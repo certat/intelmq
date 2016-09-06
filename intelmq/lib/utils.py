@@ -216,7 +216,8 @@ class StreamHandler(logging.StreamHandler):
 
 
 def log(name: str, log_path: str=intelmq.DEFAULT_LOGGING_PATH, log_level: str="DEBUG",
-        stream: Optional[object]=None, syslog: Union[bool, str, list, tuple]=None):
+        stream: Optional[object]=None, syslog: Union[bool, str, list, tuple]=None,
+        log_format_stream: str=LOG_FORMAT_STREAM):
     """
     Returns a logger instance logging to file and sys.stderr or other stream.
 
