@@ -344,9 +344,9 @@ class IntelMQCLIContollerTemplate():
         self.parser.add_argument('-n', '--dry-run', action='store_true',
                                  help='Do not store anything or change anything. Just simulate.')
 
-        self.parser.add_argument('--time-interval', nargs=1, default='2 days',
-                                 help='time interval, parseable by postgres.'
-                                      'defaults to "2 days".')
+        self.parser.add_argument('--time-interval', nargs=1, default='4 days',
+                                 help='time interval, parseable by postgres. '
+                                      'defaults to "4 days".')
 
         self.init()
 
@@ -361,7 +361,7 @@ class IntelMQCLIContollerTemplate():
             self.batch = True
         if self.args.quiet:
             self.quiet = True
-        self.time_interval = self.args.time_interval[0]
+        self.time_interval = self.args.time_interval
 
         if self.args.feed:
             self.additional_where += """ AND "feed.name" = ANY(%s::VARCHAR[]) """
