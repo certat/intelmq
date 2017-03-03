@@ -274,7 +274,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             subject_line = self.subject
         else:
             subject_line = lib.SUBJECT[taxonomy]
-        subject = ('{tax} in your network: {date}'
+        subject = ('{tax} incidents in your network: {date}'
                    ''.format(date=datetime.datetime.now().strftime('%Y-%m-%d'),
                              tax=subject_line))
         text = self.get_text(taxonomy)
