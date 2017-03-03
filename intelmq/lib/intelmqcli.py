@@ -270,6 +270,7 @@ SELECT
     "malware.version",
     "misp.event_uuid",
     "notify",
+    "misp.event_uuid",
     "protocol.application",
     "protocol.transport",
     "rtir_report_id",
