@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from ipaddress import ip_address, ip_network
 import psycopg2
 
+import json
 import netaddr
 
 from intelmq.lib.bot import Bot
@@ -59,6 +60,14 @@ class SquelcherExpertBot(Bot):
         if event is None:
             self.acknowledge_message()
             return
+
+        # XXX FIXME: quick hack by aka 2017/3/3: ignore things which have extra._origin: "dnsmalware"
+        extra = json.loads(event.get('extra', '{}'))
+        if '_origin' in extra:
+            if 'dnsmalware' == extra['_origin']:
+                event.add('notify', False, force=True)
+                self.modify_end(event)
+                return
 
         if 'source.ip' not in event and 'source.fqdn' in event:
             event.add('notify', True, force=True)

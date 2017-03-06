@@ -65,6 +65,11 @@ del INPUT8['source.asn']
 OUTPUT8 = INPUT8.copy()
 OUTPUT8['notify'] = False
 
+INPUT8 = {"__type": "Event",
+          "notify": False,
+          "extra": '{ "_origin": "dnsmalware" }'
+          }
+
 INPUT_INFINITE = {"__type": "Event",
                   "classification.identifier": "zeus",
                   "classification.type": "botnet drone",
@@ -204,6 +209,11 @@ class TestSquelcherExpertBot(test.BotTestCase, unittest.TestCase):
         self.input_message = INPUT8
         self.run_bot()
         self.assertMessageEqual(0, OUTPUT8)
+
+    def test_origin_dnsmalware(self):
+        self.input_message = INPUT9
+        self.run_bot()
+        self.assertMessageEqual(0, INPUT9)
 
     def test_infinite(self):
         self.input_message = INPUT_INFINITE
