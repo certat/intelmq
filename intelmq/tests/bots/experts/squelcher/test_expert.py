@@ -65,7 +65,7 @@ del INPUT8['source.asn']
 OUTPUT8 = INPUT8.copy()
 OUTPUT8['notify'] = False
 
-INPUT8 = {"__type": "Event",
+INPUT9 = {"__type": "Event",
           "notify": False,
           "extra": '{ "_origin": "dnsmalware" }'
           }
