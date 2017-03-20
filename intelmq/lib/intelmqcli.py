@@ -140,7 +140,7 @@ WHERE
 
 BASE_WHERE = """
 "notify" = TRUE AND
-"time.source" >= now() - interval '2 days' AND
+"time.source" >= now() - interval '4 days' AND
 "sent_at" IS NULL AND
 "feed.name" IS NOT NULL AND
 "classification.taxonomy" IS NOT NULL AND
