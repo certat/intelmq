@@ -68,35 +68,35 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
         self.connect_database()
 
         if self.args.list_feeds:
-            self.execute(lib.QUERY_FEED_NAMES)
+            self.execute(lib.QUERY_FEED_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['feed.name']:
                     self.logger.info(row['feed.name'])
             exit(0)
 
         if self.args.list_texts:
-            self.execute(lib.QUERY_TEXT_NAMES)
+            self.execute(lib.QUERY_TEXT_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['key']:
                     self.logger.info(row['key'])
             exit(0)
 
         if self.args.list_identifiers:
-            self.execute(lib.QUERY_IDENTIFIER_NAMES)
+            self.execute(lib.QUERY_IDENTIFIER_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.identifier']:
                     self.logger.info(row['classification.identifier'])
             exit(0)
 
         if self.args.list_taxonomies:
-            self.execute(lib.QUERY_TAXONOMY_NAMES)
+            self.execute(lib.QUERY_TAXONOMY_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.taxonomy']:
                     self.logger.info(row['classification.taxonomy'])
             exit(0)
 
         if self.args.list_types:
-            self.execute(lib.QUERY_TYPE_NAMES)
+            self.execute(lib.QUERY_TYPE_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.type']:
                     self.logger.info(row['classification.type'])
@@ -158,7 +158,8 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                         continue
 
                 self.executemany("UPDATE events SET rtir_incident_id = %s WHERE id = %s",
-                                 [(incident_id, event_id) for event_id in event_ids])
+                                 [(incident_id, event_id) for event_id in event_ids],
+                                 extend=False)
                 self.con.commit()
                 self.logger.info('Linked events to incident.')
 
@@ -397,7 +398,8 @@ Subject: {subj}
                 return False
 
             self.executemany("UPDATE events SET rtir_investigation_id = %s WHERE id = %s",
-                             [(investigation_id, evid) for evid in ids])
+                             [(investigation_id, evid) for evid in ids],
+                             extend=False)
             self.logger.info('Linked events to investigation.')
 
         # CORRESPOND
@@ -430,7 +432,8 @@ Subject: {subj}
                 self.logger.info('Correspondence added to Investigation.')
 
             self.execute("UPDATE events SET sent_at = LOCALTIMESTAMP WHERE "
-                         "rtir_investigation_id = %s", (investigation_id, ))
+                         "rtir_investigation_id = %s", (investigation_id, ),
+                         extend=False)
             self.logger.info('Marked events as sent.')
         except:
             self.con.rollback()
@@ -454,7 +457,8 @@ Subject: {subj}
                                               ', '.join(asns)))).strip()
             if answer.strip().lower() in ('', 'y', 'j'):
                 self.executemany(lib.QUERY_UPDATE_CONTACT,
-                                 [(requestor, asn) for asn in asns])
+                                 [(requestor, asn) for asn in asns],
+                                 extend=False)
                 self.con.commit()
                 if self.cur.rowcount == 0:
                     self.query_insert_contact(asns=asns, contact=requestor)
@@ -466,7 +470,8 @@ Subject: {subj}
         time = datetime.datetime.now().strftime('%c')
         comment = 'Added by {user} @ {time}'.format(user=user, time=time)
         self.executemany(lib.QUERY_INSERT_CONTACT,
-                         [(asn, contact, comment) for asn in asns])
+                         [(asn, contact, comment) for asn in asns],
+                         extend=False)
         self.con.commit()
 
 
