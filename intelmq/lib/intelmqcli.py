@@ -112,7 +112,7 @@ CSV_FIELDS = ["time.source", "source.ip", "protocol.transport", "source.port", "
               "classification.taxonomy", "classification.type", "classification.identifier",
               "destination.ip", "destination.port", "destination.fqdn", "destination.url",
               "feed", "event_description.text", "event_description.url", "malware.name", "extra",
-              "comment", "additional_field_freetext", "version: 1.1"
+              "comment", "additional_field_freetext", "feed.documentation", "version: 1.2"
               ]
 
 QUERY_UPDATE_CONTACT = """
@@ -263,6 +263,7 @@ SELECT
     "event_hash",
     "extra",
     "feed.accuracy",
+    "feed.documentation",
     "malware.hash",
     "malware.hash.md5",
     "malware.hash.sha1",

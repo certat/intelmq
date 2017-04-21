@@ -91,6 +91,7 @@ Changes between 0.9 and 1.0.0.dev6
 - parameter `hierarchical_output` for many output bots
 - deduplicator bot has a new required parameter to configure deduplication mode `filter_type`
 - deduplicator bot key ignore_keys was renamed to filter_keys
+- The tor_nodes expert has a new parameter `overwrite`, which is by default `false`.
 
 ### Harmonization
 - ENH: Additional data types: integer, float and Boolean
@@ -118,7 +119,7 @@ Changes between 0.9 and 1.0.0.dev6
 -`classification.taxonomy` is now lower case only
 =======
 - all hashes are lower case only
-- added `malware.hash.(md5|sha1)`
+- added `malware.hash.(md5|sha1|sha256)`, removed `malware.hash`
 - New parameter and field named feed.accuracy to represent the accuracy of each feed
 - New parameter and field named feed.provider to document the name of the source of each feed
 - New field `classification.identifier`
