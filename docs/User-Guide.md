@@ -1,11 +1,9 @@
 # User Guide
 
-  * [Requirements](#requirements)
-  * [Install](#install)
-    * [Install Dependencies](#install-dependencies)
-        * [Ubuntu 14.04 / Debian 8](#ubuntu-1404--debian-8)
-        * [CentOS 7](#centos-7)
-    * [Installation](#install)
+For installation instructions, see [INSTALL.md](INSTALL.md).
+For upgrade instructions, see [UPGRADING.md](UPGRADING.md).
+
+  * [Configure services](#configure-services)
   * [Configuration](#configuration)
     * [System Configuration](#system-configuration)
     * [Pipeline Configuration](#pipeline-configuration)
@@ -34,84 +32,16 @@
   * [Additional Information](#additional-information)
     * [Performance Tests](#performance-tests)
 
-
-# Requirements
-
-The following instructions assume the following requirements:
-
-* **Operating System:** Ubuntu 14.04 and 16.04 LTS, Debian 8, CentOS 7 or OpenSUSE Leap 42.x
-
-Please report any errors you encounter at https://github.com/certtools/intelmq/issues
-
-# Install
-
-## Install Dependencies
-
-#### Ubuntu 14.04 / Debian 8
-
+# Configure services
+You need to enable and start Redis is not done already. Using systemd it can be done with:
 ```bash
-apt-get install python3 python3-pip
-apt-get install git build-essential libffi-dev
-apt-get install python3-dev
-apt-get install redis-server
-```
-**Special note for Debian 8**: 
-if you are using Debian 8, you need to install this package extra: ``apt-get install libgnutls28-dev``.
-In addition, Debian 8 has an old version of pip3. Please get a current one via:
-```bash
-curl "https://bootstrap.pypa.io/get-pip.py" -o "/tmp/get-pip.py"
-python3.4 /tmp/get-pip.py
-```
-
-##### CentOS 7
-
-```bash
-yum install epel-release
-yum install python34 python34-devel
-yum install git gcc gcc-c++
-yum install redis
-```
-
-Install the last pip version:
-```bash
-curl "https://bootstrap.pypa.io/get-pip.py" -o "/tmp/get-pip.py"
-python3.4 /tmp/get-pip.py
-```
-
-Enable redis on startup:
-```bash
-systemctl enable redis
-systemctl start redis
-```
-
-## Installation
-
-The `REQUIREMENTS` files define a list of python packages and versions, which are necessary to run most components of IntelMQ. The defined (minimal) versions are recommendations. Some bots have additional dependencies which are mentioned in their documentation and their own `REQUIREMENTS` file (in their source directory).
-
-If your Python version is lower than 3.5 you additionally need the "typing" package:
-```bash
-pip3 install typing
-```
-
-If you do not do any modifications on the code, use `pip install intelmq` instead of `pip install .` or packages.
-
-```bash
-git clone https://github.com/certtools/intelmq.git /tmp/intelmq
-cd /tmp/intelmq
-
-sudo -s
-
-pip3 install -r REQUIREMENTS
-pip3 install .
-
-useradd -d /opt/intelmq -U -s /bin/bash intelmq
-chmod -R 0770 /opt/intelmq
-chown -R intelmq.intelmq /opt/intelmq
+systemctl enable redis.service
+systemctl start redis.service
 ```
 
 # Configuration
 
-By default, one collector, one parser and one output are started. The default collector and the parser handle data from malware domain list, the file output bot writes all data to `/opt/intelmq/var/lib/bots/file-output/events.txt`.
+Note: If you installed the packages, LSB paths are used instead of `/opt/intelmq`.
 
 The configuration directory is `/opt/intelmq/etc/`, all files are JSON. By
 default, the installation method puts it's distributed configuration files into
@@ -135,6 +65,7 @@ using the template from BOTS.
 Configure source and destination queues in `pipeline.conf`.
 Use the IntelMQ Manager mentioned above to generate the configuration files if unsure.
 
+In the shipped examples 4 collectors and parsers, 6 common experts and one output are configured. The default collector and the parser handle data from malware domain list, the file output bot writes all data to `/opt/intelmq/var/lib/bots/file-output/events.txt`.
 
 ## System Configuration (defaults)
 
@@ -148,6 +79,8 @@ Small extract:
 * `logging_syslog`: If `logging_handler` is `syslog`. Either a list with hostname and UDP port of syslog service, e.g. `["localhost", 514]` or a device name, e.g. the default `"/var/log"`.
 
 We recommend logging_level WARNING for production environments and INFO if you want more details. In any case, monitor your free disk space.
+
+You can set these per bot too. The settings will become active after the runtime configuration has been read (which is after loading the defaults configuration.
 
 ## Pipeline Configuration
 
@@ -209,7 +142,7 @@ More examples can be found at `intelmq/etc/pipeline.conf` directory in IntelMQ r
 #### Miscellaneous
 
 * **`load_balance`** - this option allows you to choose the behavior of the queue. Use the following values:
-    * **`true`** - splits the messages into several queues wihtout duplication
+    * **`true`** - splits the messages into several queues without duplication
     * **`false`** - duplicates the messages into each queue
 
 * **`broker`** - select which broker intelmq can use. Use the following values:
@@ -330,7 +263,7 @@ This configuration is used to specify the fields for all message types. The harm
             "type": "Integer"
         },
         "destination.geolocation.cc": {
-            "description": "Country-Code accoriding to ISO3166-1 alpha-2 for the destination IP.",
+            "description": "Country-Code according to ISO3166-1 alpha-2 for the destination IP.",
             "regex": "^[a-zA-Z0-9]{2}$",
             "type": "String"
         },
@@ -500,7 +433,7 @@ Most of the cases, bots will need to be configured as `continuous` run mode in o
     "name": "Blocklist.de Parser",
     "group": "Parser",
     "module": "intelmq.bots.parsers.blocklistde.parser",
-    "description": "BlockList.DE Parser is the bot responsible to parse the report and sanitize the information.",
+    "description": "Blocklist.DE Parser is the bot responsible to parse the report and sanitize the information.",
     "enabled": false,
     "run_mode": "continuous"
     "parameters": {
@@ -600,43 +533,6 @@ All bots and `intelmqctl` log to `/opt/intelmq/var/log/`. In case of failures, m
 tail -f /opt/intelmq/var/log/*.log
 ```
 
-# Upgrade
-
-## Stop IntelMQ and Backup
-
-* Make sure that your IntelMQ system is completely stopped.
-* Create a backup of IntelMQ Home directory, which includes all configurations. They are not overwritten, but backups are always nice to have!
-
-```bash
-sudo su -
-
-cp -R /opt/intelmq /opt/intelmq-backup
-```
-
-## Upgrade
-
-```bash
-cd intelmq/
-git pull
-pip install -U intelmq  # or pip install -U . if you have a local repository
-```
-
-## Restore Configurations
-
-* Apply your configurations backup.
-
-```bash
-rm -rf /opt/intelmq/etc/*
-cp -R /opt/intelmq-backup/etc/* /opt/intelmq/etc/
-```
-
-## Redefine permissions
-
-```bash
-chmod -R 0770 /opt/intelmq
-chown -R intelmq.intelmq /opt/intelmq
-```
-
 # Uninstall
 
 ```bash
@@ -657,12 +553,12 @@ To enable bash completion on `intelmqctl` and `intelmqdump` in order to help you
 
 ## Performance Tests
 
-Somes tests have been made with a virtual machine with 
+Some tests have been made with a virtual machine with 
 the following specifications:
 
 * CPU: 1 core dedicated from i7 processor
 * Memory: 4GB
 * HDD: 10GB
 
-The entire solution didnt have any problem handling 2.000.000 
+The entire solution didn't have any problem handling 2.000.000 
 queued events in memory with bots digesting the messages.

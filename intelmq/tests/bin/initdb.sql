@@ -45,6 +45,7 @@ CREATE TABLE events (
     "misp.attribute_uuid" varchar(36),
     "misp.event_uuid" varchar(36),
     "notify" boolean,
+    "output" json,
     "protocol.application" varchar(100),
     "protocol.transport" varchar(11),
     "raw" text,

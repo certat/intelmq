@@ -71,22 +71,21 @@ class TestUtils(unittest.TestCase):
     def test_file_logger(self):
         """Tests if a logger for a file can be generated with log()."""
 
-        with tempfile.NamedTemporaryFile() as handle:
+        with tempfile.NamedTemporaryFile(suffix=".log", mode='w+') as handle:
             filename = handle.name
-            name = os.path.split(filename)[-1]
+            name = os.path.splitext(os.path.split(filename)[-1])[0]
             logger = utils.log(name, log_path=tempfile.tempdir,
                                stream=io.StringIO())
 
             logger.info(LINES['spare'][0])
             logger.error(LINES['spare'][1])
             logger.critical(LINES['spare'][2])
-
             handle.seek(0)
             file_lines = handle.readlines()
 
             line_format = [line.format(name) for line in LINES['long']]
             for ind, line in enumerate(file_lines):
-                self.assertRegex(line, line_format[ind])
+                self.assertRegex(line.strip(), line_format[ind])
 
     def test_stream_logger(self):
         """Tests if a logger for a stream can be generated with log()."""
@@ -143,6 +142,18 @@ class TestUtils(unittest.TestCase):
         """Tests if error_message_from_exc correctly returns the error message."""
         exc = IndexError('This is a test')
         self.assertEqual(utils.error_message_from_exc(exc), 'This is a test')
+
+    def test_parse_relative(self):
+        """Tests if parse_reltive returns the correct timespan."""
+        self.assertEqual(utils.parse_relative('1 hour'), 60)
+        self.assertEqual(utils.parse_relative('2\tyears'), 1051200)
+
+    def test_parse_relative_raises(self):
+        """Tests if parse_reltive correctly raises ValueError."""
+        with self.assertRaises(ValueError):
+            utils.parse_relative('1 hou')
+        with self.assertRaises(ValueError):
+            utils.parse_relative('1 minute')
 
 
 if __name__ == '__main__':  # pragma: no cover

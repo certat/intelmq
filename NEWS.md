@@ -10,8 +10,29 @@ See the changelog for a full list of changes.
 * system.conf and startup.conf have been dropped entirely, use defaults.conf and runtime.conf instead
 * Many bots have been renamed/moved or deleted. Please read the Bots section in the changelog and upgrade your configuration accordingly.
 
-1.0.0.dev7 (in developement)
-----------------------------
+development
+-----------
+
+1.0.0.dev8
+----------
+### Configuration
+- `http_timeout` has been renamed to `http_timeout_sec` and `http_timeout_max_tries` has been added.
+
+### Configuration
+Two new fields have been added to `defaults.conf` which are expected by the bots:
+- `"log_processed_messages_count": 500` and
+- `'log_processed_messages_seconds": 900`
+Configure them in your setup and optionally adapt the values to your needs.
+
+### Postgres databases
+Use the following statement carefully to upgrade your database.
+```SQL
+ALTER TABLE events
+   ADD COLUMN "output" json
+```
+
+1.0.0.dev7
+----------
 
 ### Configuration
 * The deduplicator expert requires a new parameter `filter_type`, the old previous default was `blacklist`. The key `ignore_keys` has been renamed to `filter_keys`.
@@ -44,6 +65,9 @@ See the changelog for a full list of changes.
           ...
       ]
 
+### Libraries
+The built-in Alienvault OTX API library has been removed, install the library from github instead. See the [README.md](intelmq/bots/collectors/alienvault_otx/README.md) for details.
+
 ### Postgres databases
 Use the following statement carefully to upgrade your database.
 Take care that no data will be lost, the statement may not be complete!
@@ -54,7 +78,8 @@ ALTER TABLE events
    ADD COLUMN "feed.documentation" text,
    ADD COLUMN "notify" boolean,
    ADD COLUMN "sent_at" timestamp with time zone,
-   ADD COLUMN "shareable_extra_info" json;
+   ADD COLUMN "shareable_extra_info" json,
+   ADD COLUMN "feed.documentation" text;
 
 UPDATE events
    SET "source.local_hostname"="destination.local_hostname",
@@ -69,6 +94,9 @@ UPDATE events
 UPDATE events
    SET "feed.url" = substring("feed.url" from 1 for 36)
    WHERE SUBSTRING("feed.url" from 1 for 37) = 'https://data.phishtank.com/data/'
+UPDATE events
+   SET "classification.taxonomy" = lower("classification.taxonomy")
+   WHERE "classification.taxonomy" IS NOT NULL;
 ```
 
 1.0.0.dev6
@@ -86,9 +114,11 @@ ALTER TABLE events
 ### Postgres databases
 ```sql
 ALTER TABLE events
-   ADD COL   ADD COLUMN "msip.attribute_uuid" varchar(36),
-   ALTER COLUMN "misp.event_uuid" SET DATA TYPE varchar(36).
-   RENAME COLUMN "misp_uuid" TO "misp.event_uuid";
+   ADD COLUMN "misp.attribute_uuid" varchar(36),
+   ADD COLUMN "malware.hash.sha256" text,
+   ALTER COLUMN "misp.event_uuid" SET DATA TYPE varchar(36);
+   
+ALTER TABLE events   RENAME COLUMN "misp_uuid" TO "misp.event_uuid";
 
 UPDATE events
    SET "protocol.application" = lower("protocol.application")

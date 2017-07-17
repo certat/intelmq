@@ -385,7 +385,8 @@ Subject: {subj}
         else:
             investigation_id = self.rt.create_ticket(Queue='Investigations',
                                                      Subject=subject,
-                                                     Owner=self.config['rt']['user'],
+                                                     Owner=self.config['rt'].get('investigation_owner',
+                                                                                 self.config['rt']['user']),
                                                      Requestor=requestor)
 
             if investigation_id == -1:
@@ -477,6 +478,7 @@ Subject: {subj}
 
 def main():
     IntelMQCLIContoller()
+
 
 if __name__ == '__main__':
     main()

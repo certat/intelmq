@@ -4,14 +4,20 @@ Squelcher Expert marks events as new or old depending on a TTL(ASN, Net, IP).
 """
 from __future__ import unicode_literals
 from ipaddress import ip_address, ip_network
-import psycopg2
 
 import json
-import netaddr
 
 from intelmq.lib.bot import Bot
 from intelmq.lib.utils import load_configuration
 
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
+try:
+    import netaddr
+except ImportError:
+    netaddr = None
 
 SELECT_QUERY = '''
 SELECT COUNT(*) FROM {table}
@@ -20,8 +26,15 @@ WHERE
 "classification.type" = %s AND
 "classification.identifier" = %s AND
 "source.ip" = %s AND
-notify IS TRUE
+notify IS TRUE AND
+("time.source" >= LOCALTIMESTAMP - INTERVAL %s OR
+ (sent_at IS NOT NULL AND "time.source" < LOCALTIMESTAMP - INTERVAL %s)
+)
 '''
+"""
+If the event in the DB is older than 2 days, then we also check if it has been sent out.
+If this is not the case, we assume the event will be sent out, thus we squelch the new event.
+"""
 
 
 class SquelcherExpertBot(Bot):
@@ -30,6 +43,11 @@ class SquelcherExpertBot(Bot):
         self.config = load_configuration(self.parameters.configuration_path)
 
         self.logger.debug("Connecting to PostgreSQL.")
+        if psycopg2 is None:
+            raise ValueError('Could not import psycopg2. Please install it.')
+        if netaddr is None:
+            raise ValueError('Could not import netaddr. Please install it.')
+
         try:
             if hasattr(self.parameters, 'connect_timeout'):
                 connect_timeout = self.parameters.connect_timeout
@@ -56,10 +74,6 @@ class SquelcherExpertBot(Bot):
 
     def process(self):
         event = self.receive_message()
-
-        if event is None:
-            self.acknowledge_message()
-            return
 
         # XXX FIXME: quick hack by aka 2017/3/3: ignore things which have extra._origin: "dnsmalware"
         extra = json.loads(event.get('extra', '{}'))
@@ -101,7 +115,8 @@ class SquelcherExpertBot(Bot):
             if ttl >= 0:
                 self.cur.execute(SELECT_QUERY, (ttl, event['classification.type'],
                                                 event['classification.identifier'],
-                                                event['source.ip']))
+                                                event['source.ip']) +
+                                               (self.parameters.sending_time_interval, ) * 2)
                 result = self.cur.fetchone()[0]
             else:  # never notify with ttl -1
                 result = 1
@@ -118,7 +133,7 @@ class SquelcherExpertBot(Bot):
             event.add('notify', notify, force=True)
             self.modify_end(event)
 
-    def stop(self):
+    def shutdown(self):
         try:
             self.cur.close()
         except:
@@ -127,7 +142,6 @@ class SquelcherExpertBot(Bot):
             self.con.close()
         except:
             pass
-        super(SquelcherExpertBot, self).stop()
 
     def modify_end(self, event):
         self.send_message(event)
