@@ -79,16 +79,16 @@ class SquelcherExpertBot(Bot):
         extra = json.loads(event.get('extra', '{}'))
         if '_origin' in extra:
             if 'dnsmalware' == extra['_origin']:
-                event.add('notify', False, force=True)
+                event.add('notify', False, overwrite=True)
                 self.modify_end(event)
                 return
 
         if 'source.ip' not in event and 'source.fqdn' in event:
-            event.add('notify', True, force=True)
+            event.add('notify', True, overwrite=True)
             self.modify_end(event)
             return
         if 'source.asn' not in event:
-            event.add('notify', False, force=True)
+            event.add('notify', False, overwrite=True)
             self.modify_end(event)
             return
 
@@ -130,7 +130,7 @@ class SquelcherExpertBot(Bot):
             else:
                 notify = False
 
-            event.add('notify', notify, force=True)
+            event.add('notify', notify, overwrite=True)
             self.modify_end(event)
 
     def shutdown(self):
