@@ -71,55 +71,57 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             self.execute(lib.QUERY_FEED_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['feed.name']:
-                    self.logger.info(row['feed.name'])
+                    print(row['feed.name'])
             exit(0)
 
         if self.args.list_texts:
             self.execute(lib.QUERY_TEXT_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['key']:
-                    self.logger.info(row['key'])
+                    print(row['key'])
             exit(0)
 
         if self.args.list_identifiers:
             self.execute(lib.QUERY_IDENTIFIER_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.identifier']:
-                    self.logger.info(row['classification.identifier'])
+                    print(row['classification.identifier'])
             exit(0)
 
         if self.args.list_taxonomies:
             self.execute(lib.QUERY_TAXONOMY_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.taxonomy']:
-                    self.logger.info(row['classification.taxonomy'])
+                    print(row['classification.taxonomy'])
             exit(0)
 
         if self.args.list_types:
             self.execute(lib.QUERY_TYPE_NAMES, extend=False)
             for row in self.cur.fetchall():
                 if row['classification.type']:
-                    self.logger.info(row['classification.type'])
+                    print(row['classification.type'])
             exit(0)
 
         if locale.getpreferredencoding() != 'UTF-8':
             self.logger.error('The preferred encoding of your locale setting is not UTF-8 '
-                              'but {}. Exiting.'.format(locale.getpreferredencoding()))
+                              'but %s. Exiting.', locale.getpreferredencoding())
             exit(1)
 
         if not self.rt.login():
-            self.logger.error('Could not login as {} on {}.'.format(self.config['rt']['user'],
-                                                                    self.config['rt']['uri']))
+            self.logger.error('Could not login as %r on %r.',
+                              self.config['rt']['user'],
+                              self.config['rt']['uri'])
             exit(2)
         else:
-            self.logger.info('Logged in as {} on {}.'.format(self.config['rt']['user'],
-                                                             self.config['rt']['uri']))
+            self.logger.info('Logged in as %r on %r.',
+                             self.config['rt']['user'],
+                             self.config['rt']['uri'])
         try:
             self.execute(lib.QUERY_OPEN_TAXONOMIES)
             taxonomies = [x['classification.taxonomy'] for x in self.cur.fetchall()]
             self.logger.info("All taxonomies: " + ", ".join(taxonomies))
             for taxonomy in taxonomies:
-                self.logger.info('Handling taxonomy {!r}.'.format(taxonomy))
+                self.logger.info('Handling taxonomy %r.', taxonomy)
                 if (taxonomy not in lib.SUBJECT or lib.SUBJECT[taxonomy] is None) and not self.subject:
                     self.logger.error('No subject defined for %r.' % taxonomy)
                     continue
@@ -142,7 +144,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     incident_id = self.rt.create_ticket(Queue='Incidents', Subject=subject,
                                                         Owner=self.config['rt']['user'])
                     if incident_id == -1:
-                        self.logger.error('Could not create Incident ({}).'.format(incident_id))
+                        self.logger.error('Could not create Incident %r.', subject)
                         continue
 
                     self.logger.info('Created Incident %s.' % incident_id)
@@ -153,8 +155,8 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
 
                 for report_id in report_ids:
                     if not self.dryrun and not self.rt.edit_link(report_id, 'MemberOf', incident_id):
-                        self.logger.error('Could not link Incident to Incident Report: ({} -> {}).'
-                                          ''.format(incident_id, report_id))
+                        self.logger.error('Could not link Incident to Incident Report: (%d -> %d).',
+                                          incident_id, report_id)
                         continue
 
                 self.executemany("UPDATE events SET rtir_incident_id = %s WHERE id = %s",
@@ -186,18 +188,19 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     try:
                         if not self.dryrun and not self.rt.edit_ticket(incident_id,
                                                                        Status='resolved'):
-                            self.logger.error('Could not close incident {}.'.format(incident_id))
+                            self.logger.error('Could not close incident %d.', incident_id)
                     except IndexError:
                         # Bug in RT/python-rt
                         pass
                 else:
-                    self.logger.info('Not all investigations completed -> Can\'t be resolved!')
+                    self.logger.warn('Not all investigations completed -> Can\'t resolve '
+                                     'incident %d.', incident_id)
             self.execute(lib.QUERY_HALF_PROC_INCIDENTS)
             query = [(x['rtir_incident_id'], x['classification.taxonomy'])
                      for x in self.cur.fetchall()]
             self.logger.info("All half processed incidents and taxonomy: " + str(query))
             for incident_id, taxonomy in query:
-                self.logger.info('Handling incident {!r} and taxonomy {!r}.'.format(incident_id, taxonomy))
+                self.logger.info('Handling incident %d and taxonomy %r.', incident_id, taxonomy)
                 if (taxonomy not in lib.SUBJECT or lib.SUBJECT[taxonomy] is None) and not self.args.subject:
                     self.logger.error('No subject defined for %r.' % taxonomy)
                     continue
@@ -217,12 +220,13 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     try:
                         if not self.dryrun and not self.rt.edit_ticket(incident_id,
                                                                        Status='resolved'):
-                            self.logger.error('Could not close incident {}.'.format(incident_id))
+                            self.logger.error('Could not close incident %d.', incident_id)
                     except IndexError:
                         # Bug in RT/python-rt
                         pass
                 else:
-                    self.logger.info('Not all investigations completed -> Can\'t be resolved!')
+                    self.logger.warn('Not all investigations completed -> Can\'t resolve '
+                                     'incident %d.', incident_id)
 
         finally:
             self.rt.logout()
@@ -371,7 +375,7 @@ Subject: {subj}
                 requestor = answer
             return self.send(taxonomy, contact, query, incident_id, requestor)
         elif answer != 's':
-            self.logger.error('Unknow command {!r}.'.format(answer))
+            self.logger.error('Unknow command %r.', answer)
             return self.send(taxonomy, contact, query, incident_id, requestor)
 
         if text is None:
@@ -390,10 +394,10 @@ Subject: {subj}
                                                      Requestor=requestor)
 
             if investigation_id == -1:
-                self.logger.error('Could not create Investigation.')
+                self.logger.error('Could not create Investigation %r.', subject)
                 return False
 
-            self.logger.info('Created Investigation {}.'.format(investigation_id))
+            self.logger.info('Created Investigation %d.', investigation_id)
             if not self.rt.edit_link(incident_id, 'HasMember', investigation_id):
                 self.logger.error('Could not link Investigation to Incident.')
                 return False
@@ -446,7 +450,7 @@ Subject: {subj}
             try:
                 if not self.dryrun and not self.rt.edit_ticket(investigation_id,
                                                                Status='resolved'):
-                    self.logger.error('Could not close investigation {}.'.format(investigation_id))
+                    self.logger.error('Could not close investigation %d.', investigation_id)
             except IndexError:
                 # Bug in RT/python-rt
                 pass
