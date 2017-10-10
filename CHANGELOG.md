@@ -1,6 +1,46 @@
 CHANGELOG
 ==========
 
+1.1.0
+-----
+Support for Python 3.3 has been dropped, it reached its end of life.
+
+### Tools
+- `intelmqctl start` prints bot's error messages if it failed to start
+- `intelmqctl check` checks for defaults.conf completeness
+- `intelmqctl list bots -q` only prints the IDs of enabled bots
+
+### Core
+- Subitems in fields of type `JSONDict` (see below) can be accessed directly. E.g. you can do:
+  event['extra.foo'] = 'bar'
+  event['extra.foo'] # gives 'bar'
+  It is still possible to set and get the field as whole, however this may be removed or changed in the future:
+  event['extra'] = '{"foo": "bar"}'
+  event['extra'] # gives '{"foo": "bar"}'
+  "Old" bots and configurations compatible with 1.0.x do still work.
+  Also, the extra field is now properly exploded when exporting events, analogous to all other fields.
+- intelmq.lib.message.Message.add: The parameter overwrite accepts now three different values: True, False and None (new).
+  True: An existing value will be overwritten
+  False: An existing value will not be overwritten (previously and exception has been raised when the value was raised).
+  None (default): If the value exists an KeyExists Exception is thrown (previously the same as False).
+  This allows shorter code in the bots, as an 'overwrite' configuration parameter can be directly passed to the function.
+- Bots can specify a static method `check(parameters)` which can perform individual checks specific to the bot.
+  These functions will be called by `intelmqctl check` if the bot is configured with the given parameters
+
+### Bots
+#### Collectors
+- Mail: New parameters; `sent_from`: filter messages by sender, `sent_to`: filter messages by recipient
+- bots.experts.maxmind_geoip: New (optional) parameter `overwrite`, by default false. The current default was to overwrite!
+
+### Harmonization
+- Renamed `JSON` to `JSONDict` and added a new type `JSON`. `JSONDict` saves data internally as JSON, but acts like a dictionary. `JSON` accepts any valid JSON.
+
+#### Parsers
+- changed feednames in `bots.parsers.shadowserver`. Please refer to it's README for the exact changes.
+
+### Requirements
+- Requests is no longer listed as dependency of the core. For depending bots the requirement is noted in their REQUIREMENTS.txt file
+
 1.0.1 Bugfix release
 --------------------
 ### Documentation
@@ -15,12 +55,13 @@ CHANGELOG
 - lib/bot: Bots will now log the used intelmq version at startup
 
 ### Tools
-- intelmqctl: To check the status of a bot, the comandline of the running process is compared to the actual executable of the bot. Otherwise unrelated programs with the same PID are detected as running bot.
+- intelmqctl: To check the status of a bot, the command line of the running process is compared to the actual executable of the bot. Otherwise unrelated programs with the same PID are detected as running bot.
 - intelmqctl: enable, disable, check, clear now support the JSON output
 
 1.0.0 Stable release
 --------------------
 ### Core
+- use SIGTERM instead of SIGINT to stop bots (#981)
 - Fixes a thrown FileNotFound exception when stopping bots started with `intelmqctl run ...`
 
 ### Harmonization
@@ -39,6 +80,9 @@ CHANGELOG
 - Deprecated parameters force and ignore of `Message.add` have been removed
 - Deprecated method `Message.contains` has been removed
 - Drop support for deprecated configuration files `startup.conf` and `system.conf`
+
+### Harmonization
+- New ASN type. Like integer but checks the range.
 
 ### Development
 - We are now testing with and without optional libraries/lowest recommended versions and most current versions of required libraries
@@ -67,13 +111,6 @@ CHANGELOG
 
 ### Experts
 - bots.experts.deduplicator: New parameter `bypass` to deactivate deduplication, default: False
-
-### Bots
-- HTTP collectors: If http_username and http_password are both given and empty or null, 'None:None' has been used to authenticate. It is now checked that the username evaulates to non-false/null before adding the authentication. (fixes #1017)
-
-#### Parsers
-- Removed bots.parsers.openbl as the source is offline since end of may (#1018, https://twitter.com/sshblorg/status/854669263671615489)
-- Shadowserver: Added Accessible SMB
 
 v1.0.0.dev8
 -----------
@@ -240,12 +277,12 @@ Changes between 0.9 and 1.0.0.dev6
 - `webshot_url` is now `screenshot_url`
 - `additional_information` renamed to `extra`, must be JSON
 - `os.name`, `os.version`, `user_agent` removed in favor of `extra`
--`classification.taxonomy` is now lower case only
 - all hashes are lower case only
 - added `malware.hash.(md5|sha1|sha256)`, removed `malware.hash`
 - New parameter and field named feed.accuracy to represent the accuracy of each feed
 - New parameter and field named feed.provider to document the name of the source of each feed
 - New field `classification.identifier`
+-`classification.taxonomy` is now lower case only
 
 ### Known issues
  - Harmonization: hashes are not normalized and classified, see also issue #394 and pull #634

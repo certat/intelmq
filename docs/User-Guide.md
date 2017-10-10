@@ -147,7 +147,7 @@ You can set these parameters per bot as well. The settings will take effect afte
 
 ## Pipeline Configuration
 
-This configuration is used by each bot to load the pipeline of associated source- and destination queues. Note that the IntelMQ Manager generates this configuration.
+This configuration is used by each bot to load the source pipeline and destination pipelines associated to each of them. IntelMQ Manager generates this configuration.
 
 **Template:**
 ```
@@ -178,7 +178,6 @@ This configuration is used by each bot to load the pipeline of associated source
 	...
 }
 ```
-Note that a bot must only have one (input) source queue but may have multiple destination queues.
 
 More examples can be found at `intelmq/etc/pipeline.conf` directory in IntelMQ repository.
 
