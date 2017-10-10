@@ -2,8 +2,6 @@
 """
 Modify Expert bot let's you manipulate all fields with a config file.
 """
-import json
-
 from intelmq.lib.bot import Bot
 
 
@@ -12,11 +10,9 @@ class CopyExtraExpertBot(Bot):
         event = self.receive_message()
 
         if 'extra' in event:
-            extra = json.loads(event['extra'])
-
-            share = {key: extra[key] for key in self.parameters.keys if key in extra}
-            if share:
-                event.add('shareable_extra_info', share)
+            for extrakey, extravalue in event.to_dict(hierarchical=True)['extra'].items():
+                if extrakey in self.parameters.keys:
+                    event['shareable_extra_info.%s' % extrakey] = extravalue
 
         self.send_message(event)
         self.acknowledge_message()
