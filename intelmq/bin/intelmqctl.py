@@ -977,6 +977,13 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
             else:
                 self.logger.warning("'extra' field needs to be of type 'JSONDict'.")
             retval = 1
+        shareable_type = files[HARMONIZATION_CONF_FILE]['event']['shareable_extra_info']['type']
+        if shareable_type != 'JSONDict':
+            if RETURN_TYPE == 'json':
+                output.append(['warning', "'shareable_extra_info' field needs to be of type 'JSONDict'."])
+            else:
+                self.logger.warning("'shareable_extra_info' field needs to be of type 'JSONDict'.")
+            retval = 1
 
         if RETURN_TYPE == 'json':
             output.append(['info', 'Checking for bots.'])
