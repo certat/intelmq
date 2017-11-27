@@ -275,12 +275,11 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
         ids = list(str(row['id']) for row in query)
 
         if self.subject:
-            subject_line = self.subject
+            subject = self.subject
         else:
-            subject_line = lib.SUBJECT[taxonomy]
-        subject = ('{tax} incidents in your network: {date}'
-                   ''.format(date=datetime.datetime.now().strftime('%Y-%m-%d'),
-                             tax=subject_line))
+            subject = ('{tax} in your network: {date}'
+                       ''.format(date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                                 tax=lib.SUBJECT[taxonomy]))
         text = self.get_text(taxonomy)
         csvfile = io.StringIO()
         if lib.CSV_FIELDS:
