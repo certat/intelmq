@@ -130,12 +130,11 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                 self.execute(lib.QUERY_OPEN_EVENT_IDS_BY_TAXONOMY, (taxonomy, ))
                 event_ids = [x['id'] for x in self.cur.fetchall()]
                 if self.subject:
-                    subject_line = self.subject
+                    subject = self.subject
                 else:
-                    subject_line = lib.SUBJECT[taxonomy]
-                subject = ('%s %s incidents on %s'
-                           '' % (len(event_ids), subject_line,
-                                 datetime.datetime.now().strftime('%Y-%m-%d')))
+                    subject = ('%s %s incidents on %s'
+                               '' % (len(event_ids), lib.SUBJECT[taxonomy],
+                                     datetime.datetime.now().strftime('%Y-%m-%d')))
 
                 if self.dryrun:
                     self.logger.info('Simulate creation of incident.')
