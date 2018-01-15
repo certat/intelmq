@@ -169,7 +169,7 @@ class Bot(object):
             except Exception as exc:
                 # in case of serious system issues, exit immediately
                 if isinstance(exc, MemoryError):
-                    self.logger.exception('Out of memory. Exit immediately.')
+                    self.logger.exception('Out of memory. Exit immediately. Reason: %r.' % exc.args[0])
                     self.stop()
                 elif isinstance(exc, (IOError, OSError)) and exc.errno == 28:
                     self.logger.exception('Out of disk space. Exit immediately.')
@@ -560,6 +560,7 @@ class ParserBot(Bot):
         A basic CSV parser.
         """
         raw_report = utils.base64_decode(report.get("raw")).strip()
+        raw_report = raw_report.translate({0: None})
         if self.ignore_lines_starting:
             raw_report = '\n'.join([line for line in raw_report.splitlines()
                                     if not any([line.startswith(prefix) for prefix
@@ -573,6 +574,7 @@ class ParserBot(Bot):
         A basic CSV Dictionary parser.
         """
         raw_report = utils.base64_decode(report.get("raw")).strip()
+        raw_report = raw_report.translate({0: None})
         if self.ignore_lines_starting:
             raw_report = '\n'.join([line for line in raw_report.splitlines()
                                     if not any([line.startswith(prefix) for prefix
