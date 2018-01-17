@@ -59,7 +59,7 @@ Harmonization field names
 | |rtir_report_id|[Integer](#integer)|Request Tracker Incident Response incident report id.|
 | |screenshot_url|[URL](#url)|Some source may report URLs related to a an image generated of a resource without any metadata. Or an URL pointing to resource, which has been rendered into a webshot, e.g. a PNG image and the relevant metadata related to its retrieval/generation.|
 | |sent_at|[DateTime](#datetime)|Time when the report has been sent to the responsible recipient.|
-| |shareable_extra_info|[JSON](#json)|Fields from extra which can be shared.|
+| |shareable_extra_info|[JSONDict](#jsondict)|Fields from extra which can be shared.|
 |Source|source.abuse_contact|[LowercaseString](#lowercasestring)|Abuse contact for source address. A comma separated list.|
 |Source|source.account|[String](#string)|An account name or email address, which has been identified to relate to the source of an abuse event.|
 |Source|source.allocated|[DateTime](#datetime)|Allocation date corresponding to BGP prefix.|
