@@ -9,10 +9,9 @@ class CopyExtraExpertBot(Bot):
     def process(self):
         event = self.receive_message()
 
-        if 'extra' in event:
-            for extrakey, extravalue in event.to_dict(hierarchical=True)['extra'].items():
-                if extrakey in self.parameters.keys:
-                    event['shareable_extra_info.%s' % extrakey] = extravalue
+        for extrakey, extravalue in event.to_dict(hierarchical=True).get('extra', {}).items():
+            if extrakey in self.parameters.keys:
+                event['shareable_extra_info.%s' % extrakey] = extravalue
 
         self.send_message(event)
         self.acknowledge_message()
