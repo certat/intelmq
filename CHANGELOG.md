@@ -21,8 +21,8 @@ CHANGELOG
 - Shadowserver Parser: Add Accessible Cisco Smart Install
 - CleanMX Phising Parser: Handle new columns `first` and `last` (#1131).
 - n6 parser: Fix classification mappings. See NEWS file for changes values. (#738)
-- renamed `bots.parsers.cymru_full_bogons.parser` to `bots.parsers.cymru.full_bogons`, compatibility shim will be removed in version 2.0
-- added `bots.parsers.cymru.cap_program`
+- renamed `bots.parsers.cymru_full_bogons.parser` to `bots.parsers.cymru.parser_full_bogons`, compatibility shim will be removed in version 2.0
+- added `bots.parsers.cymru.parser_cap_program`
 
 ### Documentation
 - add release procedure documentation
