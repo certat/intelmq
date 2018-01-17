@@ -30,7 +30,8 @@ import pytz
 
 __all__ = ['base64_decode', 'base64_encode', 'decode', 'encode',
            'load_configuration', 'load_parameters', 'log', 'parse_logline',
-           'reverse_readline', 'error_message_from_exc', 'parse_relative'
+           'reverse_readline', 'error_message_from_exc', 'parse_relative',
+           'RewindableFileHandle',
            ]
 
 # Used loglines format
@@ -40,11 +41,11 @@ LOG_FORMAT_SYSLOG = '%(name)s: %(levelname)s %(message)s'
 
 # Regex for parsing the above LOG_FORMAT
 LOG_REGEX = (r'^(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+) -'
-             r' (?P<bot_id>[-\w]+) - '
+             r' (?P<bot_id>([-\w]+|py\.warnings)) - '
              r'(?P<log_level>[A-Z]+) - '
              r'(?P<message>.+)$')
 SYSLOG_REGEX = ('^(?P<date>\w{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<hostname>[-\.\w]+) '
-                '(?P<bot_id>[-\w]+): (?P<log_level>[A-Z]+) (?P<message>.+)$')
+                '(?P<bot_id>([-\w]+|py\.warnings)): (?P<log_level>[A-Z]+) (?P<message>.+)$')
 
 
 class Parameters(object):
@@ -220,6 +221,7 @@ def log(name: str, log_path: str=intelmq.DEFAULT_LOGGING_PATH, log_level: str="D
         log_format_stream: str=LOG_FORMAT_STREAM):
     """
     Returns a logger instance logging to file and sys.stderr or other stream.
+    The warnings module will log to the same handlers.
 
     Parameters:
         name: filename for logfile or string preceding lines in stream
@@ -243,6 +245,9 @@ def log(name: str, log_path: str=intelmq.DEFAULT_LOGGING_PATH, log_level: str="D
         LOG_FORMAT_STREAM: Default log format for stream handler
         LOG_FORMAT_SYSLOG: Default log format for syslog
     """
+    logging.captureWarnings(True)
+    warnings_logger = logging.getLogger("py.warnings")
+
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
 
@@ -257,9 +262,12 @@ def log(name: str, log_path: str=intelmq.DEFAULT_LOGGING_PATH, log_level: str="D
             handler = logging.handlers.SysLogHandler(address=syslog)
         handler.setLevel(log_level)
         handler.setFormatter(logging.Formatter(LOG_FORMAT_SYSLOG))
+    else:
+        raise ValueError("Invalid configuration, neither log_path is given nor syslog is used.")
 
     if log_path or syslog:
         logger.addHandler(handler)
+        warnings_logger.addHandler(handler)
 
     if stream or stream is None:
         console_formatter = logging.Formatter(log_format_stream)
@@ -269,6 +277,7 @@ def log(name: str, log_path: str=intelmq.DEFAULT_LOGGING_PATH, log_level: str="D
             console_handler = logging.StreamHandler(stream)
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
+        warnings_logger.addHandler(console_handler)
         console_handler.setLevel(log_level)
 
     return logger
@@ -411,3 +420,23 @@ def extract_tar(file: bytes, extract_files: Union[bool, list]) -> list:
         extract_files = [file.name for file in tar.getmembers()]
 
     return [tar.extractfile(member).read() for member in tar.getmembers() if member.name in extract_files]
+
+
+class RewindableFileHandle(object):
+    """
+    Can be used for easy retrieval of last input line to populate raw field
+    during CSV parsing.
+    """
+    def __init__(self, f):
+        self.f = f
+        self.current_line = None
+        self.first_line = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.current_line = next(self.f)
+        if self.first_line is None:
+            self.first_line = self.current_line
+        return self.current_line

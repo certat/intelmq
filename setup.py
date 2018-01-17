@@ -64,6 +64,7 @@ setup(
     version=__version__,
     maintainer='Sebastian Wagner',
     maintainer_email='wagner@cert.at',
+    python_requires='>=3.3',
     install_requires=REQUIRES,
     test_suite='intelmq.tests',
     packages=find_packages(),
@@ -105,6 +106,7 @@ setup(
             'intelmqctl = intelmq.bin.intelmqctl:main',
             'intelmqdump = intelmq.bin.intelmqdump:main',
             'intelmq_psql_initdb = intelmq.bin.intelmq_psql_initdb:main',
+            'intelmq.bots.experts.sieve.validator = intelmq.bots.experts.sieve.validator:main',
         ] + BOTS,
     },
     scripts=[

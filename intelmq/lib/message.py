@@ -15,6 +15,7 @@ import intelmq.lib.harmonization
 from intelmq import HARMONIZATION_CONF_FILE
 from intelmq.lib import utils
 from typing import Sequence, Optional
+from collections import defaultdict
 
 
 __all__ = ['Event', 'Message', 'MessageFactory', 'Report']
@@ -105,16 +106,22 @@ class Message(dict):
                                              expected=VALID_MESSSAGE_TYPES,
                                              docs=HARMONIZATION_CONF_FILE)
 
-        if classname == 'event' and self.harmonization_config['extra']['type'] == 'JSON':
+        if (classname == 'event' and 'extra' in self.harmonization_config and
+           self.harmonization_config['extra']['type'] == 'JSON'):
             warnings.warn("Assuming harmonization type 'JSONDict' for harmonization field 'extra'. "
                           "This assumption will be removed in version 2.0.", DeprecationWarning)
             self.harmonization_config['extra']['type'] = 'JSONDict'
+        for harm_key in self.harmonization_config.keys():
+            if not re.match('^[a-z_](.[a-z_0-9]+)*$', harm_key) and harm_key != '__type':
+                raise exceptions.InvalidKey("Harmonization key %r is invalid." % harm_key)
 
         super(Message, self).__init__()
         if isinstance(message, dict):
             iterable = message.items()
         elif isinstance(message, tuple):
             iterable = message
+        else:
+            raise ValueError("Type %r of message can't be handled, must be dict or tuple.", type(message))
         for key, value in iterable:
             if not self.add(key, value, sanitize=False, raise_failure=False):
                 self.add(key, value, sanitize=True)
@@ -287,7 +294,7 @@ class Message(dict):
         message = json.loads(message_string)
         return message
 
-    @functools.lru_cache(maxsize=None)
+#    @functools.lru_cache(maxsize=None)
     def __is_valid_key(self, key: str):
         try:
             class_name, subitem = self.__get_type_config(key)
@@ -329,7 +336,7 @@ class Message(dict):
         else:
             return class_reference().sanitize_subitem(value)
 
-    @functools.lru_cache(maxsize=None)
+#    @functools.lru_cache(maxsize=None)
     def __get_type_config(self, key: str):
         if key == '__type':
             return None, None
@@ -382,18 +389,46 @@ class Message(dict):
 
         return event_hash.hexdigest()
 
-    def to_dict(self, hierarchical: bool=False, with_type: bool=False):
-        json_dict = dict()
+    def to_dict(self, hierarchical: bool=False, with_type: bool=False,
+                jsondict_as_string: bool=False) -> dict:
+        """
+        Returns a copy of self, only based on a dict class.
+
+        Parameters:
+            hierarchical: Split all keys at a dot and save these subitems
+                in dictionaries.
+            with_type: Add a value named `__type` containing the message type
+            jsondict_as_string:
+                If False (default) treat values in JSONDict fields just as normal ones
+                If True, save such fields as JSON-encoded string. This is the old behavior
+                    before version 1.1.
+
+        Returns:
+            new_dict: A dictionary as copy of itself modified according
+                to the given parameters
+        """
+        new_dict = {}
 
         if with_type:
-            self['__type'] = self.__class__.__name__
+            new_dict['__type'] = self.__class__.__name__
+
+        jsondicts = defaultdict(dict)
 
         for key, value in self.items():
+            splitted_key = key.split('.')
             if hierarchical:
-                subkeys = key.split('.')
+                subkeys = splitted_key
             else:
                 subkeys = [key]
-            json_dict_fp = json_dict
+            json_dict_fp = new_dict
+
+            try:
+                key_type = self.__get_type_config(splitted_key[0])[0]['type']
+            except KeyError:
+                key_type = None
+            if key_type == 'JSONDict' and jsondict_as_string:
+                jsondicts[splitted_key[0]]['.'.join(splitted_key[1:])] = value
+                continue
 
             for subkey in subkeys:
                 if subkey == subkeys[-1]:
@@ -405,14 +440,34 @@ class Message(dict):
 
                 json_dict_fp = json_dict_fp[subkey]
 
-        if with_type:
-            del self['__type']
+        for key, value in jsondicts.items():
+            new_dict[key] = json.dumps(value, ensure_ascii=False)
 
-        return json_dict
+        return new_dict
 
-    def to_json(self, hierarchical=False, with_type=False):
+    def to_json(self, hierarchical=False, with_type=False, jsondict_as_string=False):
         json_dict = self.to_dict(hierarchical=hierarchical, with_type=with_type)
         return json.dumps(json_dict, ensure_ascii=False)
+
+    def __eq__(self, other) -> bool:
+        """
+        Necessary as we have an additional member harmonization_config and types.
+        The additional checks are only performed for subclasses of Message.
+
+        Comparison with other types e.g. dicts does not check the harmonization_config.
+        """
+        dict_eq = super(Message, self).__eq__(other)
+        if dict_eq and issubclass(type(other), Message):
+            type_eq = type(self) == type(other)
+            harm_eq = self.harmonization_config == other.harmonization_config if hasattr(other, 'harmonization_config') else False
+            if type_eq and harm_eq:
+                return True
+        elif dict_eq:
+            return True
+        return False
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
 
 
 class Event(Message):

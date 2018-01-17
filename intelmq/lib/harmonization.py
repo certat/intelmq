@@ -137,33 +137,8 @@ class Boolean(GenericType):
 
 class ClassificationType(GenericType):
     """
-    Type of classification.type field.
-
-    Only these values are allowed:
-     * backdoor
-     * blacklist
-     * botnet drone
-     * brute-force
-     * c&c
-     * compromised
-     * ddos
-     * defacement
-     * dga domain
-     * dropzone
-     * exploit
-     * ids alert
-     * malware
-     * malware configuration
-     * other
-     * phishing
-     * proxy
-     * ransomware
-     * scanner
-     * spam
-     * test
-     * unknown
-     * vulnerable service
-    """
+    classification.type type. Allowed values are:
+     * """
 
     allowed_values = ['backdoor',
                       'blacklist',
@@ -177,6 +152,7 @@ class ClassificationType(GenericType):
                       'dropzone',
                       'exploit',
                       'ids alert',
+                      'leak',
                       'malware',
                       'malware configuration',
                       'other',
@@ -186,9 +162,12 @@ class ClassificationType(GenericType):
                       'scanner',
                       'spam',
                       'test',
+                      'tor',
                       'unknown',
                       'vulnerable service',
                       ]
+
+    __doc__ += '\n     * '.join(allowed_values)
 
     @staticmethod
     def is_valid(value, sanitize=False):
@@ -266,6 +245,21 @@ class DateTime(GenericType):
             datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f+00:00')
 
         return value
+
+    @staticmethod
+    def from_epoch_millis(tstamp, tzone='UTC'):
+        """
+        Returns ISO formatted datetime from given epoch timestamp with milliseconds.
+        It ignores the milliseconds, converts it into normal timestamp and processes it.
+        """
+        bytecount = len(str(tstamp))
+        int_tstamp = int(tstamp)
+        if bytecount == 10:
+            return DateTime.from_timestamp(int_tstamp, tzone)
+        if bytecount == 12:
+            return DateTime.from_timestamp(int_tstamp // 100, tzone)
+        if bytecount == 13:
+            return DateTime.from_timestamp(int_tstamp // 1000, tzone)
 
     @staticmethod
     def from_timestamp(tstamp, tzone='UTC'):
@@ -366,7 +360,7 @@ class Accuracy(GenericType):
                 return float(value) * 100
 
             value = float(value)
-            if value >= 0 or value <= 100:
+            if value >= 0 and value <= 100:
                 return value
         except (ValueError, TypeError):
             return None
