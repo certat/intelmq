@@ -9,6 +9,7 @@ import locale
 import os
 import readline  # nopep8, hooks into input()
 import subprocess
+import sys
 import tempfile
 import zipfile
 
@@ -34,7 +35,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
     zipme = False
     subject = None
 
-    def init(self):
+    def run(self):
         self.parser.add_argument('-l', '--list-feeds', action='store_true',
                                  help='List all feeds')
         self.parser.add_argument('-i', '--list-identifiers', action='store_true',
@@ -130,12 +131,11 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                 self.execute(lib.QUERY_OPEN_EVENT_IDS_BY_TAXONOMY, (taxonomy, ))
                 event_ids = [x['id'] for x in self.cur.fetchall()]
                 if self.subject:
-                    subject_line = self.subject
+                    subject = self.subject
                 else:
-                    subject_line = lib.SUBJECT[taxonomy]
-                subject = ('%s %s incidents on %s'
-                           '' % (len(event_ids), subject_line,
-                                 datetime.datetime.now().strftime('%Y-%m-%d')))
+                    subject = ('%s %s incidents on %s'
+                               '' % (len(event_ids), lib.SUBJECT[taxonomy],
+                                     datetime.datetime.now().strftime('%Y-%m-%d')))
 
                 if self.dryrun:
                     self.logger.info('Simulate creation of incident.')
@@ -182,7 +182,11 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                         self.execute(lib.DRY_QUERY_EVENTS_BY_ASCONTACT_TAXONOMY,
                                      (taxonomy, contact, ))
                     data = self.cur.fetchall()
-                    inv_results.append(self.send(taxonomy, contact, data, incident_id))
+                    results = self.send(taxonomy, contact, data, incident_id)
+                    if results:
+                        inv_results.append(results)
+                    else:
+                        return False
 
                 if all(inv_results):
                     try:
@@ -214,7 +218,12 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     self.execute(lib.QUERY_EVENTS_BY_ASCONTACT_INCIDENT,
                                  (incident_id, contact, ))
                     data = self.cur.fetchall()
-                    inv_results.append(self.send(taxonomy, contact, data, incident_id))
+                    data = self.cur.fetchall()
+                    results = self.send(taxonomy, contact, data, incident_id)
+                    if results:
+                        inv_results.append(results)
+                    else:
+                        return False
 
                 if all(inv_results):
                     try:
@@ -227,6 +236,8 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                 else:
                     self.logger.warn('Not all investigations completed -> Can\'t resolve '
                                      'incident %d.', incident_id)
+                    return False
+            return True
 
         finally:
             self.rt.logout()
@@ -276,12 +287,11 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
         ids = list(str(row['id']) for row in query)
 
         if self.subject:
-            subject_line = self.subject
+            subject = self.subject
         else:
-            subject_line = lib.SUBJECT[taxonomy]
-        subject = ('{tax} in your network: {date}'
-                   ''.format(date=datetime.datetime.now().strftime('%Y-%m-%d'),
-                             tax=subject_line))
+            subject = ('{tax} incidents in your network: {date}'
+                       ''.format(date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                                 tax=lib.SUBJECT[taxonomy]))
         text = self.get_text(taxonomy)
         csvfile = io.StringIO()
         if lib.CSV_FIELDS:
@@ -481,7 +491,9 @@ Subject: {subj}
 
 
 def main():
-    IntelMQCLIContoller()
+    controller = IntelMQCLIContoller()
+    if not controller.run():
+        sys.exit(1)
 
 
 if __name__ == '__main__':

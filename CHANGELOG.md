@@ -135,6 +135,8 @@ CHANGELOG
 - `bots.parsers.shadowserver.parser`: Add Accessible Cisco Smart Install (#1122).
 - `bots.parsers.cleanmx.parser`: Handle new columns `first` and `last`, rewritten for XML feed. See NEWS.md for upgrade instructions (#1131, #1136, #1163).
 - `bots.parsers.n6.parser`: Fix classification mappings. See NEWS file for changes values (#738, #1127).
+- renamed `bots.parsers.cymru_full_bogons.parser` to `bots.parsers.cymru.parser_full_bogons`, compatibility shim will be removed in version 2.0
+- added `bots.parsers.cymru.parser_cap_program`
 
 ### Documentation
 - `Release.md` add release procedure documentation

@@ -23,8 +23,9 @@ import intelmq.lib.intelmqcli as lib
 
 class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
     appname = 'intelmqcli_create_reports'
+    retval = 0
 
-    def init(self):
+    def run(self):
         self.parser.add_argument('-l', '--list-feeds', action='store_true',
                                  help='List all open feeds')
 
@@ -36,7 +37,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             for row in self.cur.fetchall():
                 if row['feed.name']:
                     self.logger.info(row['feed.name'])
-            exit(0)
+            return True
 
         if not self.rt.login():
             self.logger.error('Could not login as {} on {}.'.format(self.config['rt']['user'],
@@ -83,7 +84,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                                                   Owner=self.config['rt']['user'])
                 if report_id == -1:
                     self.logger.error('Could not create Incident ({}).'.format(report_id))
-                    return
+                    return False
                 else:
                     self.logger.info('Created Report {}.'.format(report_id))
 
@@ -94,7 +95,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                                              files=[('events.zip', attachment, 'application/zip')])
                 if not comment_id:
                     self.logger.error('Could not correspond with file.')
-                    return
+                    return False
 
             if not self.dryrun:
                 self.executemany("UPDATE events SET rtir_report_id = %s WHERE id = %s",
@@ -102,10 +103,13 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                                  extend=False)
                 self.con.commit()
             self.logger.info('Linked events to report.')
+        return True
 
 
 def main():
-    IntelMQCLIContoller()
+    controller = IntelMQCLIContoller()
+    if not controller.run():
+        exit(1)
 
 
 if __name__ == '__main__':

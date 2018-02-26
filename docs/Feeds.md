@@ -586,9 +586,64 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run `int
 
 ## Virus
 
+<<<<<<< HEAD
 * **Status:** on
 * **Revision:** 20-01-2018
 * **Description:** In order to download the CleanMX feed you need to use a custom user agent and register that user agent.
+=======
+**Status:** Active
+
+### Collector Bot
+
+**Bot Name:** Generic URL Fetcher
+
+**Bot Module:** intelmq.bots.collectors.http.collector_http
+
+**Configuration Parameters:**
+```
+id: cleanmx-virus-collector
+provider: CleanMX
+feed: CleanMX Virus
+rate_limit: 129600
+http_url: http://support.clean-mx.de/clean-mx/xmlviruses?response=alive&domain=
+http_user_agent: {{ your user agent }}
+http_timeout_sec: 120
+```
+
+### Parser Bot
+
+**Bot Name:** CleanMX Virus
+
+**Bot Module:** intelmq.bots.parsers.cleanmx.parser
+
+**Configuration Parameters:**
+```
+id: cleanmx-virus-parser
+```
+
+# Cymru CAP program
+
+http://www.team-cymru.org/CSIRT-AP.html
+
+**Status:** Active
+
+## Collector Bot
+
+Usually via HTTPS.
+
+## Parser Bot
+
+**Bot Name:** Cymru CAP Program
+
+**Bot Module:** intelmq.bots.parsers.cymru.parser_cap_program
+
+**Configuration Parameters:**
+```
+id: cymru-cap-program-parser
+```
+
+# Cymru Full Bogons
+>>>>>>> certat
 
 ### Collector
 
@@ -604,6 +659,28 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run `int
 * **Module:** intelmq.bots.parsers.cleanmx.parser
 * **Configuration Parameters:**
 
+<<<<<<< HEAD
+=======
+**Configuration Parameters:**
+```
+id: cymru-full-bogons-collector
+provider: Cymru
+feed: Cymru Full Bogons
+rate_limit: 129600
+http_url: https://www.team-cymru.org/Services/Bogons/fullbogons-ipv4.txt
+```
+
+## Parser Bot
+
+**Bot Name:** Cymru Full Bogons
+
+**Bot Module:** intelmq.bots.parsers.cymru.parser_full_bogons
+
+**Configuration Parameters:**
+```
+id: cymru-full-bogons-parser
+```
+>>>>>>> certat
 
 # DShield
 

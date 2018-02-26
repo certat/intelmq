@@ -5,7 +5,7 @@ Last-Update: 2017-09-20
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/intelmq/__init__.py
 +++ b/intelmq/__init__.py
-@@ -1,13 +1,12 @@
+@@ -1,14 +1,13 @@
  from .version import __version__
  import os
  
@@ -18,6 +18,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +DEFAULT_LOGGING_PATH = "/var/log/intelmq/"
  DEFAULTS_CONF_FILE = os.path.join(CONFIG_DIR, "defaults.conf")
  HARMONIZATION_CONF_FILE = os.path.join(CONFIG_DIR, "harmonization.conf")
+ INTELMQCLI_CONF_FILE = os.path.join(CONFIG_DIR, "intelmqcli.conf")
  PIPELINE_CONF_FILE = os.path.join(CONFIG_DIR, "pipeline.conf")
  RUNTIME_CONF_FILE = os.path.join(CONFIG_DIR, "runtime.conf")
 -VAR_RUN_PATH = os.path.join(ROOT_DIR, "var/run/")
