@@ -30,6 +30,7 @@ Harmonization field names
 |Destination|destination.reverse_dns|[FQDN](#fqdn)|Reverse DNS name acquired through a reverse DNS query on an IP address. N.B. Record types other than PTR records may also appear in the reverse DNS tree. Furthermore, unfortunately, there is no rule prohibiting people from writing anything in a PTR record. Even JavaScript will work. A final point is stripped, string is converted to lower case characters.|
 |Destination|destination.tor_node|[Boolean](#boolean)|If the destination IP was a known tor node.|
 |Destination|destination.url|[URL](#url)|A URL denotes on IOC, which refers to a malicious resource, whose interpretation is defined by the abuse type. A URL with the abuse type phishing refers to a phishing resource.|
+| |destination_visible|[Boolean](#boolean)|If destination fields are visible.|
 |Event_Description|event_description.target|[String](#string)|Some sources denominate the target (organization) of a an attack.|
 |Event_Description|event_description.text|[String](#string)|A free-form textual description of an abuse event.|
 |Event_Description|event_description.url|[URL](#url)|A description URL is a link to a further description of the the abuse event in question.|

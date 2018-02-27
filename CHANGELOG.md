@@ -1,40 +1,91 @@
 CHANGELOG
 ==========
 
-1.0.3 Bugfix release (unreleased)
+1.0.4 Bugfix release (unreleased)
 ---------------------------------
 ### Contrib
-* logrotate: use sudo for postrotate script
 
 ### Core
-- warnings of bots are catched by the logger (#1074)
-- Bots stop when redis gives the error "OOM command not allowed when used memory > 'maxmemory'.".
+
+### Harmonization
 
 ### Bots
 #### Collectors
-- bots.collectors.mail.collector_mail_attach: Support attachment file parsing for imbox versions newer than 0.9.5
-- bots.outputs.smtp.output: Fix STARTTLS, threw an exception (#1152)
 
 #### Parsers
-- All CSV parsers ignore NULL-bytes now, because the csv-library cannot handle it (#967)
-- Modify Bot default ruleset: changed conficker rule to catch more spellings
-- Shadowserver Parser: Add Accessible Cisco Smart Install
-- CleanMX Phising Parser: Handle new columns `first` and `last` (#1131).
-- n6 parser: Fix classification mappings. See NEWS file for changes values. (#738)
-- renamed `bots.parsers.cymru_full_bogons.parser` to `bots.parsers.cymru.parser_full_bogons`, compatibility shim will be removed in version 2.0
-- added `bots.parsers.cymru.parser_cap_program`
+
+#### Experts
+* `certat_contact_intern`: Added ability to handle tlp-amber only data.
+
+#### Outputs
 
 ### Documentation
-- add release procedure documentation
-- fix example configuration for modify expert
 
 ### Tools
 
 ### Tests
-- `tests/lib/test_pipeline`: Redis tests clear all queues before and after tests (#1086)
+
+### Packaging
+
+### Known issues
+
+
+1.0.3 Bugfix release (2018-02-05)
+---------------------------------
+### Contrib
+* logrotate: use sudo for postrotate script
+* cron-jobs: use the scripts in the bots' directories and link them (#1056, #1142)
+
+### Core
+- `lib.harmonization`: Handle idna encoding error in FQDN sanitation (#1175, #1176).
+- `lib.bot`:
+  - Bots stop when redis gives the error "OOM command not allowed when used memory > 'maxmemory'." (#1138).
+  - warnings of bots are catched by the logger (#1074, #1113).
+  - Fixed exitcodes 0 for graceful shutdowns .
+  - better handling of problems with pipeline and especially it's initialization (#1178).
+  - All parsers using `ParserBot`'s methods now log the sum of successfully parsed and failed lines at the end of each run (#1161).
+
+### Harmonization
+- Rule for harmonization keys is enforced (#1104, #1141).
+- New allowed values for `classification.type`: `tor` & `leak` (see n6 parser below ).
+
+### Bots
+#### Collectors
+- `bots.collectors.mail.collector_mail_attach`: Support attachment file parsing for imbox versions newer than 0.9.5 (#1134).
+- `bots.outputs.smtp.output`: Fix STARTTLS, threw an exception (#1152, #1153).
+
+#### Parsers
+- All CSV parsers ignore NULL-bytes now, because the csv-library cannot handle it (#967, #1114).
+- `bots.experts.modify` default ruleset: changed conficker rule to catch more spellings.
+- `bots.parsers.shadowserver.parser`: Add Accessible Cisco Smart Install (#1122).
+- `bots.parsers.cleanmx.parser`: Handle new columns `first` and `last`, rewritten for XML feed. See NEWS.md for upgrade instructions (#1131, #1136, #1163).
+- `bots.parsers.n6.parser`: Fix classification mappings. See NEWS file for changes values (#738, #1127).
+- renamed `bots.parsers.cymru_full_bogons.parser` to `bots.parsers.cymru.parser_full_bogons`, compatibility shim will be removed in version 2.0
+- added `bots.parsers.cymru.parser_cap_program`
+
+### Documentation
+- `Release.md` add release procedure documentation
+- `Bots.md`: fix example configuration for modify expert
+
+### Tools
+- intelmqctl now exits with exit codes > 0 when errors happened or the operation was not successful. Also, the status operation exits with 1, if bots are stopped, but enabled. (#977, #1143)
+- `intelmctl check` checks for valid `run_mode` in runtime configuration (#1140).
+
+### Tests
+- `tests.lib.test_pipeline`: Redis tests clear all queues before and after tests (#1086).
+- Repaired debian package build on travis (#1169).
+- Warnings are not allowed by default, an allowed count can be specified (#1129).
+- `tests.bots.experts.cymru_whois/abusix`: Skipped on travis because of ongoing problems.
 
 ### Packaging
 * cron jobs: fix paths of executables
+
+### Known issues
+- `bots.collectors/outputs.xmpp` must be killed two times (#970).
+- When running bots with `intelmqctl run [bot-id]` the log level is always INFO (#1075).
+- `intelmqctl run [bot-id] message send [msg]` does only support Events, not Reports (#1077).
+- `python3 setup.py sdist` does not include static files in the resulting tarballs (#1146).
+- `bots.parsers.cleanmx.parser`: The cleanMX feed may have FQDNs as IPs in rare cases, such lines are dumped (#1162).
 
 1.0.2 Bugfix release (2017-11-09)
 ---------------------------------
@@ -66,6 +117,7 @@ CHANGELOG
 ### Bots
 - bots/experts/ripencc_abuse_contact/expert.py: Use HTTPS URLs for rest.db.ripe.net
 - bots/outputs/file/output.py: properly close the file handle on shutdown
+- bots/parser/shadowserver: If conversion of a value via conversion function fails, only log the function name, not the representation string (#1157).
 
 ### Core
 - lib/bot: Bots will now log the used intelmq version at startup

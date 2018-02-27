@@ -26,6 +26,7 @@ CREATE TABLE events (
     "destination.reverse_dns" text,
     "destination.tor_node" boolean,
     "destination.url" text,
+    "destination_visible" boolean,
     "event_description.target" text,
     "event_description.text" text,
     "event_description.url" text,

@@ -3,9 +3,6 @@
 Utilities for intelmqcli.
 
 Static data (queries)
-
-TODO: Implement cc-filer
-TODO: Implement fqdn-filter
 """
 import argparse
 import json
@@ -57,6 +54,12 @@ optionally save the (new) address to the database linked to the ASNs.
 If you are ready to submit the incidents to RT and send the mails out, press
 's'.
 'b' for back jumps to the incident overview and 'q' quits.
+
+Exit codes:
+ 0 if no errors happend or only errors which could be handled. Check the
+   output if recoverable errors happened.
+ 1 if unrecoverable errors happened
+ 2 if user input or configuration is faulty
 """
 USAGE = '''
     intelmqcli
@@ -145,7 +148,7 @@ BASE_WHERE = """
 "feed.name" IS NOT NULL AND
 "classification.taxonomy" IS NOT NULL AND
 "source.abuse_contact" IS NOT NULL AND
-UPPER("source.geolocation.cc") = 'AT'
+(UPPER("source.geolocation.cc") = %s OR SUBSTRING("source.fqdn" from %s) = %s)
 """
 # PART 1: CREATE REPORTS
 QUERY_OPEN_FEEDNAMES = """
@@ -350,8 +353,6 @@ class IntelMQCLIContollerTemplate():
                                  help='time interval, parseable by postgres.'
                                       'defaults to "4 days".')
 
-        self.init()
-
     def setup(self):
         self.args = self.parser.parse_args()
 
@@ -431,10 +432,20 @@ class IntelMQCLIContollerTemplate():
         self.cur = self.con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     def execute(self, query, parameters=(), extend=True):
-        """ Passes query to database. """
+        """
+        Passes query to database.
+
+        Parameters:
+            extend:
+                If True, the parameters for BASE_WHERE are added (time interval,
+                country code, FQDN from config, and additional parameters)
+                If False, parameters are used as given.
+        """
         if extend:
             query = query + self.additional_where
-            parameters = parameters + (self.time_interval, ) + self.additional_params
+            parameters = parameters + (self.time_interval, self.config['filter']['cc'],
+                                       '.' * len(self.config['filter']['fqdn']) + '$',
+                                       self.config['filter']['fqdn']) + self.additional_params
         self.logger.debug(self.cur.mogrify(query, parameters))
         if not self.dryrun or query.strip().upper().startswith('SELECT'):
             self.cur.execute(query, parameters)

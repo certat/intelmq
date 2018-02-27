@@ -454,6 +454,7 @@
                 "autocommit": true,
                 "ascolumn": "asn",
                 "column": "contact",
+                "feed_code": "{{feed.code of your tlp amber feed}}",
                 "database": "intelmq",
                 "host": "localhost",
                 "password": "<password>",
