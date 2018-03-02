@@ -218,7 +218,6 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     self.execute(lib.QUERY_EVENTS_BY_ASCONTACT_INCIDENT,
                                  (incident_id, contact, ))
                     data = self.cur.fetchall()
-                    data = self.cur.fetchall()
                     results = self.send(taxonomy, contact, data, incident_id)
                     if results:
                         inv_results.append(results)
