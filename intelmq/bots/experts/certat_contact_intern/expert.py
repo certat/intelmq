@@ -89,6 +89,7 @@ class CERTatContactExpertBot(Bot):
 
             else:
                 self.logger.debug('No contact found.')
+                event['destination_visible'] = False
 
             self.send_message(event)
             self.acknowledge_message()

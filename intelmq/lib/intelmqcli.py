@@ -281,7 +281,7 @@ SELECT
     "screenshot_url",
     "status",
     "time.observation"
-FROM events
+FROM v_events
 WHERE
     rtir_report_id IS NOT NULL AND
     rtir_incident_id = %s AND

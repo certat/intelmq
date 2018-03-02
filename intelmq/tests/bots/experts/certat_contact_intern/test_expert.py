@@ -85,7 +85,7 @@ class TestCERTatContactExpertBot(test.BotTestCase, unittest.TestCase):
     def insert(self, asn, contact, tlp_amber):
         query = '''
 INSERT INTO {table}(
-    "{ascolumn}", "{column}", "tlp-amber_{feed_code}"
+    "{ascolumn}", "{column}", "can-see-tlp-amber_{feed_code}"
 ) VALUES (%s, %s, %s)
 '''.format(table=self.sysconfig['table'], column=self.sysconfig['column'], feed_code=self.sysconfig['feed_code'], ascolumn=self.sysconfig['ascolumn'])
         self.cur.execute(query, (asn, contact, tlp_amber))
