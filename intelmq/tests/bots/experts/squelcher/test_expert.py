@@ -24,7 +24,7 @@ INPUT1 = {"__type": "Event",
           "classification.identifier": "zeus",
           "classification.type": "botnet drone",
           "notify": False,
-          "source.asn": 1,
+          "source.asn": 64496,
           "source.ip": "192.0.2.1",
           "feed.name": "Example Feed",
           }
