@@ -42,6 +42,7 @@ TODOs:
 
 """
 import intelmq.lib.harmonization as harmonization
+import re
 
 
 def get_feed(feedname):
@@ -141,9 +142,18 @@ def convert_hostname_and_url(value, row):
 def convert_httphost_and_url(value, row):
     """
     URLs are split into hostname and path, we can also guess the protocol here.
+    With some reports, url/http_url holds only the path, with others the full HTTP request.
     """
-    if row['http_host'] and row['url']:
-        return 'http://' + row['http_host'] + row['url']
+    if "url" in row:
+        if row['http_host'] and row['url']:
+            path = re.sub(r'^[^/]*', '', row['url'])
+            path = re.sub(r'\s.*$', '', path)
+            return 'http://' + row['http_host'] + path
+    elif "http_url" in row:
+        if row['http_host'] and row['http_url']:
+            path = re.sub(r'^[^/]*', '', row['http_url'])
+            path = re.sub(r'\s.*$', '', path)
+            return 'http://' + row['http_host'] + path
     return value
 
 
@@ -172,7 +182,7 @@ def validate_ip(value):
 
 
 def validate_fqdn(value):
-    if harmonization.FQDN.is_valid(value, sanitize=True):
+    if value and harmonization.FQDN.is_valid(value, sanitize=True):
         return value
 
 
@@ -295,7 +305,7 @@ sinkhole_http_drone = {
         ('destination.ip', 'dst_ip', validate_ip),
         ('destination.asn', 'dst_asn'),
         ('destination.geolocation.cc', 'dst_geo'),
-        ('destination.fqdn', 'http_host'),
+        ('destination.fqdn', 'http_host', validate_fqdn),  # could also be an IP
         # Other known fields which will go into "extra"
         ('user_agent', 'http_agent'),
         ('os.name', 'p0f_genre'),
