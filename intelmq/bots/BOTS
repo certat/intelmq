@@ -171,6 +171,24 @@
                 "rate_limit": 3600
             }
         },
+        "Microsoft Interflow": {
+            "description": "",
+            "module": "intelmq.bots.collectors.microsoft.collector_interflow",
+            "parameters": {
+                "api_key": "",
+                "feed": "",
+                "file_match": null,
+                "http_timeout_sec": 300,
+                "not_older_than": "2 days",
+                "provider": "microsoft",
+                "rate_limit": 3600,
+                "redis_cache_db": "5",
+                "redis_cache_host": "127.0.0.1",
+                "redis_cache_port": 6379,
+                "redis_cache_password": null,
+                "redis_cache_ttl": 604800
+            }
+        },
         "N6stomp": {
             "description": "N6 Collector - CERT.pl's N6 Collector - N6 feed via STOMP interface. Note that rate_limit does not apply for this bot as it is waiting for messages on a stream.",
             "module": "intelmq.bots.collectors.n6.collector_stomp",
@@ -351,6 +369,11 @@
         "MalwarePatrol Dans Guardian": {
             "description": "MalwarePatrol Dans Guardian Parser is the bot responsible to parse the report and sanitize the information.",
             "module": "intelmq.bots.parsers.malwarepatrol.parser_dansguardian",
+            "parameters": {}
+        },
+        "Microsoft CTIP": {
+            "description": "Parses JSON data from Microsoft's CTIP program.",
+            "module": "intelmq.bots.parsers.microsoft.parser_ctip",
             "parameters": {}
         },
         "N6Stomp": {
@@ -560,7 +583,8 @@
             "description": "Modify bot can make nearly arbitrary changes to event's fields based on regex-rules on different values. See docs/Bots.md for some examples.",
             "module": "intelmq.bots.experts.modify.expert",
             "parameters": {
-                "configuration_path": "/opt/intelmq/var/lib/bots/modify/modify.conf"
+                "configuration_path": "/opt/intelmq/var/lib/bots/modify/modify.conf",
+                "case_sensitive": true
             }
         },
         "RFC 1918": {
@@ -631,6 +655,19 @@
             "module": "intelmq.bots.experts.url2fqdn.expert",
             "parameters": {
                 "overwrite": false
+            }
+        },
+        "Wait": {
+            "description": "Wait bot can wait for a some time or until a queue size is lower than a given numer.",
+            "module": "intelmq.bots.experts.wait.expert",
+            "parameters": {
+                "queue_db": 2,
+                "queue_host": "localhost",
+                "queue_name": null,
+                "queue_polling_interval": 0.05,
+                "queue_port": 6379,
+                "queue_size": 0,
+                "sleep_time": null
             }
         }
     },
