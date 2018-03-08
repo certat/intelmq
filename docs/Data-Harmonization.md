@@ -103,6 +103,7 @@ The taxonomy can be automatically added by the taxonomy expert bot based on the 
 |blacklist|other|Some sources provide blacklists, which clearly refer to abusive behavior, such as spamming, but fail to denote the exact reason why a given identity has been blacklisted. The reason may be that the justification is anecdotal or missing entirely. This type should only be used if the typing fits the definition of a blacklist, but an event specific denomination is not possible for one reason or another.|
 |unknown|other|unknown events|
 |test|test|This is a value for testing purposes.|
+|vulnerable client|vulnerable|This attribute refers to a badly configured or vulnerable clients, which may be vulnerable and can be compromised by a third party. For example, not-up-to-date clients or client which are misconfigured, such as clients querying public domains for WPAD configurations. In addition, to specify the vulnerability and its potential abuse, one should use the classification.identifier, description and other attributes for that purpose respectively.|
 
 Meaning of source, destination and local values for each classification type and possible identifiers. The identifier is often a normalized malware name, grouping many variants.
 
@@ -129,6 +130,7 @@ Meaning of source, destination and local values for each classification type and
 |vulnerable service|*vulnerable device*||| heartbleed, openresolver, snmp |
 |blacklist|*blacklisted device*||||
 |unknown||||||
+|vulnerable client|*vulnerable device*||| wpad |
 
 Field in italics is the interesting one for CERTs.
 

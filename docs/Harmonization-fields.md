@@ -132,13 +132,14 @@ classification.type type. Allowed values are:
  * dropzone
  * phishing
  * proxy
- * vulnerable service
  * blacklist
  * other
- * unknown
  * test
  * tor
  * leak
+ * unknown
+ * vulnerable client
+ * vulnerable service
 
 ### DateTime
 
