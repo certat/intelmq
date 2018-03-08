@@ -36,7 +36,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             self.execute(lib.QUERY_OPEN_FEEDNAMES)
             for row in self.cur.fetchall():
                 if row['feed.name']:
-                    self.logger.info(row['feed.name'])
+                    print(row['feed.name'])
             return True
 
         if not self.rt.login():
