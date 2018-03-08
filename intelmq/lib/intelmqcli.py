@@ -264,7 +264,7 @@ SELECT
     "event_description.text",
     "event_description.url",
     "event_hash",
-    "extra",
+    "shareable_extra_info" AS "extra",
     "feed.accuracy",
     "feed.documentation",
     "malware.hash",
