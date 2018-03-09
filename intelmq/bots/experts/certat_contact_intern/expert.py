@@ -50,14 +50,14 @@ class CERTatContactExpertBot(Bot):
 
         if 'source.asn' not in event:
             self.logger.warning('source.asn not present in event. Skipping event.')
-            event['destination_visible'] = False
+            event.add('destination_visible', False, overwrite=self.parameters.overwrite)
             self.send_message(event)
             self.acknowledge_message()
             return
 
         if 'source.abuse_contact' in event and not self.parameters.overwrite:
             event['destination_visible'] = False
-            self.send_message(event)
+            event.add('destination_visible', False, overwrite=self.parameters.overwrite)
             self.acknowledge_message()
             return
 
@@ -76,22 +76,19 @@ class CERTatContactExpertBot(Bot):
                 result = self.cur.fetchone()
                 self.logger.debug('Changing `source.abuse_contact` from %r to %r.' % (event.get('source.abuse_contact'), result[0]))
 
-                if 'source.abuse_contact' in event:
-                    event.change('source.abuse_contact', result[0])
-                else:
-                    event['source.abuse_contact'] = result[0]
+                event.add('source.abuse_contact', result[0], overwrite=self.parameters.overwrite)
 
                 if event['feed.code'] == self.parameters.feed_code:
                     if result[1]:
-                        event['destination_visible'] = True
+                        event.add('destination_visible', True, overwrite=self.parameters.overwrite)
                     else:
-                        event['destination_visible'] = False
+                        event.add('destination_visible', False, overwrite=self.parameters.overwrite)
                 else:
-                    event['destination_visible'] = True
+                    event.add('destination_visible', True, overwrite=self.parameters.overwrite)
 
             else:
                 self.logger.debug('No contact found.')
-                event['destination_visible'] = False
+                event.add('destination_visible', False, overwrite=self.parameters.overwrite)
 
             self.send_message(event)
             self.acknowledge_message()
