@@ -50,11 +50,13 @@ class CERTatContactExpertBot(Bot):
 
         if 'source.asn' not in event:
             self.logger.warning('source.asn not present in event. Skipping event.')
+            event['destination_visible'] = False
             self.send_message(event)
             self.acknowledge_message()
             return
 
-        if 'source.abuse_contact' in event and not self.parameters.override:
+        if 'source.abuse_contact' in event and not self.parameters.overwrite:
+            event['destination_visible'] = False
             self.send_message(event)
             self.acknowledge_message()
             return
