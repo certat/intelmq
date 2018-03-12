@@ -67,6 +67,7 @@ class TestCERTatContactExpertBot(test.BotTestCase, unittest.TestCase):
                          "password": "intelmq",
                          "sslmode": "allow",
                          "table": "test_contacts",
+                         "overwrite": False,
                          }
         cls.con = psycopg2.connect(database=cls.sysconfig['database'],
                                    user=cls.sysconfig['user'],

@@ -293,11 +293,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                                  tax=lib.SUBJECT[taxonomy]))
         text = self.get_text(taxonomy)
         csvfile = io.StringIO()
-        if lib.CSV_FIELDS:
-            fieldnames = lib.CSV_FIELDS
-        else:
-            fieldnames = query[0].keys()    # send all
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames,
+        writer = csv.DictWriter(csvfile, fieldnames=lib.CSV_FIELDS,
                                 quoting=csv.QUOTE_MINIMAL, delimiter=str(";"),
                                 extrasaction='ignore', lineterminator='\n')
         writer.writeheader()
