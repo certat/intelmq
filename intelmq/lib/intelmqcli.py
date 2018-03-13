@@ -250,7 +250,7 @@ SELECT
     "feed.documentation",
     "malware.name",
     "protocol.application",
-    "protocol.transport",
+    "protocol.transport"
 FROM v_events_filtered
 WHERE
     rtir_report_id IS NOT NULL AND
