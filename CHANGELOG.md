@@ -52,6 +52,9 @@ CHANGELOG
 - `bots.collectors.stomp.collector`: Heartbeat timeout is now logged with log level info instead of warning.
 - `bots.collectors.microsoft.collector_interlow`: added for MS interflow API
 
+### Harmonization
+- Renamed `JSON` to `JSONDict` and added a new type `JSON`. `JSONDict` saves data internally as JSON, but acts like a dictionary. `JSON` accepts any valid JSON.
+
 #### Parsers
 - changed feednames in `bots.parsers.shadowserver`. Please refer to it's README for the exact changes.
 - shadowserver parser: If the conversion function fails for a line, an error is raised and the offending line will be handled according to the error handling configuration.
@@ -102,9 +105,13 @@ CHANGELOG
 - Shadowserver parser:
  * The fields `url` and `http_url` now handle HTTP URL paths and HTTP requests for all feeds (#1204).
  * The conversion function `validate_fqdn` now handles empty strings correctly.
+ * Feed 'drone (hadoop)':
+   * Correct validation of field `cc_dns`, will now only be added as `destination.fqdn` if correct FQDN, otherwise ignored. Previously this field could be saved in extra containing an IP address.
+   * Adding more mappings for added columns.
 
 #### Experts
 * `certat_contact_intern`: Added ability to handle tlp-amber only data.
+* modify expert: added rule for 'iotrdp' in Spamhaus CERT feed.
 
 #### Outputs
 
