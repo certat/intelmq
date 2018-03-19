@@ -94,7 +94,9 @@ CHANGELOG
 ### Contrib
 
 ### Core
-- lib/harmonization: FQDN validation now handles None correctly (raised an Exception).
+- lib/harmonization:
+ * FQDN validation now handles None correctly (raised an Exception).
+ * Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
 
 ### Harmonization
 
@@ -110,6 +112,7 @@ CHANGELOG
    * Adding more mappings for added columns.
 - Spamhaus CERT parser:
  * fix parsing for bot names 'openrelay' and 'iotdrp'.
+- CleanM phishing parser: handle FQDNs in IP column (#1162).
 
 #### Experts
 * `certat_contact_intern`: Added ability to handle tlp-amber only data.
@@ -119,8 +122,10 @@ CHANGELOG
 ### Documentation
 
 ### Tools
+- `intelmqcli_create_reports`: JSON reports are now indented and sorted
 
 ### Tests
+- lib/bot: No dumps will be written during tests (#934).
 
 ### Packaging
 * Static data is now included in source tarballs, development files are excluded

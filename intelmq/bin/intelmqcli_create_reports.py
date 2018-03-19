@@ -71,7 +71,9 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             attachment = io.BytesIO()
             ziphandle = zipfile.ZipFile(attachment, mode='w',
                                         compression=zipfile.ZIP_DEFLATED)
-            ziphandle.writestr('events.json', json.dumps(feeddata))
+            ziphandle.writestr('events.json', json.dumps(feeddata,
+                                                         sort_keys=True, indent=4,
+                                                         separators=(',', ': ')))
             ziphandle.close()
             attachment.seek(0)
             subject = 'Reports of {} on {}'.format(feedname, time.strftime('%Y-%m-%d'))
