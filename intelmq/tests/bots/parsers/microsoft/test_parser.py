@@ -73,7 +73,6 @@ EXAMPLE_EVENTS = [{
     }, {
     "__type": "Event",
     'classification.type': 'botnet drone',
-    'destination.ip': '203.0.113.220',
     'destination.port': 443,
     'event_description.text': 'Host is a member of Botnet B75-S12',
     'extra': '{"additionalmetadata": ["any??thing\\\\x0000can\\\\x01be!here??"], "ispartnershareable": "true", "isproductlicensed": "true", "tlp": "Green"}',

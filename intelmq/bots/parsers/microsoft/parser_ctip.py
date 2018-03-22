@@ -53,6 +53,8 @@ class MicrosoftCTIPParserBot(ParserBot):
                 value += ' UTC'
             if key == "hostname" and value == line["networkdestinationipv4"]:  # ignore IP in FQDN field
                 continue
+            if key == 'networkdestinationipv4' and value == '0.0.0.0':
+                continue
             if key in MAPPING:
                 event[MAPPING[key]] = value
             else:
