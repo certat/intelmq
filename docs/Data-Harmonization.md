@@ -81,29 +81,31 @@ The taxonomy can be automatically added by the taxonomy expert bot based on the 
 
 |Type|Taxonomy|Description|
 |----|--------|-----------|
-|spam|abusive content|This IOC refers to resources, which make up a SPAM infrastructure, be it a harvester, dictionary attacker, URL etc.|
-|malware|malicious code|A URL is the most common resource with reference to malware binary distribution.|
-|botnet drone|malicious code|This is a compromized machine, which has been observed to make a connection to a command and control server.|
-|ransomware|malicious code|This IOC refers to a specific type of compromized machine, where the computer has been hijacked for ransom by the criminals.|
-|dga domain|malicious code|DGA Domains are seen various families of malware that are used to periodically generate a large number of domain names that can be used as rendezvous points with their command and control servers.|
-|malware configuration|malicious code|This is a resource which updates botnet drones with a new configuration.|
-|c&c|malicious code|This is a command and control server in charge of a given number of botnet drones.|
-|scanner|information gathering|This IOC refers to port scanning activity specifically.|
-|exploit|intrusion attempts|An exploit is often executed through a malicious URL.|
+|backdoor|intrusions|This refers to hosts, which have been compromised and backdoored with a remote administration software or Trojan in the traditional sense.|
+|blacklist|other|Some sources provide blacklists, which clearly refer to abusive behavior, such as spamming, but fail to denote the exact reason why a given identity has been blacklisted. The reason may be that the justification is anecdotal or missing entirely. This type should only be used if the typing fits the definition of a blacklist, but an event specific denomination is not possible for one reason or another.|
+|botnet drone|malicious code|This is a compromised machine, which has been observed to make a connection to a command and control server.|
 |brute-force|intrusion attempts|This IOC refers to a resource, which has been observed to perform brute-force attacks over a given application protocol. Please see the IOC protocol below.|
-|ids alert|intrusion attempts|IOCs based on a sensor network. This is a generic IOC denomination, should it be difficult to reliably denote the exact type of activity involved for example due to an anecdotal nature of the rule that triggered the alert.|
-|defacement|intrusions|This IOC refers to hacktivism related activity.|
+|c&c|malicious code|This is a command and control server in charge of a given number of botnet drones.|
 |compromised|intrusions|This IOC refers to compromised system.|
-|backdoor|intrusions|This refers to hosts, which have been compromized and backdoored with a remote administration software or trojan in the traditional sense.|
 |ddos|availability|This IOC refers to various parts of the DDOS infrastructure.|
-|dropzone|information content Security|This IOC refers to place where the compromized machines store the stolen user data.|
+|defacement|intrusions|This IOC refers to hacktivism related activity.|
+|dga domain|malicious code|DGA Domains are seen various families of malware that are used to periodically generate a large number of domain names that can be used as rendezvous points with their command and control servers.|
+|dropzone|information content security|This IOC refers to place where the compromised machines store the stolen user data.|
+|exploit|intrusion attempts|An exploit is often executed through a malicious URL.|
+|ids alert|intrusion attempts|IOCs based on a sensor network. This is a generic IOC denomination, should it be difficult to reliably denote the exact type of activity involved for example due to an anecdotal nature of the rule that triggered the alert.|
+|leak|information content security|IOCs relating to leaked credentials or personal data.|
+|malware configuration|malicious code|This is a resource which updates botnet drones with a new configuration.|
+|malware|malicious code|A URL is the most common resource with reference to malware binary distribution.|
+|other|other|All IOCs that can not be put in any other taxonomy.|
 |phishing|fraud|This IOC most often refers to a URL, which is phishing for user credentials.|
 |proxy|other|This refers to the use of proxies from inside your network.|
-|vulnerable service|vulnerable|This attribute refers to a badly configured or vulnerable network service, which may be abused by a third party. For example, these services relate to open proxies, open dns resolvers, network time servers (ntp) or character generation services (chargen), simple network management services (snmp). In addition, to specify the network service and its potential abuse, one should use the protocol, destination port and description attributes for that purpose respectively.|
-|blacklist|other|Some sources provide blacklists, which clearly refer to abusive behavior, such as spamming, but fail to denote the exact reason why a given identity has been blacklisted. The reason may be that the justification is anecdotal or missing entirely. This type should only be used if the typing fits the definition of a blacklist, but an event specific denomination is not possible for one reason or another.|
-|unknown|other|unknown events|
+|ransomware|malicious code|This IOC refers to a specific type of compromised machine, where the computer has been hijacked for ransom by the criminals.|
+|scanner|information gathering|This IOC refers to port scanning activity specifically.|
+|spam|abusive content|This IOC refers to resources, which make up a SPAM infrastructure, be it a harvester, dictionary attacker, URL etc.|
 |test|test|This is a value for testing purposes.|
-|vulnerable client|vulnerable|This attribute refers to a badly configured or vulnerable clients, which may be vulnerable and can be compromised by a third party. For example, not-up-to-date clients or client which are misconfigured, such as clients querying public domains for WPAD configurations. In addition, to specify the vulnerability and its potential abuse, one should use the classification.identifier, description and other attributes for that purpose respectively.|
+|tor|other|This IOC refers to incidents related to TOR network infrastructure.|
+|unknown|other|unknown events|
+|vulnerable service|vulnerable|This attribute refers to a badly configured or vulnerable network service, which may be abused by a third party. For example, these services relate to open proxies, open dns resolvers, network time servers (NTP) or character generation services (chargen), simple network management services (SNMP). In addition, to specify the network service and its potential abuse, one should use the protocol, destination port and description attributes for that purpose respectively.|
 
 Meaning of source, destination and local values for each classification type and possible identifiers. The identifier is often a normalized malware name, grouping many variants.
 

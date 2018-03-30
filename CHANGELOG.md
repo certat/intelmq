@@ -97,8 +97,8 @@ CHANGELOG
 
 ### Core
 - lib/harmonization:
- * FQDN validation now handles None correctly (raised an Exception).
- * Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
+* FQDN validation now handles None correctly (raised an Exception).
+* Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
 
 ### Harmonization
 
@@ -107,17 +107,20 @@ CHANGELOG
 
 #### Parsers
 - Shadowserver parser:
- * The fields `url` and `http_url` now handle HTTP URL paths and HTTP requests for all feeds (#1204).
- * The conversion function `validate_fqdn` now handles empty strings correctly.
- * Feed 'drone (hadoop)':
-   * Correct validation of field `cc_dns`, will now only be added as `destination.fqdn` if correct FQDN, otherwise ignored. Previously this field could be saved in extra containing an IP address.
-   * Adding more mappings for added columns.
+  * The fields `url` and `http_url` now handle HTTP URL paths and HTTP requests for all feeds (#1204).
+  * The conversion function `validate_fqdn` now handles empty strings correctly.
+  * Feed 'drone (hadoop)':
+    * Correct validation of field `cc_dns`, will now only be added as `destination.fqdn` if correct FQDN, otherwise ignored. Previously this field could be saved in extra containing an IP address.
+    * Adding more mappings for added columns.
+  * A lot of newly added fields and fixed conversions.
 - Spamhaus CERT parser:
- * fix parsing for bot names 'openrelay' and 'iotdrp'.
+ * fix parsing and classification for bot names 'openrelay', 'iotrdp', 'sshauth', 'telnetauth', 'iotcmd', 'iotuser', 'wpscanner', 'w_wplogin',
+   see the NEWS file - Postgresql section - for all changes.
 - CleanM phishing parser: handle FQDNs in IP column (#1162).
 
 #### Experts
 * `certat_contact_intern`: Added ability to handle tlp-amber only data.
+- `bots.experts.ripencc_abuse_contact`: Add existing parameter `mode` to BOTS file.
 
 #### Outputs
 
@@ -125,9 +128,11 @@ CHANGELOG
 
 ### Tools
 - `intelmqcli_create_reports`: JSON reports are now indented and sorted
+- intelmqctl check: Fixed and extended message for 'run_mode' check.
 
 ### Tests
 - lib/bot: No dumps will be written during tests (#934).
+- lib/test: Expand regular expression on python version to match pre-releases (debian testing).
 
 ### Packaging
 * Static data is now included in source tarballs, development files are excluded
@@ -454,7 +459,7 @@ Changes between 0.9 and 1.0.0.dev6
 - New field `classification.identifier`
 
 ### Known issues
- - Harmonization: hashes are not normalized and classified, see also issue #394 and pull #634
+- Harmonization: hashes are not normalized and classified, see also issue #394 and pull #634
 
 ### Contrib
 - ansible and vagrant scripts added
@@ -493,6 +498,6 @@ Changes between 0.9 and 1.0.0.dev6
 2015/06/03 (aaron)
 ------------------
 
-  * fixed the license to AGPL in setup.py
-  * moved back the documentation from the wiki repo to `docs/`. See #205.
-  * added python-zmq as a setup requirement in UserGuide . See #206
+* fixed the license to AGPL in setup.py
+* moved back the documentation from the wiki repo to `docs/`. See #205.
+* added python-zmq as a setup requirement in UserGuide . See #206
