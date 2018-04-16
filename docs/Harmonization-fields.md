@@ -45,13 +45,13 @@ Harmonization field names
 |Malware Hash|malware.hash.md5|[String](#string)|A string depicting an MD5 checksum for a file, be it a malware sample for example.|
 |Malware Hash|malware.hash.sha1|[String](#string)|A string depicting a SHA1 checksum for a file, be it a malware sample for example.|
 |Malware Hash|malware.hash.sha256|[String](#string)|A string depicting a SHA256 checksum for a file, be it a malware sample for example.|
-|Malware|malware.name|[LowercaseString](#lowercasestring)|A malware family name in lower case.|
+|Malware|malware.name|[LowercaseString](#lowercasestring)|The malware name in lower case.|
 |Malware|malware.version|[String](#string)|A version string for an identified artifact generation, e.g. a crime-ware kit.|
 |Misp|misp.attribute_uuid|[LowercaseString](#lowercasestring)|MISP - Malware Information Sharing Platform & Threat Sharing UUID of an attribute.|
 |Misp|misp.event_uuid|[LowercaseString](#lowercasestring)|MISP - Malware Information Sharing Platform & Threat Sharing UUID.|
 | |notify|[Boolean](#boolean)|If mail will be sent out to affected or responsible contact.|
 | |output|[JSON](#json)|Event data converted into foreign format, intended to be exported by output plugin.|
-|Protocol|protocol.application|[LowercaseString](#lowercasestring)|e.g. vnc, ssh, sip, irc, http or p2p.|
+|Protocol|protocol.application|[LowercaseString](#lowercasestring)|e.g. vnc, ssh, sip, irc, http or smtp.|
 |Protocol|protocol.transport|[LowercaseString](#lowercasestring)|e.g. tcp, udp, icmp.|
 | |raw|[Base64](#base64)|The original line of the event from encoded in base64.|
 | |rtir_incident_id|[Integer](#integer)|Request Tracker Incident Response incident id.|

@@ -736,10 +736,14 @@ dns_open_resolvers = {
         ('source.geolocation.city', 'city'),
         ('protocol.transport', 'protocol'),
         ('source.reverse_dns', 'hostname'),
+        # ('classification.identifier', 'tag'),  # always set to 'openresolver' in constant_fields
         ('extra.', 'min_amplification', convert_float),
         ('extra.', 'dns_version', validate_to_none),
         ('os.name', 'p0f_genre'),
         ('os.version', 'p0f_detail'),
+        ('extra.', 'naics', invalidate_zero),
+        ('extra.', 'sic', invalidate_zero),
+        ('extra.', 'sector', validate_to_none),
     ],
     'constant_fields': {
         'classification.type': 'vulnerable service',
@@ -911,9 +915,6 @@ ssl_scan = {
 }
 
 # https://www.shadowserver.org/wiki/pmwiki.php/Services/Open-Memcached
-# "timestamp","ip","protocol","port","hostname","tag","version","asn","geo","region","city","naics","sic","pid","pointer_size","uptime","time","curr_connections","total_connections"
-# "2015-01-22 01:30:25","167.160.165.190","tcp",11211,,"memcached","1.4.20",62639,"US","CALIFORNIA","LOS ANGELES",0,0,787,64,87136,"2015-01-22 01:30:26",10,13  # noqa
-
 open_memcached = {
     'required_fields': [
         ('time.source', 'timestamp', add_UTC_to_timestamp),

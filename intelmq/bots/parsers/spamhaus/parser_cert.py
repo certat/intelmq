@@ -24,26 +24,19 @@ local_port, protocol
 """
 
 from intelmq.lib import utils
-from intelmq.lib.bot import Bot
+from intelmq.lib.bot import ParserBot
 from intelmq.lib.harmonization import DateTime
 
 __all__ = ['SpamhausCERTParserBot']
 
 
-class SpamhausCERTParserBot(Bot):
+class SpamhausCERTParserBot(ParserBot):
 
-    def process(self):
-        report = self.receive_message()
-
-        raw_report = utils.base64_decode(report["raw"])
-
-        for row in raw_report.splitlines():
-            row = row.strip()
-
-            if not len(row) or row.startswith(';'):
-                continue
-
-            row_splitted = [field.strip() for field in row.split(',')]
+    def parse_line(self, row, report):
+        if not len(row) or row.startswith(';'):
+            self.tempdata.append(row)
+        else:
+            row_splitted = [field.strip() for field in row.strip().split(',')]
             event = self.new_event(report)
             event.change("feed.url", event["feed.url"].split("key=")[0])
 
@@ -72,6 +65,14 @@ class SpamhausCERTParserBot(Bot):
                 event.add('classification.type', 'brute-force')
                 event.add('classification.identifier', 'telnet')
                 event.add('protocol.application', 'telnet')
+            elif malware == 'iotscan':
+                event.add('classification.type', 'scanner')
+                event.add('event_description.text', 'infected IoT device scanning for other vulnerable IoT devices')
+                if row_splitted[7] == '23':
+                    event.add('protocol.application', 'telnet')
+                    event.add('classification.identifier', 'telnet')
+                else:
+                    event.add('classification.identifier', 'scanner-generic')
             elif malware == 'wpscanner':
                 event.add('classification.type', 'scanner')
                 event.add('classification.identifier', 'wordpress-vulnerabilities')
@@ -100,10 +101,9 @@ class SpamhausCERTParserBot(Bot):
                 else:
                     event.add('extra', {'destination.local_port': port})
             event.add('protocol.transport', row_splitted[9], raise_failure=False)
-            event.add('raw', row)
+            event.add('raw', self.recover_line(row))
 
-            self.send_message(event)
-        self.acknowledge_message()
+            yield event
 
 
 BOT = SpamhausCERTParserBot
