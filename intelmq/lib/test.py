@@ -215,7 +215,7 @@ class BotTestCase(object):
             if self.default_input_message:  # None for collectors
                 self.input_queue = [self.default_input_message]
 
-    def run_bot(self, iterations: int=1, error_on_pipeline: bool=False, prepare=True):
+    def run_bot(self, iterations: int = 1, error_on_pipeline: bool = False, prepare=True):
         """
         Call this method for actually doing a test run for the specified bot.
 
@@ -260,8 +260,8 @@ class BotTestCase(object):
 
         """ Test if bot log messages are correctly formatted. """
         self.assertLoglineMatches(0, "{} initialized with id {} and intelmq [0-9a-z.]* and python"
-                                     " [0-9a-z.]{{5,8}}\+? \([a-zA-Z0-9,:. ]+\)( \[GCC\])?"
-                                     " as process [0-9]+\."
+                                     r" [0-9a-z.]{{5,8}}\+? \([a-zA-Z0-9,:. ]+\)( \[GCC\])?"
+                                     r" as process [0-9]+\."
                                      "".format(self.bot_name,
                                                self.bot_id), "INFO")
         self.assertRegexpMatchesLog("INFO - Bot is starting.")
@@ -326,7 +326,7 @@ class BotTestCase(object):
         self.assertEqual('Test{}'.format(self.bot_name),
                          self.__class__.__name__)
 
-    def assertAnyLoglineEqual(self, message: str, levelname: str="ERROR"):
+    def assertAnyLoglineEqual(self, message: str, levelname: str = "ERROR"):
         """
         Asserts if any logline matches a specific requirement.
 
@@ -348,7 +348,7 @@ class BotTestCase(object):
             raise ValueError('Logline with level {!r} and message {!r} not found'
                              ''.format(levelname, message))
 
-    def assertLoglineEqual(self, line_no: int, message: str, levelname: str="ERROR"):
+    def assertLoglineEqual(self, line_no: int, message: str, levelname: str = "ERROR"):
         """
         Asserts if a logline matches a specific requirement.
 
@@ -369,7 +369,7 @@ class BotTestCase(object):
         self.assertEqual(levelname, fields["log_level"])
         self.assertEqual(message, fields["message"])
 
-    def assertLoglineMatches(self, line_no: int, pattern: str, levelname: str="ERROR"):
+    def assertLoglineMatches(self, line_no: int, pattern: str, levelname: str = "ERROR"):
         """
         Asserts if a logline matches a specific requirement.
 
@@ -390,7 +390,7 @@ class BotTestCase(object):
         self.assertEqual(levelname, fields["log_level"])
         self.assertRegex(fields["message"], pattern)
 
-    def assertLogMatches(self, pattern: str, levelname: str="ERROR"):
+    def assertLogMatches(self, pattern: str, levelname: str = "ERROR"):
         """
         Asserts if any logline matches a specific requirement.
 

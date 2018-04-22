@@ -304,7 +304,7 @@ PROCESS_MANAGER = {'intelmq': IntelMQProcessManager}
 
 class IntelMQController():
 
-    def __init__(self, interactive: bool=False, return_type: str="python", quiet: bool=False):
+    def __init__(self, interactive: bool = False, return_type: str = "python", quiet: bool = False):
         """
         Initializes intelmqctl.
 
@@ -642,6 +642,8 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
                 botnet_status[bot_id] = self.bot_status(bot_id)[1]
                 if botnet_status[bot_id] not in ['running', 'disabled']:
                     retval = 1
+                    if RETURN_TYPE == 'text':
+                        print(bot_id, botnet_status[bot_id])
 
         log_botnet_message('running')
         return retval, botnet_status

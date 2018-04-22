@@ -91,19 +91,47 @@ CHANGELOG
 ### Requirements
 - Requests is no longer listed as dependency of the core. For depending bots the requirement is noted in their REQUIREMENTS.txt file
 
-1.0.4 Bugfix release (unreleased)
+1.0.5 Bugfix release (unreleased)
 ---------------------------------
-### Contrib
 
 ### Core
-- lib/harmonization:
-* FQDN validation now handles None correctly (raised an Exception).
-* Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
 
 ### Harmonization
 
 ### Bots
 #### Collectors
+
+#### Parsers
+
+#### Experts
+
+#### Outputs
+
+### Documentation
+
+### Packaging
+
+### Tests
+
+### Contrib
+
+### Known issues
+
+
+1.0.4 Bugfix release (2018-04-20)
+---------------------------------
+- make code style compatible to pycodestyle 2.4.0
+- fixed permissions of some files (they were executable but shouldn't be)
+
+### Core
+- lib/harmonization:
+ * FQDN validation now handles None correctly (raised an Exception).
+ * Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
+
+### Harmonization
+
+### Bots
+* Use the new pypi website at https://pypi.org/ everywhere.
 
 #### Parsers
 - Shadowserver parser:
@@ -113,22 +141,20 @@ CHANGELOG
     * Correct validation of field `cc_dns`, will now only be added as `destination.fqdn` if correct FQDN, otherwise ignored. Previously this field could be saved in extra containing an IP address.
     * Adding more mappings for added columns.
   * A lot of newly added fields and fixed conversions.
+  * Add newly added columns of `Ssl-Scan` feed to parser
 - Spamhaus CERT parser:
  * fix parsing and classification for bot names 'openrelay', 'iotrdp', 'sshauth', 'telnetauth', 'iotcmd', 'iotuser', 'wpscanner', 'w_wplogin', 'iotscan'
    see the NEWS file - Postgresql section - for all changes.
-- CleanM phishing parser: handle FQDNs in IP column (#1162).
+- CleanMX phishing parser: handle FQDNs in IP column (#1162).
 
 #### Experts
 * `certat_contact_intern`: Added ability to handle tlp-amber only data.
 - `bots.experts.ripencc_abuse_contact`: Add existing parameter `mode` to BOTS file.
 
-#### Outputs
-
-### Documentation
-
 ### Tools
 - `intelmqcli_create_reports`: JSON reports are now indented and sorted
 - intelmqctl check: Fixed and extended message for 'run_mode' check.
+- `intelmqctl start` botnet. When using `--type json`, no non-json information about wrong bots are output because that would confuse eg. intelmq-manager
 
 ### Tests
 - lib/bot: No dumps will be written during tests (#934).
@@ -138,6 +164,10 @@ CHANGELOG
 * Static data is now included in source tarballs, development files are excluded
 
 ### Known issues
+- `bots.collectors/outputs.xmpp` must be killed two times (#970).
+- When running bots with `intelmqctl run [bot-id]` the log level is always INFO (#1075).
+- `intelmqctl run [bot-id] message send [msg]` does only support Events, not Reports (#1077).
+- A warning issued by the python warnings module is logged without the bot-id (#1184).
 
 
 1.0.3 Bugfix release (2018-02-05)
