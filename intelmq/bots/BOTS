@@ -372,6 +372,16 @@
             "module": "intelmq.bots.parsers.malwarepatrol.parser_dansguardian",
             "parameters": {}
         },
+        "Malwareurl": {
+            "description": "Malwareurl is the bot responsible to parse the report and sanitize the information.",
+            "module": "intelmq.bots.parsers.malwareurl.parser",
+            "parameters": {}
+        },
+        "Microsoft BingMURLs": {
+            "description": "Parses JSON data from Microsoft's Bing Malicious URLs list.",
+            "module": "intelmq.bots.parsers.microsoft.parser_bingmurls",
+            "parameters": {}
+        },
         "Microsoft CTIP": {
             "description": "Parses JSON data from Microsoft's CTIP program.",
             "module": "intelmq.bots.parsers.microsoft.parser_ctip",
