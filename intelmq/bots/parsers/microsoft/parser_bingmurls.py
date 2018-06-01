@@ -7,22 +7,23 @@ import json
 from intelmq.lib.bot import ParserBot
 
 
-MAPPING = {"Attributable": "extra.attributable",
-           "Description": "event_description.text",
+MAPPING = {"Description": "event_description.text",
            "IndicatorThreatType": "classification.identifier",  # MaliciousUrl
            "TLPLevel": "tlp",
            "FirstReportedDateTime": "time.source",
            "NetworkDestinationAsn": "source.asn",
            "NetworkDestinationIPv4": "source.ip",
            "NetworkDestinationPort": "source.port",
-           "IsProductLicensed": "extra.isproductlicensed",
-           "IsPartnerShareable": "extra.ispartnershareable",
            "Url": "source.url",
-           "IndicatorProvider": "extra.indicator_provider",
-           "IndicatorExpirationDateTime": "extra.indicator_expiration_date_time",
-           "ThreatDetectionProduct": "extra.threat_detection_product",
-           "Tags": "extra.tags",
            }
+EXTRA = {"Attributable": "attributable",
+         "IsProductLicensed": "isproductlicensed",
+         "IsPartnerShareable": "ispartnershareable",
+         "IndicatorProvider": "indicator_provider",
+         "IndicatorExpirationDateTime": "indicator_expiration_date_time",
+         "ThreatDetectionProduct": "threat_detection_product",
+         "Tags": "tags",
+         }
 
 
 class MicrosoftCTIPParserBot(ParserBot):
@@ -39,6 +40,7 @@ class MicrosoftCTIPParserBot(ParserBot):
         if line['IndicatorThreatType'] != 'MaliciousUrl':
             raise ValueError('Unknown indicatorthreattype %r, only MaliciousUrl is supported.' % line['indicatorthreattype'])
         event = self.new_event(report)
+        extra = {}
         for key, value in line.items():
             if key == "LastReportedDateTime" and value != line["FirstReportedDateTime"]:
                 raise ValueError("Unexpectedly seen different values in 'FirstReportedDateTime' and "
@@ -51,7 +53,12 @@ class MicrosoftCTIPParserBot(ParserBot):
                 continue
             if key == 'NetworkDestinationAsn' and value == 0:
                 continue
-            event[MAPPING[key]] = value
+            if key in MAPPING:
+                event[MAPPING[key]] = value
+            else:
+                extra[EXTRA[key]] = value
+        if extra:
+            event.add('extra', extra)
         event.add('classification.type', 'blacklist')
         event.add('raw', raw)
         yield event

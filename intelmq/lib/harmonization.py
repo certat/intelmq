@@ -20,6 +20,7 @@ import binascii
 import datetime
 import ipaddress
 import json
+import re
 import socket
 import urllib.parse as parse
 
@@ -32,7 +33,7 @@ import intelmq.lib.utils as utils
 __all__ = ['Base64', 'Boolean', 'ClassificationType', 'DateTime', 'FQDN',
            'Float', 'Accuracy', 'GenericType', 'IPAddress', 'IPNetwork',
            'Integer', 'JSON', 'LowercaseString', 'Registry', 'String', 'URL',
-           ]
+           'ASN']
 
 
 class GenericType(object):
@@ -426,6 +427,40 @@ class Integer(GenericType):
             return None
 
 
+class ASN(GenericType):
+    """
+    ASN type. Derived from Integer with forbidden values.
+
+    Only valid are: 0 < asn <= 4294967295
+    See https://en.wikipedia.org/wiki/Autonomous_system_(Internet)
+    > The first and last ASNs of the original 16-bit integers, namely 0 and
+    > 65,535, and the last ASN of the 32-bit numbers, namely 4,294,967,295 are
+    > reserved and should not be used by operators.
+    """
+    @staticmethod
+    def check_asn(value):
+        if 0 < value <= 4294967295:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def is_valid(value, sanitize=False):
+        if sanitize:
+            value = Integer().sanitize(value)
+        if not Integer.is_valid(value):
+            return False
+        if not ASN.check_asn(value):
+            return False
+        return True
+
+    @staticmethod
+    def sanitize(value):
+        value = Integer.sanitize(value)
+        if value and ASN.check_asn(value):
+            return value
+
+
 class IPAddress(GenericType):
     """
     Type for IP addresses, all families. Uses the ipaddress module.
@@ -721,4 +756,35 @@ class Registry(UppercaseString):
         value = UppercaseString.sanitize(value)
         if value in ['RIPENCC', 'RIPE-NCC']:
             value = 'RIPE'
+        return value
+
+
+class TLP(UppercaseString):
+    """
+    TLP level type. Derived from UppercaseString.
+
+    Only valid values: WHITE, GREEN, AMBER, RED.
+
+    Accepted for sanitation are different cases and the prefix 'tlp:'.
+    """
+    enum = ['WHITE', 'GREEN', 'AMBER', 'RED']
+    prefix_pattern = re.compile('^(TLP:)?')
+
+    @staticmethod
+    def is_valid(value, sanitize=False):
+        if sanitize:
+            value = TLP.sanitize(value)
+
+        if not UppercaseString.is_valid(value):
+            return False
+
+        if value not in TLP.enum:
+            return False
+
+        return True
+
+    @staticmethod
+    def sanitize(value):
+        value = UppercaseString.sanitize(value)
+        value = TLP.prefix_pattern.sub('', value)
         return value

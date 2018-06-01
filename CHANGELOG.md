@@ -53,9 +53,6 @@ CHANGELOG
 - `bots.collectors.microsoft.collector_interlow`: added for MS interflow API
   - Automatic ungzipping for .gz files.
 
-### Harmonization
-- Renamed `JSON` to `JSONDict` and added a new type `JSON`. `JSONDict` saves data internally as JSON, but acts like a dictionary. `JSON` accepts any valid JSON.
-
 #### Parsers
 - changed feednames in `bots.parsers.shadowserver`. Please refer to it's README for the exact changes.
 - shadowserver parser: If the conversion function fails for a line, an error is raised and the offending line will be handled according to the error handling configuration.
@@ -86,12 +83,16 @@ CHANGELOG
  * default ruleset: added avalanche rule.
  * new parameter `case_sensitive` (default: True)
 - Added wait expert for sleeping
+- Added domain suffix expert to extract the TLD/Suffix from a domain name.
 
 ### Harmonization
 - Renamed `JSON` to `JSONDict` and added a new type `JSON`. `JSONDict` saves data internally as JSON, but acts like a dictionary. `JSON` accepts any valid JSON.
 - fixed regex for `protocol.transport` it previously allowed more values than it should have.
 - New ASN type. Like integer but checks the range.
 - Added new `classification.type` 'vulnerable client'
+- Added `(destination|source).domain_suffix` to hold the TLD/domain suffix.
+- New field 'tlp' for tlp level specification.
+ - New TLP type. Allows all four tlp levels, removes 'TLP:' prefix and converts to upper case.
 
 ### Requirements
 - Requests is no longer listed as dependency of the core. For depending bots the requirement is noted in their REQUIREMENTS.txt file

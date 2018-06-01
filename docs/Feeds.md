@@ -26,6 +26,8 @@ The available feeds are grouped by the source of the feeds. For each feed the co
 - [Malware Domains](#malware-domains)
 - [MalwarePatrol Dans Guardian](#malwarepatrol-dans-guardian)
 - [N6](#n6)
+- [MalwarePatrol](#malwarepatrol)
+- [MalwareUrl](#malwareurl)
 - [Netlab 360](#netlab-360)
 - [Nothink](#nothink)
 - [OpenBL](#openbl)
@@ -34,10 +36,12 @@ The available feeds are grouped by the source of the feeds. For each feed the co
 - [Proxyspy](#proxyspy)
 - [Shadowserver](#shadowserver)
 - [Spamhaus](#spamhaus)
+- [Sucuri](#sucuri)
 - [Taichung](#taichung)
 - [Turris Greylist](#turris-greylist)
 - [URLVir](#urlvir)
 - [VXVault](#vxvault)
+- [ZoneH](#zoneh)
 
 <!-- /TOC -->
 
@@ -1607,6 +1611,25 @@ id: n6-parser
 
 **Notes:** N6 Collector - CERT.pl's N6 Collector - N6 feed via STOMP interface. Note that rate_limit does not apply for this bot as it is waiting for messages on a stream.
 
+# MalwareUrl
+
+* **Status:** on
+* **Revision:** 05-02-2018
+* **Description:** Latest malicious domains.
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.http.collector_http
+* **Configuration Parameters:**
+*  * `http_url`: `https://www.malwareurl.com/`
+*  * `rate_limit`: `86400`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.malwareurl.parser
+* **Configuration Parameters:**
+
+
 # Netlab 360
 
 ## DGA Feed
@@ -2138,6 +2161,38 @@ id: spamhaus-asn-drop-parser
 
 **Notes:** ASN-DROP contains a list of Autonomous System Numbers controlled by spammers or cyber criminals, as well as "hijacked" ASNs. ASN-DROP can be used to filter BGP routes which are being used for malicious purposes.
 
+# Sucuri
+
+## Sucuri Malware
+
+**Status:** Active
+
+### Collector Bot
+
+**Bot Name:** Generic URL Fetcher
+
+**Bot Module:** intelmq.bots.collectors.http.collector_http
+
+**Configuration Parameters:**
+```
+id: sucuri-collector
+feed: Sucuri Hidden Iframes
+http_url: http://labs.sucuri.net/?malware
+rate_limit: 86400
+```
+
+### Parser Bot
+
+**Bot Name:** Sucuri Security Parser
+
+**Bot Module:** intelmq.bots.parsers.sucuri.parser
+
+**Configuration Parameters:**
+```
+id: sucuri-parser
+```
+
+Please note that the parser only extracts the hidden iframes  and the conditional redirects, not the encoded javascript.
 
 # Taichung
 
@@ -2296,3 +2351,38 @@ http_url: http://vxvault.net/URL_List.php
 ```
 id: vxvault-parser
 ```
+
+# ZoneH
+
+**Status:** Active
+
+## Collector Bot
+
+FIXME: Information how to get the feed, what kind of reports you can reveive
+
+**Bot Name:** Generic Mail Attachment Fetcher
+
+**Bot Module:** intelmq.bots.collectors.mail.collector_mail_attach
+
+**Configuration Parameters:**
+```
+id: zoneh-collector
+provider: ZoneH
+feed: ZoneH <feed type>
+rate_limit: FIXME
+subject_regex: FIXME
+attach_regex: FIXME
+attach_unzip: true
+```
+
+## Parser Bot
+
+**Bot Name:** VXVault
+
+**Bot Module:** intelmq.bots.parsers.zoneh.parser
+
+**Configuration Parameters:**
+```
+id: zoneh-parser
+```
+

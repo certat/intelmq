@@ -21,7 +21,8 @@ from intelmq import (DEFAULT_LOGGING_PATH, DEFAULTS_CONF_FILE,
 from intelmq.lib import exceptions, utils
 import intelmq.lib.message as libmessage
 from intelmq.lib.pipeline import PipelineFactory
-from typing import Any, Optional
+from typing import Any, Optional, List
+from intelmq.lib.utils import RewindableFileHandle
 
 __all__ = ['Bot', 'CollectorBot', 'ParserBot']
 
@@ -565,6 +566,8 @@ class Bot(object):
 class ParserBot(Bot):
     csv_params = {}
     ignore_lines_starting = []
+    handle = None
+    current_line = None
 
     def __init__(self, bot_id):
         super(ParserBot, self).__init__(bot_id=bot_id)
@@ -583,8 +586,9 @@ class ParserBot(Bot):
             raw_report = '\n'.join([line for line in raw_report.splitlines()
                                     if not any([line.startswith(prefix) for prefix
                                                 in self.ignore_lines_starting])])
-
-        for line in csv.reader(io.StringIO(raw_report)):
+        self.handle = RewindableFileHandle(io.StringIO(raw_report))
+        for line in csv.reader(self.handle):
+            self.current_line = self.handle.current_line
             yield line
 
     def parse_csv_dict(self, report: dict):
@@ -597,8 +601,9 @@ class ParserBot(Bot):
             raw_report = '\n'.join([line for line in raw_report.splitlines()
                                     if not any([line.startswith(prefix) for prefix
                                                 in self.ignore_lines_starting])])
-
-        for line in csv.DictReader(io.StringIO(raw_report)):
+        self.handle = RewindableFileHandle(io.StringIO(raw_report))
+        for line in csv.DictReader(self.handle):
+            self.current_line = self.handle.current_line
             yield line
 
     def parse_json(self, report: dict):
@@ -678,7 +683,13 @@ class ParserBot(Bot):
 
         Recovers a fully functional report with only the problematic line.
         """
-        return '\n'.join(self.tempdata + [line])
+        if self.handle and self.handle.first_line and not self.tempdata:
+            tempdata = [self.handle.first_line.strip()]
+        else:
+            tempdata = self.tempdata
+        if self.current_line:
+            line = self.current_line
+        return '\n'.join(tempdata + [line])
 
     def recover_line_csv(self, line: str):
         out = io.StringIO()

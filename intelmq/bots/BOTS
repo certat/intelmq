@@ -59,6 +59,7 @@
                 "feed": "",
                 "provider": "",
                 "http_url": "<insert url of feed>",
+                "http_url_formatting": false,
                 "http_username": null,
                 "http_password": null,
                 "ssl_client_certificate": null,
@@ -430,6 +431,11 @@
             "module": "intelmq.bots.parsers.spamhaus.parser_drop",
             "parameters": {}
         },
+        "Sucuri Malware": {
+            "description": "Sucuri Malware parser parses the list of Hidden Iframes and Conditional redirections from Sucuri.",
+            "module": "intelmq.bots.parsers.sucuri.parser",
+            "parameters": {}
+        },
         "Taichung": {
             "description": "Taichung Parser is the bot responsible to parse the report and sanitize the information.",
             "module": "intelmq.bots.parsers.taichung.parser",
@@ -450,6 +456,11 @@
         "VXVault": {
             "description": "VXVault Parser is the bot responsible to parse the report and sanitize the information.",
             "module": "intelmq.bots.parsers.vxvault.parser",
+            "parameters": {}
+        },
+        "ZoneH": {
+            "description": "ZoneH CSV report parser",
+            "module": "intelmq.bots.parsers.zoneh.parser",
             "parameters": {}
         }
     },
@@ -530,6 +541,14 @@
                 "redis_cache_port": "6379",
                 "redis_cache_password": null,
                 "redis_cache_ttl": "86400"
+            }
+        },
+        "Domain Suffix": {
+            "description": "Extracts the domain suffix from a domain and saves it in the the domain_suffix field.",
+            "module": "intelmq.bots.experts.domain_suffix.expert",
+            "parameters": {
+                "field": "fqdn",
+                "suffix_file": "<path of suffix file>"
             }
         },
         "Field Reducer": {
