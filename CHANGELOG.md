@@ -101,17 +101,21 @@ CHANGELOG
 ---------------------------------
 
 ### Core
+- `lib/message`: `Report()` can now create a Report instance from Event instances (#1225).
 
 ### Harmonization
 
 ### Bots
 #### Collectors
+- `bots.collectors.mail.collector_mail_url`: handle empty downloaded reports (#988).
 
 #### Parsers
 - Shadowserver parser:
   * SSL FREAK: Remove optional column `device_serial` and add several new ones.
+- Spamhaus CERT parser: add support for `smtpauth` and `l_spamlink` (#1254).
 
 #### Experts
+- `bots.experts.filter`: Pre-compile regex at bot initialization.
 
 #### Outputs
 
@@ -120,6 +124,11 @@ CHANGELOG
 ### Packaging
 
 ### Tests
+
+### Tools
+- `intelmqctl run` has a new parameter `-l` `--loglevel` to overwrite the log level for the run (#1075).
+- `intelmqdump` has now command completion for bot names, actions and queue names in interacive console.
+- `intelmqdump` automatically converts messages from events to reports if the queue the message is being restored to is the source queue of a parser (#1225).
 
 ### Contrib
 
@@ -133,10 +142,8 @@ CHANGELOG
 
 ### Core
 - lib/harmonization:
- * FQDN validation now handles None correctly (raised an Exception).
- * Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
-
-### Harmonization
+  * FQDN validation now handles None correctly (raised an Exception).
+  * Fixed several sanitize() methods, the generic sanitation method were called by is_valid, not the sanitize methods (#1219).
 
 ### Bots
 * Use the new pypi website at https://pypi.org/ everywhere.
@@ -151,8 +158,8 @@ CHANGELOG
   * A lot of newly added fields and fixed conversions.
   * Add newly added columns of `Ssl-Scan` feed to parser
 - Spamhaus CERT parser:
- * fix parsing and classification for bot names 'openrelay', 'iotrdp', 'sshauth', 'telnetauth', 'iotcmd', 'iotuser', 'wpscanner', 'w_wplogin', 'iotscan'
-   see the NEWS file - Postgresql section - for all changes.
+  * fix parsing and classification for bot names 'openrelay', 'iotrdp', 'sshauth', 'telnetauth', 'iotcmd', 'iotuser', 'wpscanner', 'w_wplogin', 'iotscan'
+    see the NEWS file - Postgresql section - for all changes.
 - CleanMX phishing parser: handle FQDNs in IP column (#1162).
 
 #### Experts

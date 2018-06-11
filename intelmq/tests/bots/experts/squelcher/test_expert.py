@@ -24,7 +24,7 @@ INPUT1 = {"__type": "Event",
           "classification.identifier": "zeus",
           "classification.type": "botnet drone",
           "notify": False,
-          "source.asn": 0,
+          "source.asn": 1,
           "source.ip": "192.0.2.1",
           "feed.name": "Example Feed",
           }
@@ -109,7 +109,7 @@ class TestSquelcherExpertBot(test.BotTestCase, unittest.TestCase):
                          "user": "intelmq",
                          "password": "intelmq",
                          "sending_time_interval": "2 years",
-                         "sslmode": "require",
+                         "sslmode": "allow",
                          "table": "tests",
                          "logging_level": "DEBUG",
                          }
@@ -146,7 +146,7 @@ INSERT INTO {table}(
 
     def test_ttl_1(self):
         "event exists in db -> squelch"
-        self.insert('zeus', 'botnet drone', True, 0, '192.0.2.1', '0')
+        self.insert('zeus', 'botnet drone', True, 1, '192.0.2.1', '0')
         self.input_message = INPUT1
         self.run_bot()
         self.truncate()
@@ -155,7 +155,7 @@ INSERT INTO {table}(
 
     def test_ttl_2(self):
         "event in db is too old -> notify"
-        self.insert('https', 'vulnerable service', True, 0, '192.0.2.1',
+        self.insert('https', 'vulnerable service', True, 1, '192.0.2.1',
                     '- 01:45')
         self.input_message = INPUT2
         self.run_bot()
@@ -165,7 +165,7 @@ INSERT INTO {table}(
 
     def test_ttl_2h_squelch(self):
         "event is in db -> squelch"
-        self.insert('https', 'vulnerable service', True, 0, '192.0.2.4',
+        self.insert('https', 'vulnerable service', True, 1, '192.0.2.4',
                     '- 01:45')
         self.input_message = INPUT3
         self.run_bot()
@@ -176,7 +176,7 @@ INSERT INTO {table}(
     def test_network_match(self):
         """event is in db without notify -> notify
         find ttl based on network test"""
-        self.insert('openresolver', 'vulnerable service', False, 0,
+        self.insert('openresolver', 'vulnerable service', False, 1,
                     '198.51.100.5', '- 20:00')
         self.input_message = INPUT5
         self.run_bot()
@@ -187,7 +187,7 @@ INSERT INTO {table}(
     def test_network_match3(self):
         """event is in db -> squelch
         find ttl based on network test"""
-        self.insert('openresolver', 'vulnerable service', True, 0,
+        self.insert('openresolver', 'vulnerable service', True, 1,
                     '198.51.100.5', '- 25:00', '- 25:00')
         self.input_message = INPUT5
         self.run_bot()
@@ -197,7 +197,7 @@ INSERT INTO {table}(
 
     def test_address_match1(self):
         "event in db is too old -> notify"
-        self.insert('openresolver', 'vulnerable service', True, 0,
+        self.insert('openresolver', 'vulnerable service', True, 1,
                     '198.51.100.45', '- 25:00', '- 25:00')
         self.input_message = INPUT6
         self.run_bot()
@@ -207,7 +207,7 @@ INSERT INTO {table}(
 
     def test_address_match2(self):
         "event is in db -> squelch"
-        self.insert('openresolver', 'vulnerable service', True, 0,
+        self.insert('openresolver', 'vulnerable service', True, 1,
                     '198.51.100.45', '- 20:00', '- 20:00')
         self.input_message = INPUT6
         self.run_bot()
@@ -217,7 +217,7 @@ INSERT INTO {table}(
 
     def test_ttl_other_ident(self):
         "other event in db -> notify"
-        self.insert('https', 'vulnerable service', True, 0, '198.51.100.5',
+        self.insert('https', 'vulnerable service', True, 1, '198.51.100.5',
                     '- 01:45', '- 01:45')
         self.input_message = INPUT4
         self.run_bot()
@@ -263,7 +263,7 @@ INSERT INTO {table}(
 
     def test_unsent_notify(self):
         """event exists, but is older than 1 day and has not been sent -> notify """
-        self.insert('openresolver', 'vulnerable service', True, 0, '198.51.100.5', str(-25*3600))
+        self.insert('openresolver', 'vulnerable service', True, 1, '198.51.100.5', str(-25*3600))
         self.sysconfig['sending_time_interval'] = '1 day'
         self.input_message = INPUT5
         self.run_bot()
@@ -274,7 +274,7 @@ INSERT INTO {table}(
 
     def test_unsent_squelch(self):
         """event exists, is younger than 2 days and has not been sent -> squelch """
-        self.insert('openresolver', 'vulnerable service', True, 0, '198.51.100.5', '- 86400')
+        self.insert('openresolver', 'vulnerable service', True, 1, '198.51.100.5', '- 86400')
         self.input_message = INPUT5
         self.run_bot()
         self.truncate()
