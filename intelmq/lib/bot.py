@@ -9,12 +9,14 @@ import json
 import requests
 import logging
 import os
+import psutil
 import re
 import signal
 import sys
 import time
 import traceback
 import types
+import warnings
 
 from intelmq import (DEFAULT_LOGGING_PATH, DEFAULTS_CONF_FILE,
                      HARMONIZATION_CONF_FILE, PIPELINE_CONF_FILE,
@@ -36,6 +38,13 @@ class Bot(object):
     __message_counter_start = None
     # Bot is capable of SIGHUP delaying
     sighup_delay = True
+    # From the runtime configuration
+    description = None
+    group = None
+    module = None
+    name = None
+
+    _message_processed_verb = 'Processed'
 
     def __init__(self, bot_id: str):
         self.__log_buffer = []
@@ -135,9 +144,9 @@ class Bot(object):
     def shutdown(self):
         pass
 
-    def start(self, starting: bool=True, error_on_pipeline: bool=True,
-              error_on_message: bool=False, source_pipeline: Optional[str]=None,
-              destination_pipeline: Optional[str]=None):
+    def start(self, starting: bool = True, error_on_pipeline: bool = True,
+              error_on_message: bool = False, source_pipeline: Optional[str] = None,
+              destination_pipeline: Optional[str] = None):
 
         self.__source_pipeline = source_pipeline
         self.__destination_pipeline = destination_pipeline
@@ -234,10 +243,16 @@ class Bot(object):
 
                         if error_on_message:
 
+                            delete_message = False
                             if self.parameters.error_dump_message:
                                 error_traceback = traceback.format_exception(*error_on_message)
                                 self._dump_message(error_traceback,
                                                    message=self.__current_message)
+                                delete_message = True
+                            if '_on_error' in self.__destination_queues:
+                                self.send_message(self.__current_message, path='_on_error')
+                                delete_message = True
+                            if delete_message:
                                 self.__current_message = None
 
                             # remove message from pipeline
@@ -286,20 +301,26 @@ class Bot(object):
             self.__handle_sighup()
             remaining = self.parameters.rate_limit - (time.time() - starttime)
 
-    def stop(self, exitcode: int=1):
+    def stop(self, exitcode: int = 1):
         try:
             self.shutdown()
         except BaseException:
             self.logger.exception('Error during shutdown of bot.')
 
         if self.__message_counter:
-            self.logger.info("Processed %d messages since last logging.", self.__message_counter)
+            self.logger.info("%s %d messages since last logging.",
+                             self._message_processed_verb,
+                             self.__message_counter)
 
         self.__disconnect_pipelines()
 
         if self.logger:
             self.logger.info("Bot stopped.")
             logging.shutdown()
+            # Bots using threads that do not exit properly, see #970
+            if self.__class__.__name__ in ['XMPPCollectorBot', 'XMPPOutputBot']:
+                proc = psutil.Process(os.getpid())
+                proc.send_signal(signal.SIGTERM)
         else:
             self.__log_buffer.append(('info', 'Bot stopped.'))
             self.__print_log_buffer()
@@ -318,11 +339,11 @@ class Bot(object):
         self.__log_buffer = []
 
     def __check_bot_id(self, name: str):
-        res = re.search('[^0-9a-zA-Z\-]+', name)
+        res = re.search(r'[^0-9a-zA-Z\-]+', name)
         if res:
             self.__log_buffer.append(('error',
                                       "Invalid bot id, must match '"
-                                      "[^0-9a-zA-Z\-]+'."))
+                                      r"[^0-9a-zA-Z\-]+'."))
             self.stop()
 
     def __connect_pipelines(self):
@@ -357,7 +378,12 @@ class Bot(object):
             self.__destination_pipeline = None
             self.logger.debug("Disconnected from destination pipeline.")
 
-    def send_message(self, *messages):
+    def send_message(self, *messages, path="_default", auto_add=None):
+        """
+        Parameters:
+            messages: Instances of intelmq.lib.message.Message class
+            auto_add: ignored
+        """
         for message in messages:
             if not message:
                 self.logger.warning("Ignoring empty message at sending. Possible bug in bot.")
@@ -377,7 +403,7 @@ class Bot(object):
                 self.__message_counter_start = datetime.datetime.now()
 
             raw_message = libmessage.MessageFactory.serialize(message)
-            self.__destination_pipeline.send(raw_message)
+            self.__destination_pipeline.send(raw_message, path=path)
 
     def receive_message(self):
         self.logger.debug('Waiting for incoming message.')
@@ -409,10 +435,16 @@ class Bot(object):
         return self.__current_message
 
     def acknowledge_message(self):
-        self.__source_pipeline.acknowledge()
+        """
+        Acknowledges that the last message has been processed, if any.
+
+        For bots without source pipeline (collectors), this is a no-op.
+        """
+        if self.__source_pipeline:
+            self.__source_pipeline.acknowledge()
 
     def _dump_message(self, error_traceback, message: dict):
-        if message is None:
+        if message is None or getattr(self.parameters, 'testing', False):
             return
 
         self.logger.info('Dumping message from pipeline to dump file.')
@@ -421,8 +453,8 @@ class Bot(object):
 
         dump_file = os.path.join(self.parameters.logging_path, self.__bot_id + ".dump")
 
-        new_dump_data = dict()
-        new_dump_data[timestamp] = dict()
+        new_dump_data = {}
+        new_dump_data[timestamp] = {}
         new_dump_data[timestamp]["bot_id"] = self.__bot_id
         new_dump_data[timestamp]["source_queue"] = self.__source_queues
         new_dump_data[timestamp]["traceback"] = error_traceback
@@ -459,7 +491,7 @@ class Bot(object):
         config = utils.load_configuration(RUNTIME_CONF_FILE)
         reinitialize_logging = False
 
-        if self.__bot_id in list(config.keys()):
+        if self.__bot_id in config:
             params = config[self.__bot_id]
             self.run_mode = params.get('run_mode', 'continuous')
             for option, value in params['parameters'].items():
@@ -467,6 +499,10 @@ class Bot(object):
                 self.__log_configuration_parameter("runtime", option, value)
                 if option.startswith('logging_'):
                     reinitialize_logging = True
+            self.description = params.get('description')
+            self.group = params.get('group')
+            self.module = params.get('module')
+            self.name = params.get('name')
 
         if reinitialize_logging:
             self.logger.handlers = []  # remove all existing handlers
@@ -500,6 +536,7 @@ class Bot(object):
 
                 self.__destination_queues = config[
                     self.__bot_id]['destination-queues']
+                # Convert old to new format here
 
         else:
             raise exceptions.ConfigurationError('pipeline', "no key "
@@ -594,6 +631,7 @@ class ParserBot(Bot):
             self.logger.error('ParserBot can\'t be started itself. '
                               'Possible Misconfiguration.')
             self.stop()
+        self.group = 'Parser'
 
     def parse_csv(self, report: dict):
         """
@@ -699,7 +737,10 @@ class ParserBot(Bot):
         for exc, line in self.__failed:
             report_dump = report.copy()
             report_dump.change('raw', self.recover_line(line))
-            self._dump_message(exc, report_dump)
+            if self.parameters.error_dump_message:
+                self._dump_message(exc, report_dump)
+            if '_on_error' in self._Bot__destination_queues:
+                self.send_message(report_dump, path='_on_error')
 
         self.logger.info('Sent %d events and found %d error(s).' % (events_count, len(self.__failed)))
 
@@ -756,6 +797,7 @@ class CollectorBot(Bot):
             self.logger.error('CollectorBot can\'t be started itself. '
                               'Possible Misconfiguration.')
             self.stop()
+        self.group = 'Collector'
 
     def __filter_empty_report(self, message: dict):
         if 'raw' not in message:
@@ -765,7 +807,13 @@ class CollectorBot(Bot):
         return True
 
     def __add_report_fields(self, report: dict):
-        report.add("feed.name", self.parameters.feed)
+        if hasattr(self.parameters, 'feed'):
+            report.add("feed.name", self.parameters.feed)
+            warnings.warn("The parameter 'feed' is deprecated and will be "
+                          "removed in version 2.0. Use 'name' instead.",
+                          DeprecationWarning)
+        else:
+            report.add("feed.name", self.parameters.name)
         if hasattr(self.parameters, 'code'):
             report.add("feed.code", self.parameters.code)
         if hasattr(self.parameters, 'documentation'):
@@ -775,9 +823,15 @@ class CollectorBot(Bot):
         report.add("feed.accuracy", self.parameters.accuracy)
         return report
 
-    def send_message(self, *messages):
+    def send_message(self, *messages, auto_add=True):
+        """"
+        Parameters:
+            messages: Instances of intelmq.lib.message.Message class
+            auto_add: Add some default report fields form parameters
+        """
         messages = filter(self.__filter_empty_report, messages)
-        messages = map(self.__add_report_fields, messages)
+        if auto_add:
+            messages = map(self.__add_report_fields, messages)
         super(CollectorBot, self).send_message(*messages)
 
     def new_report(self):
