@@ -24,7 +24,7 @@ INPUT1 = {"__type": "Event",
           "classification.identifier": "zeus",
           "classification.type": "botnet drone",
           "notify": False,
-          "source.asn": 64496,
+          "source.asn": 1,
           "source.ip": "192.0.2.1",
           "feed.name": "Example Feed",
           }
@@ -109,7 +109,7 @@ class TestSquelcherExpertBot(test.BotTestCase, unittest.TestCase):
                          "user": "intelmq",
                          "password": "intelmq",
                          "sending_time_interval": "2 years",
-                         "sslmode": "require",
+                         "sslmode": "allow",
                          "table": "tests",
                          "logging_level": "DEBUG",
                          }

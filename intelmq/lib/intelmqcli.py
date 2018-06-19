@@ -231,63 +231,35 @@ SELECT
     "source.ip",
     "source.port",
     "source.asn",
-    "source.network",
     "source.geolocation.cc",
-    "source.geolocation.region",
     "source.geolocation.city",
-    "source.account",
     "source.fqdn",
     "source.local_hostname",
     "source.local_ip",
-    "source.reverse_dns",
-    "source.tor_node",
-    "source.url",
     "classification.identifier",
     "classification.taxonomy",
     "classification.type",
     "comment",
     "destination.ip",
     "destination.port",
-    "destination.asn",
-    "destination.network",
-    "destination.geolocation.cc",
-    "destination.geolocation.region",
-    "destination.geolocation.city",
-    "destination.account",
     "destination.fqdn",
-    "destination.local_hostname",
-    "destination.local_ip",
-    "destination.reverse_dns",
     "destination.tor_node",
     "destination.url",
     "event_description.target",
-    "event_description.text",
-    "event_description.url",
-    "event_hash",
-    "extra",
-    "feed.accuracy",
+    "shareable_extra_info" AS "extra",
     "feed.documentation",
-    "malware.hash",
-    "malware.hash.md5",
-    "malware.hash.sha1",
     "malware.name",
-    "malware.version",
-    "misp.event_uuid",
-    "notify",
     "protocol.application",
-    "protocol.transport",
-    "rtir_report_id",
-    "screenshot_url",
-    "status",
-    "time.observation"
-FROM events
+    "protocol.transport"
+FROM v_events_filtered
 WHERE
     rtir_report_id IS NOT NULL AND
     rtir_incident_id = %s AND
     rtir_investigation_id IS NULL AND
     "source.abuse_contact" = %s AND
 """ + BASE_WHERE
-DRY_QUERY_EVENTS_BY_ASCONTACT_TAXONOMY = QUERY_EVENTS_BY_ASCONTACT_INCIDENT[:QUERY_EVENTS_BY_ASCONTACT_INCIDENT.find('WHERE') + 6] + """
+DRY_QUERY_EVENTS_BY_ASCONTACT_TAXONOMY = QUERY_EVENTS_BY_ASCONTACT_INCIDENT[:QUERY_EVENTS_BY_ASCONTACT_INCIDENT.find('WHERE') +
+                                                                            6] + """
     rtir_report_id IS NOT NULL AND
     rtir_investigation_id IS NULL AND
     "classification.taxonomy" = %s AND

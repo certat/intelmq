@@ -22,6 +22,7 @@ MAPPING = {"Attributable": "extra.attributable",
            "IndicatorExpirationDateTime": "extra.indicator_expiration_date_time",
            "ThreatDetectionProduct": "extra.threat_detection_product",
            "Tags": "extra.tags",
+           "Url": "source.url",
            }
 
 

@@ -26,9 +26,16 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run `int
 - [Malc0de](#malc0de)
 - [Malware Domain List](#malware-domain-list)
 - [Malware Domains](#malware-domains)
+<<<<<<< HEAD
 - [MalwarePatrol](#malwarepatrol)
 - [MalwareURL](#malwareurl)
 - [Microsoft](#microsoft)
+=======
+- [MalwarePatrol Dans Guardian](#malwarepatrol-dans-guardian)
+- [N6](#n6)
+- [MalwarePatrol](#malwarepatrol)
+- [MalwareUrl](#malwareurl)
+>>>>>>> certat
 - [Netlab 360](#netlab-360)
 - [Nothink](#nothink)
 - [OpenPhish](#openphish)
@@ -44,7 +51,10 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run `int
 - [URLVir](#urlvir)
 - [University of Toulouse](#university-of-toulouse)
 - [VXVault](#vxvault)
+<<<<<<< HEAD
 - [WebInspektor](#webinspektor)
+=======
+>>>>>>> certat
 - [ZoneH](#zoneh)
 
 <!-- /TOC -->
@@ -1040,15 +1050,115 @@ id: cymru-full-bogons-parser
 
 ### Collector
 
+<<<<<<< HEAD
 * **Module:** intelmq.bots.collectors.http.collector_http
 * **Configuration Parameters:**
 *  * `http_url`: `https://lists.malwarepatrol.net/cgi/getfile?receipt={{ your API key }}&product=8&list=dansguardian`
 *  * `rate_limit`: `180000`
+=======
+**Configuration Parameters:**
+```
+id: malwarepatrol-dans-guardian-collector
+provider: MalwarePatrol
+feed: MalwarePatrol Dans Guardian
+rate_limit: 180000
+http_url: https://lists.malwarepatrol.net/cgi/getfile?receipt={{ API KEY }}&product=8&list=dansguardian
+```
+
+## Parser Bot
+
+**Bot Name:** MalwarePatrol Dans Guardian
+
+**Bot Module:** intelmq.bots.parsers.malwarepatrol.parser_dansguardian
+
+**Configuration Parameters:**
+```
+ id: malwarepatrol-dans-guardian-parser
+```
+
+### Microsoft Interflow
+
+Iterates over all files available by this API.
+
+#### Information:
+* `name:` intelmq.bots.collectors.microsoft.collector_interflow
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` collect files from microsoft interflow using their API
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `api_key`: API generate in their portal
+* `file_match`: an optional regular expression to match file names
+
+* * *
+
+# N6
+
+## Stomp
+
+**Status:** Active
+
+## Collector Bot
+
+**Bot Name:** N6stomp
+
+**Bot Module:** intelmq.bots.collectors.n6.collector_stomp
+
+**Configuration Parameters:**
+```
+id: n6-collector
+provider: CERT.pl
+feed: CERT.pl N6 Stream
+server: n6stream.cert.pl
+port: 61614
+exchange: {{ insert your exchange point as given by CERT.pl }}
+ssl_ca_certificate: {{ insert path to CA file for CERT.pl's n6 }}
+ssl_client_certificate: {{ insert path to client cert file for CERTpl's n6 }}
+ssl_client_certificate_key: {{ insert path to client cert key file for CERT.pl's n6 }}
+```
+
+## Parser Bot
+
+**Bot Name:** N6Stomp
+
+**Bot Module:** intelmq.bots.parsers.n6.parser_n6stomp
+
+**Configuration Parameters:**
+```
+id: n6-parser
+```
+>>>>>>> certat
 
 ### Parser
 
+<<<<<<< HEAD
 * **Module:** intelmq.bots.parsers.malwarepatrol.parser_dansguardian
 * **Configuration Parameters:**
+=======
+# MalwareUrl
+
+* **Status:** on
+* **Revision:** 05-02-2018
+* **Description:** Latest malicious domains.
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.http.collector_http
+* **Configuration Parameters:**
+*  * `http_url`: `https://www.malwareurl.com/`
+*  * `rate_limit`: `86400`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.malwareurl.parser
+* **Configuration Parameters:**
+
+
+# Netlab 360
+>>>>>>> certat
 
 
 # MalwareURL
@@ -1545,7 +1655,42 @@ id: cymru-full-bogons-parser
 *  * `http_url`: `https://www.threatminer.org/`
 *  * `rate_limit`: `86400`
 
+<<<<<<< HEAD
 ### Parser
+=======
+# Sucuri
+
+## Sucuri Malware
+
+**Status:** Active
+
+### Collector Bot
+
+**Bot Name:** Generic URL Fetcher
+
+**Bot Module:** intelmq.bots.collectors.http.collector_http
+
+**Configuration Parameters:**
+```
+id: sucuri-collector
+feed: Sucuri Hidden Iframes
+http_url: http://labs.sucuri.net/?malware
+rate_limit: 86400
+```
+
+### Parser Bot
+
+**Bot Name:** Sucuri Security Parser
+
+**Bot Module:** intelmq.bots.parsers.sucuri.parser
+
+**Configuration Parameters:**
+```
+id: sucuri-parser
+```
+
+Please note that the parser only extracts the hidden iframes  and the conditional redirects, not the encoded javascript.
+>>>>>>> certat
 
 * **Module:** intelmq.bots.parsers.threatminer.parser
 * **Configuration Parameters:**
@@ -1703,3 +1848,45 @@ id: cymru-full-bogons-parser
 * **Configuration Parameters:**
 
 
+<<<<<<< HEAD
+=======
+**Configuration Parameters:**
+```
+id: vxvault-parser
+```
+
+# ZoneH
+
+**Status:** Active
+
+## Collector Bot
+
+FIXME: Information how to get the feed, what kind of reports you can reveive
+
+**Bot Name:** Generic Mail Attachment Fetcher
+
+**Bot Module:** intelmq.bots.collectors.mail.collector_mail_attach
+
+**Configuration Parameters:**
+```
+id: zoneh-collector
+provider: ZoneH
+feed: ZoneH <feed type>
+rate_limit: FIXME
+subject_regex: FIXME
+attach_regex: FIXME
+attach_unzip: true
+```
+
+## Parser Bot
+
+**Bot Name:** VXVault
+
+**Bot Module:** intelmq.bots.parsers.zoneh.parser
+
+**Configuration Parameters:**
+```
+id: zoneh-parser
+```
+
+>>>>>>> certat

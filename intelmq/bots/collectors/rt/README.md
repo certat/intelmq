@@ -7,7 +7,7 @@ You need the rt-library from nic.cz, available via [pypi](https://pypi.org/proje
 
 Version 1.0.9 is required, as older version have bugs.
 
-This rt bot will connect to RT and inspect the given `search_queue` for tickets matching all criteria in `search_*`, 
+This rt bot will connect to RT and inspect the given `search_queue` for tickets matching all criteria in `search_*`,
 Any matches will be inspected. For each match, all (RT-) attachments of the matching RT tickets are iterated over and within this loop, the first matching filename in the attachment is processed.
 If none of the filename matches apply, the contents of the first (RT-) "history" item is matched against the URL-regex.
 

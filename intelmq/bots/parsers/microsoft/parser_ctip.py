@@ -25,6 +25,8 @@ MAPPING = {"additionalmetadata": "extra.additionalmetadata",
            "useragent": "extra.user_agent",
            "severity": "extra.severity",
            "tags": "extra.tags",
+           "networksourceasn": "source.asn",
+           "hostname": "destination.fqdn",
            }
 
 

@@ -57,6 +57,7 @@ CHANGELOG
 - Mail:
   - New parameters; `sent_from`: filter messages by sender, `sent_to`: filter messages by recipient
   - More debug logs
+- `bots.experts.maxmind_geoip`: New (optional) parameter `overwrite`, by default false. The current default was to overwrite!
 - `bots.collectors.n6.collector_stomp`: renamed to `bots.collectors.stomp.collector` (#716)
 - bots.collectors.rt:
   - New parameter `search_requestor` to search for field Requestor.
@@ -208,9 +209,11 @@ CHANGELOG
 - CleanMX phishing parser: handle FQDNs in IP column (#1162).
 
 #### Experts
+* `certat_contact_intern`: Added ability to handle tlp-amber only data.
 - `bots.experts.ripencc_abuse_contact`: Add existing parameter `mode` to BOTS file.
 
 ### Tools
+- `intelmqcli_create_reports`: JSON reports are now indented and sorted
 - intelmqctl check: Fixed and extended message for 'run_mode' check.
 - `intelmqctl start` botnet. When using `--type json`, no non-json information about wrong bots are output because that would confuse eg. intelmq-manager
 

@@ -28,6 +28,7 @@ CREATE TABLE events (
     "destination.tor_node" boolean,
     "destination.url" text,
     "destination.urlpath" text,
+    "destination_visible" boolean,
     "event_description.target" text,
     "event_description.text" text,
     "event_description.url" text,
