@@ -32,6 +32,8 @@ TAXONOMY = {
     "other": "other",
     "tor": "other",
     "leak": "information content security",
+    'unauthorized-login': 'intrusions',
+    'unauthorized-command': 'intrusions',
 }
 
 

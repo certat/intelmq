@@ -165,6 +165,8 @@ class ClassificationType(GenericType):
                       'unknown',
                       'vulnerable client',
                       'vulnerable service',
+                      'unauthorized-login',
+                      'unauthorized-command',
                       ]
 
     __doc__ += '\n     * '.join(allowed_values)

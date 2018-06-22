@@ -154,6 +154,8 @@ classification.type type. Allowed values are:
  * unknown
  * vulnerable client
  * vulnerable service
+ * unauthorized-login
+ * unauthorized-command
 
 ### DateTime
 
