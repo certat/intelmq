@@ -27,6 +27,8 @@ EXAMPLE_EVENTS = [{
     'classification.type': 'blacklist',
     'classification.identifier': 'MaliciousUrl',
     'event_description.text': 'Website has been identified as malicious by Bing',
+    'extra.ispartnershareable': True,
+    'extra.isproductlicensed': True,
     'tlp': 'AMBER',
     'source.url': 'http://01.example.com/foobar.html',
     'source.asn': 65540,
@@ -34,15 +36,18 @@ EXAMPLE_EVENTS = [{
     'source.port': 80,
     'time.source': '2018-05-28T07:00:00+00:00',
     "raw": base64_encode(json.dumps([EXAMPLE_PARSED[0]], sort_keys=True)),
-    'extra': '{"attributable": true, "indicator_expiration_date_time": '
-             '"2018-06-28T10:49:29Z", "indicator_provider": "Bing", '
-             '"ispartnershareable": true, "isproductlicensed": true, "tags": '
-             '["com"], "threat_detection_product": "Forefront"}',
+    'extra.attributable': True,
+    'extra.indicator_provider': 'Bing',
+    'extra.indicator_expiration_date_time': '2018-06-28T10:49:29Z',
+    'extra.threat_detection_product': 'Forefront',
+    'extra.tags': ['com'],
     }, {
     "__type": "Event",
     'classification.type': 'blacklist',
     'classification.identifier': 'MaliciousUrl',
     'event_description.text': 'Website has been identified as malicious by Bing',
+    'extra.ispartnershareable': True,
+    'extra.isproductlicensed': True,
     'tlp': 'AMBER',
     'source.url': 'http://010302.example.org/',
     'source.asn': 64510,
@@ -50,10 +55,11 @@ EXAMPLE_EVENTS = [{
     'source.port': 80,
     'time.source': '2018-05-28T07:00:00+00:00',
     "raw": base64_encode(json.dumps([EXAMPLE_PARSED[1]], sort_keys=True)),
-    'extra': '{"attributable": true, "indicator_expiration_date_time": '
-             '"2018-06-28T10:49:29Z", "indicator_provider": "Bing", '
-             '"ispartnershareable": true, "isproductlicensed": true, "tags": '
-             '["org"], "threat_detection_product": "Forefront"}',
+    'extra.attributable': True,
+    'extra.indicator_provider': 'Bing',
+    'extra.indicator_expiration_date_time': '2018-06-28T10:49:29Z',
+    'extra.threat_detection_product': 'Forefront',
+    'extra.tags': ['org'],
     },
     ]
 

@@ -186,6 +186,20 @@ class TestHarmonization(unittest.TestCase):
             '2015-08-31T36:16:10+00:00'
         ))
 
+    def test_datetime_from_epoch_millis(self):
+        """ Test DateTime.from_epoch_millis method. """
+        self.assertEqual('2015-08-31T08:16:10+00:00',
+                         harmonization.DateTime.from_epoch_millis(1441008970))
+        self.assertEqual('2015-08-31T08:16:10+00:00',
+                         harmonization.DateTime.from_epoch_millis("1441008970"))
+        self.assertEqual('2015-08-31T07:16:10-01:00',
+                         harmonization.DateTime.from_epoch_millis(144100897000,
+                                                                 'Etc/GMT+1'))
+        self.assertEqual('2015-08-31T04:16:10-04:00',
+                         harmonization.DateTime.from_epoch_millis(1441008970000,
+                                                                     'America/'
+                                                                     'Guyana'))
+
     def test_datetime_from_timestamp(self):
         """ Test DateTime.from_timestamp method. """
         self.assertEqual('2015-08-31T08:16:10+00:00',
@@ -274,11 +288,13 @@ class TestHarmonization(unittest.TestCase):
         """ Test JSON.is_valid with valid arguments. """
         self.assertTrue(harmonization.JSON.is_valid('{"foo": "bar"}',
                                                     sanitize=False))
+        self.assertTrue(harmonization.JSON.is_valid('"foo"',
+                                                    sanitize=False))
 
     def test_json_invalid(self):
         """ Test JSON.is_valid with invalid arguments. """
-        self.assertFalse(harmonization.JSON.is_valid('{}'))
-        self.assertFalse(harmonization.JSON.is_valid('"example"'))
+        self.assertFalse(harmonization.JSON.is_valid('{'))
+        self.assertFalse(harmonization.JSON.is_valid('["foo", ]'))
         self.assertFalse(harmonization.JSON.is_valid(b'{"foo": 1}',
                                                      sanitize=False))
         self.assertFalse(harmonization.JSON.is_valid({"foo": "bar"},
@@ -292,6 +308,29 @@ class TestHarmonization(unittest.TestCase):
                                                     sanitize=True))
         self.assertTrue(harmonization.JSON.is_valid(b'{"foo": "bar"}',
                                                     sanitize=True))
+
+    def test_jsondict_valid(self):
+        """ Test JSONDict.is_valid with valid arguments. """
+        self.assertTrue(harmonization.JSONDict.is_valid('{"foo": "bar"}',
+                                                        sanitize=False))
+
+    def test_jsondict_invalid(self):
+        """ Test JSONDict.is_valid with invalid arguments. """
+        self.assertFalse(harmonization.JSONDict.is_valid('{}'))
+        self.assertFalse(harmonization.JSONDict.is_valid('"example"'))
+        self.assertFalse(harmonization.JSONDict.is_valid(b'{"foo": 1}',
+                                                         sanitize=False))
+        self.assertFalse(harmonization.JSONDict.is_valid({"foo": "bar"},
+                                                         sanitize=False))
+
+    def test_jsondict_sanitize(self):
+        """ Test JSONDict.sanitize with valid arguments. """
+        self.assertTrue(harmonization.JSONDict.is_valid({"foo": "bar"},
+                                                        sanitize=True))
+        self.assertTrue(harmonization.JSONDict.is_valid('{"foo": "bar"}',
+                                                        sanitize=True))
+        self.assertTrue(harmonization.JSONDict.is_valid(b'{"foo": "bar"}',
+                                                        sanitize=True))
 
     def test_lowercasestring_valid(self):
         """ Test LowercaseString.is_valid with valid arguments. """
@@ -382,6 +421,8 @@ class TestHarmonization(unittest.TestCase):
     def test_asn_sanitize(self):
         """ Test ASN.sanitize with valid arguments. """
         self.assertTrue(harmonization.ASN.is_valid('1234',
+                                                   sanitize=True))
+        self.assertTrue(harmonization.ASN.is_valid('AS1234',
                                                    sanitize=True))
 
     def test_asn_sanitize_invalid(self):

@@ -9,24 +9,23 @@ import json
 from intelmq.lib.bot import ParserBot
 
 
-MAPPING = {"description": "event_description.text",
+MAPPING = {"additionalmetadata": "extra.additionalmetadata",
+           "description": "event_description.text",
            "externalid": "malware.name",
+           "tlplevel": "tlp",
            "firstreporteddatetime": "time.source",
            "networksourceipv4": "source.ip",
            "networksourceport": "source.port",
            "networkdestinationipv4": "destination.ip",
            "networkdestinationport": "destination.port",
+           "isproductlicensed": "extra.isproductlicensed",
+           "ispartnershareable": "extra.ispartnershareable",
            "networksourceasn": "source.asn",
            "hostname": "destination.fqdn",
+           "useragent": "extra.user_agent",
+           "severity": "extra.severity",
+           "tags": "extra.tags",
            }
-EXTRA = {"additionalmetadata": "additionalmetadata",
-         "tlplevel": "tlp",
-         "isproductlicensed": "isproductlicensed",
-         "ispartnershareable": "ispartnershareable",
-         "useragent": "user_agent",
-         "severity": "severity",
-         "tags": "tags",
-         }
 
 
 class MicrosoftCTIPParserBot(ParserBot):
@@ -45,11 +44,8 @@ class MicrosoftCTIPParserBot(ParserBot):
         if 'additionalmetadata' in line and line['additionalmetadata'] in [[], [''], ['null'], [None]]:
             del line['additionalmetadata']
         event = self.new_event(report)
-        extra = {}
         for key, value in line.items():
             if key in ['version', 'indicatorthreattype', 'confidence', 'indicatorexpirationdatetime']:
-                continue
-            if value in ['', None]:
                 continue
             if key == "firstreporteddatetime":
                 value += ' UTC'
@@ -57,16 +53,11 @@ class MicrosoftCTIPParserBot(ParserBot):
                 continue
             if key == 'networkdestinationipv4' and value == '0.0.0.0':
                 continue
-            if key in MAPPING:
-                event[MAPPING[key]] = value
-            else:
-                extra[EXTRA[key]] = value
-        if extra:
-            event.add('extra', extra)
+            event[MAPPING[key]] = value
         event.add('feed.accuracy',
                   event.get('feed.accuracy', 100) * line['confidence'] / 100,
                   overwrite=True)
-        event.add('classification.type', 'botnet drone')
+        event.add('classification.type', 'infected system')
         event.add('raw', raw)
         yield event
 

@@ -32,8 +32,9 @@ import intelmq.lib.utils as utils
 
 __all__ = ['Base64', 'Boolean', 'ClassificationType', 'DateTime', 'FQDN',
            'Float', 'Accuracy', 'GenericType', 'IPAddress', 'IPNetwork',
-           'Integer', 'JSON', 'LowercaseString', 'Registry', 'String', 'URL',
-           'ASN']
+           'Integer', 'JSON', 'JSONDict', 'LowercaseString', 'Registry',
+           'String', 'URL', 'ASN',
+           ]
 
 
 class GenericType(object):
@@ -139,34 +140,35 @@ class ClassificationType(GenericType):
     classification.type type. Allowed values are:
      * """
 
-    allowed_values = ['spam',
-                      'malware',
+    allowed_values = ['backdoor',
+                      'blacklist',
                       'botnet drone',
-                      'ransomware',
-                      'dga domain',
-                      'malware configuration',
-                      'c&c',
-                      'scanner',
-                      'exploit',
                       'brute-force',
-                      'ids alert',
-                      'defacement',
+                      'c&c',
                       'compromised',
-                      'backdoor',
                       'ddos',
+                      'defacement',
+                      'dga domain',
                       'dropzone',
+                      'exploit',
+                      'ids alert',
+                      'infected system',
+                      'leak',
+                      'malware',
+                      'malware configuration',
+                      'other',
                       'phishing',
                       'proxy',
-                      'blacklist',
-                      'other',
+                      'ransomware',
+                      'scanner',
+                      'spam',
                       'test',
                       'tor',
-                      'leak',
+                      'unauthorized-login',
+                      'unauthorized-command',
                       'unknown',
                       'vulnerable client',
                       'vulnerable service',
-                      'unauthorized-login',
-                      'unauthorized-command',
                       ]
 
     __doc__ += '\n     * '.join(allowed_values)
@@ -189,6 +191,15 @@ class ClassificationType(GenericType):
 
 
 class DateTime(GenericType):
+    """
+    Date and time type for timestamps.
+
+    Valid values are timestamps with time zone and in the format '%Y-%m-%dT%H:%M:%S+00:00'.
+    Invalid are missing times and missing timezone information (UTC).
+    Microseconds are also allowed.
+
+    Sanitation normalizes the timezone to UTC, which is the only allowed timezone.
+    """
 
     @staticmethod
     def is_valid(value, sanitize=False):
@@ -236,6 +247,21 @@ class DateTime(GenericType):
             datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f+00:00')
 
         return value
+
+    @staticmethod
+    def from_epoch_millis(tstamp, tzone='UTC'):
+        """
+        Returns ISO formatted datetime from given epoch timestamp with milliseconds.
+        It ignores the milliseconds, converts it into normal timestamp and processes it.
+        """
+        bytecount = len(str(tstamp))
+        int_tstamp = int(tstamp)
+        if bytecount == 10:
+            return DateTime.from_timestamp(int_tstamp, tzone)
+        if bytecount == 12:
+            return DateTime.from_timestamp(int_tstamp // 100, tzone)
+        if bytecount == 13:
+            return DateTime.from_timestamp(int_tstamp // 1000, tzone)
 
     @staticmethod
     def from_timestamp(tstamp, tzone='UTC'):
@@ -336,7 +362,7 @@ class Accuracy(GenericType):
                 return float(value) * 100
 
             value = float(value)
-            if value >= 0 or value <= 100:
+            if value >= 0 and value <= 100:
                 return value
         except (ValueError, TypeError):
             return None
@@ -449,7 +475,7 @@ class ASN(GenericType):
     @staticmethod
     def is_valid(value, sanitize=False):
         if sanitize:
-            value = Integer().sanitize(value)
+            value = ASN().sanitize(value)
         if not Integer.is_valid(value):
             return False
         if not ASN.check_asn(value):
@@ -458,6 +484,8 @@ class ASN(GenericType):
 
     @staticmethod
     def sanitize(value):
+        if isinstance(value, str) and value.lower().startswith('as'):
+            value = value[2:]
         value = Integer.sanitize(value)
         if value and ASN.check_asn(value):
             return value
@@ -573,6 +601,44 @@ class JSON(GenericType):
     """
     JSON type.
 
+    Sanitation accepts any valid JSON objects.
+
+    Valid values are only unicode strings with JSON objects.
+    """
+
+    @staticmethod
+    def is_valid(value, sanitize=False):
+        if sanitize:
+            value = JSON().sanitize(value)
+
+        if not isinstance(value, str):
+            return False
+
+        try:
+            json.loads(value)
+        except ValueError:
+            return False
+
+        return True
+
+    @staticmethod
+    def sanitize(value):
+        if value is None:
+            return None
+        if isinstance(value, (str, bytes)):
+            sanitized = GenericType.sanitize(value)
+            if JSON.is_valid(sanitized):
+                return sanitized
+        try:
+            return GenericType().sanitize(json.dumps(value, sort_keys=True))
+        except TypeError:
+            return None
+
+
+class JSONDict(JSON):
+    """
+    JSONDict type.
+
     Sanitation accepts pythons dictionaries and JSON strings.
 
     Valid values are only unicode strings with JSON dictionaries.
@@ -581,7 +647,7 @@ class JSON(GenericType):
     @staticmethod
     def is_valid(value, sanitize=False):
         if sanitize:
-            value = JSON().sanitize(value)
+            value = JSONDict().sanitize(value)
 
         if not isinstance(value, str):
             return False
@@ -597,20 +663,33 @@ class JSON(GenericType):
         return False
 
     @staticmethod
+    def is_valid_subitem(value):
+        return True
+
+    @staticmethod
     def sanitize(value):
         if not value:
             return None
         if isinstance(value, (str, bytes)):
             sanitized = GenericType.sanitize(value)
-            if JSON.is_valid(sanitized):
+            if JSONDict.is_valid(sanitized):
                 return sanitized
         try:
             return GenericType().sanitize(json.dumps(value, sort_keys=True))
         except TypeError:
             return None
 
+    @staticmethod
+    def sanitize_subitem(value):
+        return value
+
 
 class LowercaseString(GenericType):
+    """
+    Like string, but only allows lower case characters.
+
+    Sanitation lowers all characters.
+    """
 
     @staticmethod
     def is_valid(value, sanitize=False):
@@ -633,6 +712,9 @@ class LowercaseString(GenericType):
 
 
 class String(GenericType):
+    """
+    Any non-empty string without leading or trailing whitespace.
+    """
 
     @staticmethod
     def is_valid(value, sanitize=False):
@@ -711,6 +793,11 @@ class URL(GenericType):
 
 
 class UppercaseString(GenericType):
+    """
+    Like string, but only allows upper case characters.
+
+    Sanitation uppers all characters.
+    """
 
     @staticmethod
     def is_valid(value, sanitize=False):

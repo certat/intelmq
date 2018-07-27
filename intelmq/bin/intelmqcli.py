@@ -71,8 +71,8 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
         if self.args.list_feeds:
             self.execute(lib.QUERY_FEED_NAMES, extend=False)
             for row in self.cur.fetchall():
-                if row['feed.name']:
-                    print(row['feed.name'])
+                if row['feed.code']:
+                    print(row['feed.code'])
             exit(0)
 
         if self.args.list_texts:

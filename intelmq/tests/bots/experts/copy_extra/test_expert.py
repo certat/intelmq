@@ -10,7 +10,10 @@ from intelmq.bots.experts.copy_extra.expert import CopyExtraExpertBot
 
 INPUT = {"__type": "Event",
          "time.observation": "2015-01-01T00:00:00+00:00",
-         'extra': '{"deviceid": "foo", "devicerev": "bar", "firmwarerev": 1}'}
+         "extra.deviceid": "foo",
+         "extra.devicerev": "bar",
+         "extra.firmwarerev": 1
+         }
 OUTPUT = INPUT.copy()
 OUTPUT['shareable_extra_info'] = '{"deviceid": "foo", "firmwarerev": 1}'
 

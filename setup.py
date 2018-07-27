@@ -13,7 +13,6 @@ REQUIRES = [
     'python-termstyle>=0.1.10',
     'pytz>=2012c',
     'redis>=2.10',
-    'requests>=2.2.0',
     'tabulate>=0.7.5',
     'rt>=1.0.9',
 ]
@@ -56,7 +55,7 @@ for bot_type, bots in bots.items():
         module = bot['module']
         BOTS.append('{0} = {0}:BOT.run'.format(module))
 
-with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as handle:
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as handle:
     README = handle.read().replace('<docs/',
                                    '<https://github.com/certtools/intelmq/blob/master/docs/')
 
@@ -65,9 +64,19 @@ setup(
     version=__version__,
     maintainer='Sebastian Wagner',
     maintainer_email='wagner@cert.at',
-    python_requires='>=3.3',
+    python_requires='>=3.4',
     install_requires=REQUIRES,
+    test_requires=[
+        'Cerberus',
+        'pyyaml',
+    ],
     test_suite='intelmq.tests',
+    extras_require={
+        'development': [
+            'Cerberus',
+            'pyyaml',
+        ],
+    },
     packages=find_packages(),
     include_package_data=True,
     url='https://github.com/certtools/intelmq/',
@@ -75,6 +84,7 @@ setup(
     description='IntelMQ is a solution for IT security teams for collecting and '
                 'processing security feeds using a message queuing protocol.',
     long_description=README,
+    long_description_content_type="text/markdown",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -85,7 +95,6 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -102,6 +111,7 @@ setup(
             'intelmqctl = intelmq.bin.intelmqctl:main',
             'intelmqdump = intelmq.bin.intelmqdump:main',
             'intelmq_psql_initdb = intelmq.bin.intelmq_psql_initdb:main',
+            'intelmq.bots.experts.sieve.validator = intelmq.bots.experts.sieve.validator:main',
         ] + BOTS,
     },
     scripts=[

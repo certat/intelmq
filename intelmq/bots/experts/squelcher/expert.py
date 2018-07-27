@@ -75,14 +75,6 @@ class SquelcherExpertBot(Bot):
     def process(self):
         event = self.receive_message()
 
-        # XXX FIXME: quick hack by aka 2017/3/3: ignore things which have extra._origin: "dnsmalware"
-        extra = json.loads(event.get('extra', '{}'))
-        if '_origin' in extra:
-            if 'dnsmalware' == extra['_origin']:
-                event.add('notify', False, overwrite=True)
-                self.modify_end(event)
-                return
-
         if 'source.ip' not in event and 'source.fqdn' in event:
             event.add('notify', True, overwrite=True)
             self.modify_end(event)

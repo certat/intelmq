@@ -21,9 +21,9 @@ import psycopg2.extras
 __all__ = ['BASE_WHERE', 'CSV_FIELDS', 'EPILOG',
            'QUERY_DISTINCT_CONTACTS_BY_INCIDENT', 'QUERY_EVENTS_BY_ASCONTACT_INCIDENT',
            'QUERY_FEED_NAMES', 'QUERY_GET_TEXT', 'QUERY_IDENTIFIER_NAMES',
-           'QUERY_INSERT_CONTACT', 'QUERY_OPEN_EVENTS_BY_FEEDNAME', 'QUERY_HALF_PROC_INCIDENTS',
+           'QUERY_INSERT_CONTACT', 'QUERY_OPEN_EVENTS_BY_FEEDCODE', 'QUERY_HALF_PROC_INCIDENTS',
            'QUERY_OPEN_EVENT_IDS_BY_TAXONOMY', 'QUERY_OPEN_EVENT_REPORTS_BY_TAXONOMY',
-           'QUERY_OPEN_FEEDNAMES', 'QUERY_OPEN_TAXONOMIES', 'QUERY_TAXONOMY_NAMES',
+           'QUERY_OPEN_FEEDCODES', 'QUERY_OPEN_TAXONOMIES', 'QUERY_TAXONOMY_NAMES',
            'QUERY_TEXT_NAMES', 'QUERY_TYPE_NAMES', 'QUERY_UPDATE_CONTACT', 'USAGE',
            'getTerminalHeight', 'IntelMQCLIContollerTemplate'
            ]
@@ -77,7 +77,7 @@ USAGE = '''
     intelmqcli --list-types
     intelmqcli --list-texts
     intelmqcli --text='boilerplate name'
-    intelmqcli --feed='feedname' '''
+    intelmqcli --feed='feedcode' '''
 
 SUBJECT = {"abusive content": "Abusive content (spam, ...)",
            "malicious code": "Malicious code (malware, botnet, ...)",
@@ -92,7 +92,7 @@ SUBJECT = {"abusive content": "Abusive content (spam, ...)",
            "test": "Test"
            }
 
-QUERY_FEED_NAMES = "SELECT DISTINCT \"feed.name\" from events"
+QUERY_FEED_NAMES = "SELECT DISTINCT \"feed.code\" from events"
 
 QUERY_IDENTIFIER_NAMES = "SELECT DISTINCT \"classification.identifier\" from events"
 
@@ -145,24 +145,24 @@ BASE_WHERE = """
 "notify" = TRUE AND
 "time.source" >= now() - interval %s AND
 "sent_at" IS NULL AND
-"feed.name" IS NOT NULL AND
+"feed.code" IS NOT NULL AND
 "classification.taxonomy" IS NOT NULL AND
 "source.abuse_contact" IS NOT NULL AND
 (UPPER("source.geolocation.cc") = %s OR SUBSTRING("source.fqdn" from %s) = %s)
 """
 # PART 1: CREATE REPORTS
-QUERY_OPEN_FEEDNAMES = """
+QUERY_OPEN_FEEDCODES = """
 SELECT
-    DISTINCT "feed.name"
+    DISTINCT "feed.code"
 FROM "events"
 WHERE
     "rtir_report_id" IS NULL AND
 """ + BASE_WHERE
-QUERY_OPEN_EVENTS_BY_FEEDNAME = """
+QUERY_OPEN_EVENTS_BY_FEEDCODE = """
 SELECT *
 FROM "events"
 WHERE
-    "feed.name" = %s AND
+    "feed.code" = %s AND
     "rtir_report_id" IS NULL AND
 """ + BASE_WHERE
 # PART 2: INCIDENTS
@@ -338,10 +338,10 @@ class IntelMQCLIContollerTemplate():
         self.time_interval = '' .join(self.args.time_interval)
 
         if self.args.feed:
-            self.additional_where += """ AND "feed.name" = ANY(%s::VARCHAR[]) """
+            self.additional_where += """ AND "feed.code" = ANY(%s::VARCHAR[]) """
             self.additional_params += ('{' + ','.join(self.args.feed) + '}', )
         if self.args.skip_feed:
-            self.additional_where += """ AND "feed.name" != ANY(%s::VARCHAR[]) """
+            self.additional_where += """ AND "feed.code" != ANY(%s::VARCHAR[]) """
             self.additional_params += ('{' + ','.join(self.args.skip_feed) + '}', )
         if self.args.asn:
             self.additional_where += """ AND "source.asn" = ANY(%s::INT[]) """

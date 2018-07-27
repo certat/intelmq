@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Create RTIR reports for data without, per feed.name
+Create RTIR reports for data without, per feed.code
 
 https://github.com/certat/intelmq/issues/53#issuecomment-235338136
 
 evlist = get all open events where report_id IS NULL
-foreach distinct feed.names in evlist
-   report_data = create a zipped json file (minus raw attribute) with events from current feed.name
+foreach distinct feed.codes in evlist
+   report_data = create a zipped json file (minus raw attribute) with events from current feed.code
    create report with attachment report_data
    set report_id for the used events to newly created report
 
@@ -33,10 +33,10 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
         self.connect_database()
 
         if self.args.list_feeds:
-            self.execute(lib.QUERY_OPEN_FEEDNAMES)
+            self.execute(lib.QUERY_OPEN_FEEDCODES)
             for row in self.cur.fetchall():
-                if row['feed.name']:
-                    print(row['feed.name'])
+                if row['feed.code']:
+                    print(row['feed.code'])
             return True
 
         if not self.rt.login():
@@ -47,16 +47,16 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
             self.logger.info('Logged in as {} on {}.'.format(self.config['rt']['user'],
                                                              self.config['rt']['uri']))
 
-        self.execute(lib.QUERY_OPEN_FEEDNAMES)
-        feednames = [x['feed.name'] for x in self.cur.fetchall()]
-        if feednames:
-            self.logger.info("All feeds: " + ", ".join(['%r'] * len(feednames)) % tuple(feednames))
+        self.execute(lib.QUERY_OPEN_FEEDCODES)
+        feedcodes = [x['feed.code'] for x in self.cur.fetchall()]
+        if feedcodes:
+            self.logger.info("All feeds: " + ", ".join(['%r'] * len(feedcodes)) % tuple(feedcodes))
         else:
             self.logger.info('Nothing to do.')
-        for feedname in feednames:
-            self.logger.info('Handling feedname {!r}.'.format(feedname))
-            self.execute(lib.QUERY_OPEN_EVENTS_BY_FEEDNAME,
-                         (feedname, ))
+        for feedcode in feedcodes:
+            self.logger.info('Handling feedcode {!r}.'.format(feedcode))
+            self.execute(lib.QUERY_OPEN_EVENTS_BY_FEEDCODE,
+                         (feedcode, ))
             feeddata = []
             self.logger.info('Found %s events.' % self.cur.rowcount)
             for row in self.cur:
@@ -76,7 +76,7 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                                                          separators=(',', ': ')))
             ziphandle.close()
             attachment.seek(0)
-            subject = 'Reports of {} on {}'.format(feedname, time.strftime('%Y-%m-%d'))
+            subject = 'Reports of {} on {}'.format(feedcode, time.strftime('%Y-%m-%d'))
 
             if self.dryrun:
                 self.logger.info('Dry run: Skipping creation of report.')

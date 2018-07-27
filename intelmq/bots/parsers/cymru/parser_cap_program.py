@@ -25,7 +25,6 @@ class CymruCAPProgramParserBot(ParserBot):
         event.add('time.source', timestamp + ' GMT')
         event.add('source.as_name', asn_name)
         event.add('raw', self.recover_line(line))
-        extra = {}
         if report_type == 'beagle':  # TODO: verify
             # beagle|192.0.2.1|ASN|YYYY-MM-DD HH:MM:SS|[<GET REQUEST>] [srcport <PORT>]|ASNAME
             event.add('classification.type', 'malware')
@@ -51,7 +50,7 @@ class CymruCAPProgramParserBot(ParserBot):
         elif report_type == 'bots':
             # bots|192.0.2.1|ASN|YYYY-MM-DD HH:MM:SS|[srcport <PORT>] [mwtype <TYPE>] [destaddr <IPADDR>]|ASNAME
             # TYPE can contain spaces -.-
-            event.add('classification.type', 'botnet drone')
+            event.add('classification.type', 'infected system')
             comment_results = {}
             comment_key = None
             comment_value = []
@@ -65,7 +64,7 @@ class CymruCAPProgramParserBot(ParserBot):
                     comment_value.append(part)
             for kind, value in comment_results.items():
                 if kind == 'srcport':
-                    extra['source_port'] = int(value)
+                    event['extra.source_port'] = int(value)
                 elif kind == 'mwtype':
                     event['classification.identifier'] = event['malware.name'] = value.lower()
                 elif kind == 'destaddr':
@@ -91,7 +90,7 @@ class CymruCAPProgramParserBot(ParserBot):
             event['classification.type'] = 'compromised'
             event['classification.identifier'] = report_type
             event['source.url'] = comment_split[0]
-            extra['zoneh.id'] = comment_split[1]
+            event['extra.zoneh.id'] = comment_split[1]
         elif report_type == 'fastflux':  # TODO: verify
             # fastflux|192.0.2.1|ASN|YYYY-MM-DD HH:MM:SS|[<DOMAIN>]|ASNAME
             event['classification.type'] = 'compromised'
@@ -118,7 +117,7 @@ class CymruCAPProgramParserBot(ParserBot):
             # Data in comment is not a port but e.g. HTTP CONNECT (8080)
             event['classification.type'] = 'proxy'
             event['classification.identifier'] = 'openproxy'
-            extra['request'] = comments
+            event['extra.request'] = comments
         elif report_type == 'routers':  # TODO: verify
             # routers|192.0.2.1|ASN|YYYY-MM-DD HH:MM:SS|[<DEVICE TYPE>]|ASNAME
             event['classification.type'] = 'compromised'
@@ -162,18 +161,16 @@ class CymruCAPProgramParserBot(ParserBot):
                 elif comment_split[i] in ['legacy', 'crypto']:
                     event['malware.version'] = comment_split[i]
                 elif comment_split[i] == 'srcport':
-                    extra['source_port'] = int(comment_split[i + 1])
+                    event['extra.source_port'] = int(comment_split[i + 1])
                     break
         elif report_type == 'toxbot':  # TODO: verify
             # toxbot|192.0.2.1|ASN|YYYY-MM-DD HH:MM:SS|srcport <SOURCE PORT>|ASNAME
-            event.add('classification.type', 'botnet drone')
+            event.add('classification.type', 'infected system')
             event.add('classification.identifier', report_type)
             event.add('malware.name', report_type)
-            extra['source_port'] = int(comment_split[1])
+            event['extra.source_port'] = int(comment_split[1])
         else:
             raise ValueError('Unknown report %r.', report_type)
-        if extra:
-            event.add('extra', extra)
         yield event
 
 
