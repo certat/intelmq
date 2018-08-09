@@ -30,6 +30,7 @@ CHANGELOG
 - tool `feeds-config-generator` to automatically generate the collector and parser runtime and pipeline configurations.
 - `malware_name_mapping`: Download and convert tool for malware family name mapping has been added.
 - Added a systemd script which creates systemd units for bots (#953).
+- `contrib/cron-jobs/update-asn-data`, `contrib/cron-jobs/update-geoip-data`, `contrib/cron-jobs/update-tor-nodes`: Errors produce proper output.
 
 ### Core
 - lib/bot
@@ -40,6 +41,11 @@ CHANGELOG
   - The parameter `feed` for collectors is deprecated for 2.0 and has been replaced by the more consistent `name` (#1144).
   - bug: allow path parameter for CollectorBot class.
   - Handle errors better when the logger could not be initialized.
+  - `ParserBot`:
+    - For the csv parsing methods, `ParserBot.csv_params` is now used for all these methods.
+    - `ParserBot.parse_csv_dict` now saves the field names in `ParserBot.csv_fieldnames`.
+    - `ParserBot.parse_csv_dict` now saves the raw current line in `ParserBot.current_line`.
+    - `ParserBot.recover_line_csv_dict` now uses the raw current line.
 - lib/message:
   - Subitems in fields of type `JSONDict` (see below) can be accessed directly. E.g. you can do:
     event['extra.foo'] = 'bar'
@@ -91,8 +97,11 @@ CHANGELOG
   - changed feednames . Please refer to it's README for the exact changes.
   - If the conversion function fails for a line, an error is raised and the offending line will be handled according to the error handling configuration.
     Previously errors like these were only logged and ignored otherwise.
-  - add support for the feed `Accessible-Hadoop`
+  - add support for the feeds
+    - `Accessible-Hadoop` (#1231)
+    - `Accessible ADB` (#1285)
   - Remove deprecated parameter `override`, use `overwrite` instead (#1071).
+  - The `raw` values now are exactly the input with quotes unchanged, the ParserBot methods are now used directly (#1011).
 - The Generic CSV Parser `bots.parsers.generic.parser_csv`:
   - It is possible to filter the data before processing them using the new parameters `filter_type` and `filter_text`.
   - It is possible to specify multiple columns using `|` character in parameter `columns`.
@@ -127,6 +136,9 @@ CHANGELOG
 - Added domain suffix expert to extract the TLD/Suffix from a domain name.
 - `bots.experts.maxmind_geoip`: New (optional) parameter `overwrite`, by default false. The current default was to overwrite!
 - `intelmq.bots.experts.ripencc_abuse_contact`: Remove deprecated parameter `query_ripe_stat`, use `query_ripe_stat_asn` and `query_ripe_stat_ip` instead (#1071).
+- `intelmq/bots/experts/asn_lookup/update-asn-data`: Errors produce proper output on stdout/stderr.
+- `intelmq/bots/experts/maxmind_geoip/update-geoip-data`: Errors produce proper output on stdout/stderr.
+- `intelmq/bots/experts/tor_nodes/update-tor-nodes`: Errors produce proper output on stdout/stderr.
 
 #### Outputs
 - `bots.outputs.file`:
@@ -187,6 +199,7 @@ CHANGELOG
 
 ### Documentation
 - Bots: document redis cache parameters.
+- Installation documentation: Ubuntu needs universe repositories.
 
 ### Packaging
 - Dropped support for Ubuntu 17.10, it reached its End of Life as of 2018-07-19.

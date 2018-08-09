@@ -9,7 +9,7 @@ from intelmq.bots.collectors.rt.collector_rt import RTCollectorBot
 REPORT = {'__type': 'Report',
           'feed.accuracy': 100.0,
           'feed.name': 'Request Tracker',
-          'rtir_id': 6,
+          'rtir_report_id': 6,
           }
 
 
