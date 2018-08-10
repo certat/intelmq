@@ -5,9 +5,8 @@ Squelcher Expert marks events as new or old depending on a TTL(ASN, Net, IP).
 from __future__ import unicode_literals
 from ipaddress import ip_address, ip_network
 
-import json
-
 from intelmq.lib.bot import Bot
+from intelmq.lib.message import Event
 from intelmq.lib.utils import load_configuration
 
 try:
@@ -138,6 +137,37 @@ class SquelcherExpertBot(Bot):
     def modify_end(self, event):
         self.send_message(event)
         self.acknowledge_message()
+
+    @staticmethod
+    def check(parameters):
+        retval = []
+        try:
+            config = load_configuration(parameters['configuration_path'])
+        except ValueError as exc:
+            return [['error', 'Could not load configuration: %r.' % exc]]
+        for ruleset in config:
+            condition = ruleset[0].copy()
+            if 'source.network' in condition:
+                try:
+                    ip_network(condition['source.network'])
+                except ValueError as exc:
+                    retval += [['warning', '%r is not a valid IP network: %r.' % (condition['source.network'], exc)]]
+                del condition['source.network']
+            if 'source.iprange' in condition:
+                try:
+                    netaddr.IPRange(*condition['source.iprange'])
+                except ValueError as exc:
+                    retval += [['warning', '%r is not a valid IP range: %r.' % (*condition['source.iprange'], exc)]]
+                del condition['source.iprange']
+            try:
+                Event(condition)
+            except Exception as exc:
+                retval += [['warning', 'Failed to parse conditions as Event: %r.' % (exc)]]
+            try:
+                int(ruleset[1]['ttl'])
+            except ValueError as exc:
+                retval += [['error', '%r is not a valid TTL: %r.' % (ruleset[1]['ttl'], exc)]]
+        return retval
 
 
 BOT = SquelcherExpertBot
