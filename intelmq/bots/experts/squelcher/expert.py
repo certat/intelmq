@@ -157,7 +157,7 @@ class SquelcherExpertBot(Bot):
                 try:
                     netaddr.IPRange(*condition['source.iprange'])
                 except ValueError as exc:
-                    retval += [['warning', '%r is not a valid IP range: %r.' % (*condition['source.iprange'], exc)]]
+                    retval += [['warning', '%r is not a valid IP range: %r.' % (condition['source.iprange'], exc)]]
                 del condition['source.iprange']
             try:
                 Event(condition)
