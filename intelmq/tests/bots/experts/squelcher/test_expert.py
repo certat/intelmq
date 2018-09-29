@@ -82,6 +82,9 @@ INPUT_RANGE = {"__type": "Event",
                "source.ip": "10.0.0.10",
                }
 
+INPUT9 = INPUT1.copy()
+INPUT9['extra.additionalmetadata'] = ['foobar']
+
 
 @test.skip_database()
 @test.skip_exotic()
@@ -270,6 +273,14 @@ INSERT INTO {table}(
         self.truncate()
         self.assertLogMatches('Found TTL 115200 for', levelname='DEBUG')
         self.assertMessageEqual(0, OUTPUT5)
+
+    def test_extra_list(self):
+        """ lists in extra data is handled. """
+        self.insert('zeus', 'botnet drone', True, 1, '192.0.2.1', '0')
+        self.input_message = INPUT9
+        self.run_bot()
+        self.truncate()
+        self.assertMessageEqual(0, INPUT9)
 
     @classmethod
     def tearDownClass(cls):

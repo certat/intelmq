@@ -83,6 +83,10 @@ class SquelcherExpertBot(Bot):
             self.modify_end(event)
             return
 
+        event_copy = event.to_dict()
+        if 'extra.additionalmetadata' in event:
+            event_copy['extra.additionalmetadata'] = tuple(event['extra.additionalmetadata'])
+
         ttl = None
         for ruleset in self.config:
             condition = ruleset[0].copy()
@@ -94,7 +98,7 @@ class SquelcherExpertBot(Bot):
             if 'source.iprange' in condition and 'source.ip' in event:
                 conditions.append(event['source.ip'] in netaddr.IPRange(*condition['source.iprange']))
                 del condition['source.iprange']
-            if set(condition.items()).issubset(event.items()) and all(conditions):
+            if set(condition.items()).issubset(event_copy.items()) and all(conditions):
                 ttl = ruleset[1]['ttl']
                 break
 
