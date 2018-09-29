@@ -3,7 +3,23 @@ NEWS
 
 See the changelog for a full list of changes.
 
-1.1.0 Feature release (unreleased)
+1.1.1 Bugfix release (unreleased)
+----------------------------------
+
+### Tools
+
+### Harmonization
+
+### Configuration
+
+### Libraries
+
+### Postgres databases
+
+### MongoDB databases
+In previous version the MongoDB Output Bot saved the fields `time.observation` and `time.source` as strings in ISO format. But MongoDB does support saving datetime objects directly which are converted to its native date format, enabling certain optimizations and features. The MongoDB Output Bot now saves these values as datetime objects.
+
+1.1.0 Feature release (2018-09-05)
 ----------------------------------
 ### Requirements
 - Python 3.4 or newer is required.

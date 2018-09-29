@@ -1,7 +1,51 @@
 CHANGELOG
 ==========
 
-1.1.0 (unreleased)
+1.1.1 (unreleased)
+------------------
+
+### Core
+- `lib/harmonization.py`: Change `parse_utc_isoformat` of `DateTime` class from private to public (related to #1322).
+- `lib/utils.py`: Add new function `object_pair_hook_bots`.
+
+### Development
+- `bin/rewrite_config_files.py`: Fix ordering of BOTS file (#1327).
+
+### Harmonization
+
+### Bots
+#### Collectors
+
+#### Parsers
+- `intelmq.bots.parsers.misp`: Fix Object attribute (#1318).
+
+#### Experts
+
+#### Outputs
+- `intelmq.bots.outputs.redis`: Fix sending password to redis server.
+- `intelmq.bots.outputs.mongodb`:
+  - New parameter `replacement_char` (default: `'_'`) for non-hierarchical output as dots in key names are not allowed (#1324, #1322).
+  - Save value of fields `time.observation` and `time.source` as native datetime object, not as string (#1322).
+
+### Documentation
+- FAQ: Explanation and solution on orphaned queues.
+- Add or fix the tables of contents for all documentation files.
+
+### Packaging
+- Change the maintainer from Sasche Wilde to Sebastian Wagner (#1320).
+
+### Tests
+
+### Tools
+- `intelmqctl check`: Shows more detailed information on orphaned queues.
+
+### Contrib
+- elasticsearch/elasticmapper: Add tlp field (#1308).
+
+### Known issues
+
+
+1.1.0 (2018-09-05)
 ------------------
 - Support for Python 3.3 has been dropped in IntelMQ and some dependencies of it. Python 3.3 reached its end of life and Python 3.4 or newer is a hard requirement now.
 - The list of feeds docs/Feeds.md has now a machine-readable equivalent YAML file in intelmq/etc/feeds.yaml
@@ -179,9 +223,11 @@ CHANGELOG
 - New test for checking if `docs/Feeds.md` is up to date with `etc/feeds.yaml`.
 
 ### Known bugs
+- contrib: feeds-config-generator does not add feed name as parameter (#1314).
+- bot debugger requires configured source pipeline (#1307).
+- shadowserver parser: drone feed has spam events (#1271).
+- debug log level on python 3.7 not applied (#1269).
 - `bots.experts.sieve` does not support textX (#1246).
-- performance degradation for extra fields (#1117).
-- Postgres output: support condensed JSONDicts (#1107).
 - Bots started with IntelMQ-Manager stop when the webserver is restarted (#952).
 
 1.0.6 Bugfix release (2018-08-31)
@@ -234,6 +280,7 @@ CHANGELOG
 - `cron-jobs/update-tor-nodes`: Use check.torproject.org as source as internet2.us is down (#1289).
 
 ### Known issues
+- shadowserver parser: drone feed has spam events (#1271).
 
 
 1.0.5 Bugfix release (2018-06-21)
