@@ -6,7 +6,6 @@ import csv
 import datetime
 import io
 import json
-import requests
 import logging
 import os
 import psutil
@@ -85,6 +84,7 @@ class Bot(object):
             self.__load_pipeline_configuration()
             self.__load_harmonization_configuration()
 
+            self.monitoring_interval = getattr(self.parameters, 'bot_monitoring_interval', 86400)
             self.heartbeat_time = datetime.timedelta(seconds=self.parameters.bot_heartbeat_min_wait)
             if not getattr(self.parameters, 'enabled', True):
                 self.logger.warn('The bot was disabled by configuration. '
@@ -222,12 +222,13 @@ class Bot(object):
             else:
                 if (not self.last_heartbeat or
                         (datetime.datetime.now() - self.last_heartbeat) > self.heartbeat_time):
-                    try:
-                        requests.get(self.parameters.bot_heartbeat_url.format(bot_id=self.__bot_id))
-                    except Exception as exc:
-                        self.logger.exception('heartbeat failed: requests.get() exception.  Reason: %r.' % exc.args[0])
-                    else:
-                        self.last_heartbeat = datetime.datetime.now()
+                    with open('/var/lib/check_mk_agent/spool/%s_intelmq.%s.txt' % (self.monitoring_interval, self.__bot_id),
+                              'w') as checkmk_file:
+                        checkmk_file.write('<<<local>>>\nP intelmq.%s ERROR_RETRIES_COUNTER=%d|TOTAL=0;1;1'
+                                           '' % (self.__bot_id,
+                                                 self.__error_retries_counter + error_on_message + error_on_pipeline,
+                                                 ))
+                    self.last_heartbeat = datetime.datetime.now()
 
             finally:
                 if getattr(self.parameters, 'testing', False):
