@@ -15,12 +15,14 @@ CHANGELOG
 
 ### Bots
 #### Collectors
+- `intelmq.bots.http.collector_http`: Fix parameter `extract_files` in BOTS (#1331).
 
 #### Parsers
 - `intelmq.bots.parsers.misp`: Fix Object attribute (#1318).
 - `intelmq.bots.parsers.cymru.parser_cap_program`:
   - Add support for new format (extra data about botnet of 'bots').
   - Handle AS number 0.
+- `intelmq.bots.parsers.shadowserver.config`: Spam URL reports: remove `src_naics`, `src_sic` columns.
 
 #### Experts
 
