@@ -16,13 +16,19 @@ CHANGELOG
 ### Bots
 #### Collectors
 - `intelmq.bots.http.collector_http`: Fix parameter `extract_files` in BOTS (#1331).
+- `intelmq.bots.collectos.mail.collector_mail_url`:
+  - Handle HTTP status codes != 2xx the same as HTTP timeouts: No exception, but graceful handling.
+  - Handle HTTP errors (bad status code and timeouts) with `error_procedure` == 'pass' but marking the mail as read and logging the error.
 
 #### Parsers
 - `intelmq.bots.parsers.misp`: Fix Object attribute (#1318).
 - `intelmq.bots.parsers.cymru.parser_cap_program`:
   - Add support for new format (extra data about botnet of 'bots').
   - Handle AS number 0.
-- `intelmq.bots.parsers.shadowserver.config`: Spam URL reports: remove `src_naics`, `src_sic` columns.
+- `intelmq.bots.parsers.shadowserver`:
+  - Spam URL reports: remove `src_naics`, `src_sic` columns.
+  - fix parsing of 'spam' events in ShadowServer's 'Botnet Drone Hadoop' Report (#1271).
+  - Add support in parser to ignore some columns in config file by using `False` as intelmq key.
 
 #### Experts
 
@@ -35,6 +41,7 @@ CHANGELOG
 ### Documentation
 - FAQ: Explanation and solution on orphaned queues.
 - Add or fix the tables of contents for all documentation files.
+- Feeds: Fix Autoshun Feed URL (#1325).
 
 ### Packaging
 - Change the maintainer from Sasche Wilde to Sebastian Wagner (#1320).
