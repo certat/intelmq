@@ -12,7 +12,6 @@ from intelmq.bots.collectors.rt.collector_rt import RTCollectorBot
 REPORT = {'__type': 'Report',
           'feed.accuracy': 100.0,
           'feed.name': 'Request Tracker',
-          'rtir_report_id': 1,
           'raw': 'bm90IGNvbXBsZXRlbHkgZW1wdHk=',
           }
 
@@ -56,7 +55,7 @@ class TestRTCollectorBot(test.BotTestCase, unittest.TestCase):
         ticket_id = instance.create_ticket(Queue=self.sysconfig['search_queue'], Subject=self.sysconfig['search_subject_like'], Owner=self.sysconfig['search_owner'], Status=self.sysconfig['search_status'], files=[('test.csv', attachment, 'text/csv')])
 
         self.run_bot()
-        REPORT['rtir_id'] = ticket_id
+        REPORT['rtir_report_id'] = ticket_id
         self.assertMessageEqual(0, REPORT)
 
 
