@@ -11,6 +11,7 @@ See the changelog for a full list of changes.
 ### Harmonization
 
 ### Configuration
+In 1.1.0 the default value for the parameter `error_dump_message` was set to `false`. The recommended value, used in previous and future release` is `true` to not loose any data in case of errors. Users are advised to check the values configured in their `defaults.conf` file.
 
 ### Libraries
 
@@ -21,6 +22,20 @@ Please check if you did use these feed names and eventually adapt them for your 
 UPDATE events
    SET "classification.taxonomy" = 'abusive content', "classification.type" = 'spam', "classification.identifier" = 'spam', "malware.name" = NULL, "source.fqdn" = "source.reverse_dns", "source.reverse_dns" = NULL, "source.url" = "destination.url", "destination.url" = NULL
    WHERE "malware.name" = 'spam' AND "feed.name" = 'Drone';
+```
+
+In the section for 1.1.0 there was this command:
+```
+UPDATE events
+   SET "classification.identifier" = 'open-portmapper',
+       "protocol.application" = 'portmap'
+   WHERE "classification.identifier" = 'openportmapper' AND "feed.name" = 'Open-Portmapper' AND "protocol.application" = 'portmapper';
+```
+`protocol.application` was incorrect. To fix it you can use:
+```
+UPDATE events
+   SET "protocol.application" = 'portmapper'
+   WHERE "classification.identifier" = 'open-portmapper' AND "feed.name" = 'Open-Portmapper' AND "protocol.application" = 'portmap';
 ```
 
 ### MongoDB databases
@@ -141,10 +156,6 @@ UPDATE events
 UPDATE events
    SET "classification.identifier" = 'open-redis'
    WHERE "classification.identifier" = 'openredis' AND "feed.name" = 'Open-Redis';
-UPDATE events
-   SET "classification.identifier" = 'open-portmapper',
-       "protocol.application" = 'portmap'
-   WHERE "classification.identifier" = 'openportmapper' AND "feed.name" = 'Open-Portmapper' AND "protocol.application" = 'portmapper';
 UPDATE events
    SET "classification.identifier" = 'open-ipmi'
    WHERE "classification.identifier" = 'openipmi' AND "feed.name" = 'Open-IPMI';
