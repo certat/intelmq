@@ -324,6 +324,8 @@ class IntelMQCLIContollerTemplate():
         self.parser.add_argument('--time-interval', nargs='+', default='4 days',
                                  help='time interval, parseable by postgres.'
                                       'defaults to "4 days".')
+        self.parser.add_argument('--ton', '--time-observation-newer-than', nargs=1,
+                                 help="Select only events with 'time.observation' newer than the given ISO-formatted datetime.")
 
     def setup(self):
         self.args = self.parser.parse_args()
@@ -368,6 +370,9 @@ class IntelMQCLIContollerTemplate():
         if self.args.skip_identifier:
             self.additional_where += """ AND "classification.identifier" != ANY(%s::VARCHAR[]) """
             self.additional_params += ('{' + ','.join(self.args.skip_identifier) + '}', )
+        if self.args.ton:
+            self.additional_where += """ AND "time.observation" >= %s """
+            self.additional_params += (self.args.ton[0], )
 
         with open('/etc/intelmq/intelmqcli.conf') as conf_handle:
             self.config = json.load(conf_handle)
