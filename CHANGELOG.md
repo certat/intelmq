@@ -30,6 +30,7 @@ CHANGELOG
   - Fix parameter name `extract_files` in BOTS (#1331).
   - Fix handling of `extract_files` parameter if the value is an empty string.
   - Handle not installed dependency library `requests` gracefully.
+  - Explain `extract_files` parameter in docs and use a sane default in BOTS file.
 - `intelmq.bots.collectors.mail.collector_mail_url`:
   - Handle HTTP status codes != 2xx the same as HTTP timeouts: No exception, but graceful handling.
   - Handle HTTP errors (bad status code and timeouts) with `error_procedure` == 'pass' but marking the mail as read and logging the error.
@@ -40,6 +41,8 @@ CHANGELOG
   - Handle not installed dependency library `requests` gracefully.
 - `intelmq.bots.collectors.rt.collector_rt`:
   - Handle not installed dependency library `requests` gracefully.
+- added `intelmq.bots.collectors.shodan.collector_stream` for collecting shodan stream data (#1096).
+  - Correctly check the version of the shodan library, it resulted in wrong comparisons with two digit numbers.
 
 #### Parsers
 - `intelmq.bots.parsers.misp`: Fix Object attribute (#1318).
@@ -60,6 +63,9 @@ CHANGELOG
   - Handle not installed dependency library `requests` gracefully.
 - `intelmq.bots.experts.ripencc_abuse_contact.expert`:
   - Handle not installed dependency library `requests` gracefully.
+- `intelmq.bots.experts.sieve.expert`:
+  - check method: Add missing of the harmonization for the check, caused an error for every check.
+  - Add text and more context to error messages.
 
 #### Outputs
 - `intelmq.bots.outputs.redis`: Fix sending password to redis server.
@@ -81,13 +87,14 @@ CHANGELOG
 
 ### Tests
 - `intelmq.tests.lib.test_bot`: Skip `test_logging_level_other` on python 3.7 because of unclear behavior related to copies of loggers (#1269).
-- `intelmq.tests.bots.collectors.rt.test_collector`: Make test more robust by creating the needed ticket in every test run.
+- `intelmq.tests.bots.collectors.rt.test_collector`: Remove test because the REST interface of the instance has been closed (see also https://github.com/CZ-NIC/python-rt/issues/28).
 
 ### Tools
 - `intelmqctl check`: Shows more detailed information on orphaned queues.
 - `intelmqctl`:
   - Correctly determine the status of bots started with `intelmqctl run`.
   - Fix output of errors during bot status determination, making it compatible to IntelMQ Manager.
+  - `check` subcommand: Show bot ID for messages also in JSON output.
 
 ### Contrib
 - elasticsearch/elasticmapper: Add tlp field (#1308).
