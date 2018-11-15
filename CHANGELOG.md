@@ -1,6 +1,65 @@
 CHANGELOG
 ==========
 
+1.2.0 (unreleased)
+------------------
+- use pyupgrade to upgrade all files to python3-only syntax, e.g. use `super()` instead of `super(..., ...)` in all files. Migration from old to new string formatting has not been applied if the resulting code would be longer.
+
+### Core
+- `lib/bot`:
+  - Dump messages locks the dump file using unix file locks (#574).
+  - Print idle/rate limit time also in human readable format (#1332).
+- `lib/utils`
+  - Function `unzip` to extract files from gzipped and/or tar-archives.
+  - New class `ListHandler`: new handler for logging purpose which saves the messages in a list.
+  - Add function `seconds_to_human`.
+
+### Harmonization
+
+### Bots
+#### Collectors
+- added `intelmq.bots.parsers.opendxl.collector` (#1265).
+- added `intelmq.bots.collectors.api`: collecting data using an HTTP API (#123, #1187).
+- added `intelmq.bots.collectors.rsync` (#1286).
+- `intelmq.bots.collectors.http.collector_http`: Add support for uncompressing of gzipped-files (#1270).
+- `intelmq.collectors.blueliv.collector_crimeserver`: Allow setting the API URL by parameter (#1336).
+- `intelmq.collectors.mail`:
+  - Use internal lib for functionality.
+
+#### Parsers
+- added `intelmq.bots.parsers.mcafee.parser_atd` (#1265).
+- `intelmq.bots.parsers.generic.parser_csv`:
+  - New parameter `columns_required` to optionally ignore parse errors for columns.
+- added `intelmq.bots.parsers.cert_eu.parser_csv` (#1287).
+- added `intelmq.bots.parsers.surbl.surbl`
+
+#### Experts
+- added `intelmq.bots.experts.recordedfuture_iprisk` (#1267).
+- added `intelmq.bots.experts.mcafee.expert_mar` (1265).
+- renamed `intelmq.bots.experts.ripencc_abuse_contact.expert` to `intelmq.bots.experts.ripe.expert`, compatibility shim will be removed in version 3.0.
+  - Added support for geolocation information in ripe expert with a new parameter `query_ripe_stat_geolocation` (#1317).
+
+#### Outputs
+- added `intelmq.bots.experts.mcafee.output_esm` (1265).
+- added `intelmq.bots.outputs.blackhole` (#1279).
+
+### Documentation
+
+### Packaging
+
+### Tests
+- Travis: Change the ownership of `/opt/intelmq` to the current user.
+
+### Tools
+- `intelmqctl check`: Now uses the new `ListHandler` from utils to handle the logging in JSON output mode.
+- `intelmqdump`: Inspecting dumps locks the dump file using unix file locks (#574).
+
+### Contrib
+* `malware_name_mapping`: Added the script `apply_mapping_eventdb.py` to apply the mapping to an eventdb.
+
+### Known issues
+
+
 1.1.1 (unreleased)
 ------------------
 
