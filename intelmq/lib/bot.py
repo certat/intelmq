@@ -252,7 +252,7 @@ class Bot(object):
                                 warnings.warn("Message will be removed from the pipeline and not dumped to the disk. "
                                               "Set `error_dump_message` to true to save the message on disk. "
                                               "This warning is only shown once in the runtime of a bot.")
-                            if '_on_error' in self.__destination_queues:
+                            if self.__destination_queues and '_on_error' in self.__destination_queues:
                                 self.send_message(self.__current_message, path='_on_error')
 
                             # remove message from pipeline
@@ -276,7 +276,9 @@ class Bot(object):
                             self.__error_retries_counter = 0  # reset counter
                         # error_procedure: pass and pipeline problem
                         else:
-                            self.stop()
+                            # retry forever, see https://github.com/certtools/intelmq/issues/1333
+                            # https://lists.cert.at/pipermail/intelmq-users/2018-October/000085.html
+                            pass
 
                 # no errors, check for run mode: scheduled
                 elif self.run_mode == 'scheduled':
@@ -306,7 +308,7 @@ class Bot(object):
             print('Could not initialize logger, only logging to stdout.')
         try:
             self.shutdown()
-        except BaseException:
+        except Exception:
             if self.logger:
                 self.logger.exception('Error during shutdown of bot.')
             else:  # logger not yet initialized
@@ -758,7 +760,7 @@ class ParserBot(Bot):
             report_dump.change('raw', self.recover_line(line))
             if self.parameters.error_dump_message:
                 self._dump_message(exc, report_dump)
-            if '_on_error' in self._Bot__destination_queues:
+            if self._Bot__destination_queues and '_on_error' in self._Bot__destination_queues:
                 self.send_message(report_dump, path='_on_error')
 
         self.logger.info('Sent %d events and found %d error(s).' % (events_count, len(self.__failed)))

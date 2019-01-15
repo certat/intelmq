@@ -70,14 +70,17 @@ CHANGELOG
 - `lib.bot.py`:
   - `ParserBot`'s method `recover_line_csv` now also handles given `tempdata`.
   - `Bot.acknowledge_message()` deletes `__current_message` to free the memory, saves memory in idling parsers with big reports.
-  - `process()`: Warn once per run if `error_dump_message` is set to false.
+  - `start()`: Warn once per run if `error_dump_message` is set to false.
+  - `Bot.start()`, `ParserBot.process()`: If errors happen on bots without destination pipeline, the `on_error` path has been queried and lead to an exception being raised.
+  - `start()`: If `error_procedure` is pass and on pipeline errors, the bot retries forever (#1333).
 - `lib/message.py`:
   - Fix add('extra', ..., overwrite=True): old extra fields have not been deleted previously (#1335).
   - Do not ignore empty or ignored (as defined in `_IGNORED_VALUES`) values of `extra.*` fields for backwards compatibility (#1335).
 - `lib/pipeline.py` (`Redis.receive`): Wait in 1s steps if redis is busy loading its snapshot from disk (#1334).
 
 ### Default configuration
-- Set `error_dump_message` to true by default.
+- Set `error_dump_message` to true by default in `defaults.conf`.
+- Fixed typo in `defaults.conf`: `proccess_manager` -> `process_manager`
 
 ### Development
 - `bin/rewrite_config_files.py`: Fix ordering of BOTS file (#1327).
@@ -103,6 +106,8 @@ CHANGELOG
   - Handle not installed dependency library `requests` gracefully.
 - added `intelmq.bots.collectors.shodan.collector_stream` for collecting shodan stream data (#1096).
   - Correctly check the version of the shodan library, it resulted in wrong comparisons with two digit numbers.
+- `intelmq.bots.collectors.microsoft.collector_interflow`:
+  - Add check if Cache's TTL is big enough compared to `not_older_than` and throw an error otherwise.
 
 #### Parsers
 - `intelmq.bots.parsers.misp`: Fix Object attribute (#1318).
@@ -116,7 +121,12 @@ CHANGELOG
   - Add support for the `Outdated-DNSSEC-Key` and `Outdated-DNSSEC-Key-IPv6` feeds.
   - Add support for the `Accessible-Rsync` feed.
   - Document support for the `Open-LDAP-TCP` feed.
+  - Add support for `Accessible-HTTP` and `Open-DB2-Discovery-Service` (#1349).
+  - Add support for `Accessible-AFP` (#1351).
+  - Add support for `Darknet` (#1353).
 - `intelmq.bots.parsers.generic.parser_csv`: If the `skip_header` parameter was set to `True`, the header was not part of the `raw` field as returned by the `recover_line` method. The header is now saved and handled correctly by the fixed recovery method.
+- `intelmq.bots.parsers.cleanmx.parser`: Use field `first` instead of `firsttime` for `time.source` (#1329, #1348).
+- `intelmq.bots.parsers.twitter.parser`: Support for `url-normalize` >= 1.4.1 and recommend it. Added new optional parameter `default_scheme`, passed to `url-normalize` (#1356).
 
 #### Experts
 - `intelmq.bots.experts.national_cert_contact_certat.expert`:
@@ -126,9 +136,14 @@ CHANGELOG
 - `intelmq.bots.experts.sieve.expert`:
   - check method: Add missing of the harmonization for the check, caused an error for every check.
   - Add text and more context to error messages.
+  - README: Fix 'modify' to 'update' (#1340).
+  - Handle empty rules file (#1343).
 
 #### Outputs
-- `intelmq.bots.outputs.redis`: Fix sending password to redis server.
+- `intelmq.bots.outputs.redis`:
+  - Fix sending password to redis server.
+  - Fix for redis-py >= 3.0.0: Convert Event to string explicitly (#1354).
+  - Use `Redis` class instead of deprecated `StrictRedis` for redis-py >= 3.0.0 (#1355).
 - `intelmq.bots.outputs.mongodb`:
   - New parameter `replacement_char` (default: `'_'`) for non-hierarchical output as dots in key names are not allowed (#1324, #1322).
   - Save value of fields `time.observation` and `time.source` as native datetime object, not as string (#1322).
@@ -136,11 +151,14 @@ CHANGELOG
   - Handle not installed dependency library `requests` gracefully.
 
 ### Documentation
-- FAQ: Explanation and solution on orphaned queues.
+- FAQ
+  - Explanation and solution on orphaned queues.
+  - Section on how and why to remove `raw` data.
 - Add or fix the tables of contents for all documentation files.
 - Feeds:
   - Fix Autoshun Feed URL (#1325).
   - Add parameters `name` and `provider` to `intelmq/etc/feeds.yaml`, `docs/Feeds.md` and `intelmq/bots/BOTS` (#1321).
+- Add SECURITY.md file.
 
 ### Packaging
 - Change the maintainer from Sasche Wilde to Sebastian Wagner (#1320).
@@ -155,6 +173,7 @@ CHANGELOG
   - Correctly determine the status of bots started with `intelmqctl run`.
   - Fix output of errors during bot status determination, making it compatible to IntelMQ Manager.
   - `check` subcommand: Show bot ID for messages also in JSON output.
+  - `run [bot-id] process -m [message]` works also with bots without a configured source pipeline (#1307).
 
 ### Contrib
 - elasticsearch/elasticmapper: Add tlp field (#1308).

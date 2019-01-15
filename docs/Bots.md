@@ -585,8 +585,8 @@ The cache is used to remember which files have already been downloaded. Make sur
 * **Feed parameters** (see above)
 * `api_key`: API generate in their portal
 * `file_match`: an optional regular expression to match file names
-* `not_older_than`: an optional relative (minutes) or absolute time expression to determine the oldest time of a file to be downloaded
-* `redis_cache_*` and especially `redis_cache_ttl`: Settings for the cache where file names of downloaded files are saved.
+* `not_older_than`: an optional relative (minutes) or absolute time (UTC is assumed) expression to determine the oldest time of a file to be downloaded
+* `redis_cache_*` and especially `redis_cache_ttl`: Settings for the cache where file names of downloaded files are saved. The cache's TTL must always be bigger than `not_older_than`.
 
 #### Additional functionalities
 
@@ -740,6 +740,13 @@ http://www.team-cymru.com/bogon-reference.html
 * `domain_whitelist`: domains to be filetered out
 * `substitutions`: semicolon delimited list of even length of pairs of substitutions (for example: '[.];.;,;.' substitutes '[.]' for '.' and ',' for '.')
 * `classification_type: string with a valid classification type as defined in data harmonization
+* `default_scheme`: Default scheme for URLs if not given. See also the next section.
+
+##### Default scheme
+
+The dependency `url-normalize` changed it's behavior in version 1.4.0 from using `http://` as default scheme to `https://`. Version 1.4.1 added the possibility to specify it. Thus you can only use the `default_scheme` parameter with a current version of this library >= 1.4.1, with 1.4.0 you will always get `https://` as default scheme and for older versions < 1.4.0 `http://` is used.
+
+This does not affect URLs which already include the scheme.
 
 ### Shodan
 
@@ -889,7 +896,7 @@ Please check this [README](../intelmq/bots/experts/deduplicator/README.md) file.
 
 #### Configuration Parameters:
 * `type` - either `"whitelist"` or `"blacklist"`
-* `keys` - a list of key names (strings)
+* `keys` - Can be a JSON-list of field names (`["raw", "source.account"]`) or a string with a comma-separated list of field names (`"raw,source.account"`).
 
 ##### Whitelist
 
