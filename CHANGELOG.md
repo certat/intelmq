@@ -75,11 +75,13 @@ CHANGELOG
 #### Parsers
 
 #### Experts
+- `intelmq.bots.experts.sieve.expert`: Fix key definition to allow field names with numbers (`malware.hash.md5`/`sha1`, #1371).
 
 #### Outputs
 
 ### Documentation
 - Install: Update operating system versions
+- Sieve Expert: Fix `elsif` -> `elif`.
 
 ### Packaging
 
@@ -438,10 +440,6 @@ Update to 2018-09-26 version. New values are per taxonomy:
 
 1.0.6 Bugfix release (2018-08-31)
 ---------------------------------
-
-### Core
-
-### Harmonization
 
 ### Bots
 #### Collectors
