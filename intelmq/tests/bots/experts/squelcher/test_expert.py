@@ -85,6 +85,9 @@ INPUT_RANGE = {"__type": "Event",
 INPUT9 = INPUT1.copy()
 INPUT9['extra.additionalmetadata'] = ['foobar']
 
+INPUT10 = INPUT1.copy()
+INPUT10['notify'] = True
+
 
 @test.skip_database()
 @test.skip_exotic()
@@ -106,6 +109,7 @@ class TestSquelcherExpertBot(test.BotTestCase, unittest.TestCase):
                          "database": "intelmq",
                          "user": "intelmq",
                          "password": "intelmq",
+                         "overwrite": True,
                          "sending_time_interval": "2 years",
                          "sslmode": "allow",
                          "table": "tests",
@@ -281,6 +285,15 @@ INSERT INTO {table}(
         self.run_bot()
         self.truncate()
         self.assertMessageEqual(0, INPUT9)
+
+    def test_overwrite_false(self):
+        """ check if notify is not overwritten if not allowed. """
+        self.input_message = INPUT10
+        self.sysconfig['overwrite'] = False
+        self.run_bot()
+        self.sysconfig['overwrite'] = True
+        self.assertLogMatches('Notify field present and not allowed to overwrite, skipping.', levelname='DEBUG')
+        self.assertMessageEqual(0, INPUT10)
 
     @classmethod
     def tearDownClass(cls):

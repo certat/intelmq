@@ -47,6 +47,8 @@ class SquelcherExpertBot(Bot):
         if netaddr is None:
             raise ValueError('Could not import netaddr. Please install it.')
 
+        self.overwrite = getattr(self.parameters, 'overwrite', False)
+
         try:
             if hasattr(self.parameters, 'connect_timeout'):
                 connect_timeout = self.parameters.connect_timeout
@@ -73,6 +75,11 @@ class SquelcherExpertBot(Bot):
 
     def process(self):
         event = self.receive_message()
+
+        if 'notify' in event and not self.overwrite:
+            self.logger.debug('Notify field present and not allowed to overwrite, skipping.')
+            self.modify_end(event)
+            return
 
         if 'source.ip' not in event and 'source.fqdn' in event:
             event.add('notify', True, overwrite=True)

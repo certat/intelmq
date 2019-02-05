@@ -773,6 +773,7 @@
                 "configuration_path": "/opt/intelmq/etc/squelcher.conf",
                 "database": "intelmq-events",
                 "host": "localhost",
+                "overwrite": false,
                 "password": "<password>",
                 "port": 5432,
                 "sending_time_interval": "4 days",

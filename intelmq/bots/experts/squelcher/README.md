@@ -8,6 +8,11 @@ The parameter `sending_time_interval` should match what is configures in `intelm
 
 The configuration file is a JSON-formatted file with a list of lists (rules) with two dictionaries each. The first dictionary matches the event, the second is the TTL.
 
+### Parameters
+
+* Postgresql connection parameters, see postgresql output bot for example
+* `overwrite`, boolean: If `notify` is present and `overwrite` is false (default), no action is performed.
+
 ### Event matching
 
 Each rule given is a field of the event, all of the given ones must match the event. It is not possible to do a logical OR.
