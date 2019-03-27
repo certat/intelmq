@@ -249,14 +249,14 @@ class Bot(object):
 
             else:
                 if (not self.last_heartbeat or
-                        (datetime.datetime.now() - self.last_heartbeat) > self.heartbeat_time):
+                        (datetime.now() - self.last_heartbeat) > self.heartbeat_time):
                     with open('/var/lib/check_mk_agent/spool/%s_intelmq-%s.txt' % (self.monitoring_interval, self.__bot_id),
                               'w') as checkmk_file:
                         checkmk_file.write('<<<local>>>\nP intelmq-%s ERROR_RETRIES_COUNTER=%d|TOTAL=0;1;1\n'
                                            '' % (self.__bot_id,
                                                  self.__error_retries_counter + error_on_message + error_on_pipeline,
                                                  ))
-                    self.last_heartbeat = datetime.datetime.now()
+                    self.last_heartbeat = datetime.now()
 
             finally:
                 if getattr(self.parameters, 'testing', False):
