@@ -30,6 +30,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 - [Malware Domains](#malware-domains)
 - [MalwarePatrol](#malwarepatrol)
 - [MalwareURL](#malwareurl)
+- [McAfee Advanced Threat Defense](#mcafee-advanced-threat-defense)
 - [Microsoft](#microsoft)
 - [Netlab 360](#netlab-360)
 - [Nothink](#nothink)
@@ -39,6 +40,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 - [ShadowServer](#shadowserver)
 - [Spamhaus](#spamhaus)
 - [Sucuri](#sucuri)
+- [Surbl](#surbl)
 - [Taichung](#taichung)
 - [Team Cymru](#team-cymru)
 - [Threatminer](#threatminer)
@@ -55,41 +57,21 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 
 # Abuse.ch
 
-## Feodo Tracker Domains
-
-* **Status:** on
-* **Revision:** 20-01-2018
-* **Description:** The Feodo Tracker Feodo Domain Blocklist contains domain names (FQDN) used as C&C communication channel by the Feodo Trojan. These domains names are usually registered and operated by cybercriminals for the exclusive purpose of hosting a Feodo botnet controller. Hence you should expect no legit traffic to those domains. I highly recommend you to block/drop any traffic towards any Feodo C&C domain by using the Feodo Domain Blocklist. Please consider that domain names are usually only used by version B of the Feodo Trojan. C&C communication channels used by version A, version C and version D are not covered by this blocklist.
-
-### Collector
-
-* **Module:** intelmq.bots.collectors.http.collector_http
-* **Configuration Parameters:**
-*  * `http_url`: `https://feodotracker.abuse.ch/blocklist/?download=domainblocklist`
-*  * `name`: `Feodo Tracker Domains`
-*  * `provider`: `Abuse.ch`
-*  * `rate_limit`: `129600`
-
-### Parser
-
-* **Module:** intelmq.bots.parsers.abusech.parser_domain
-* **Configuration Parameters:**
-
-
 ## Feodo Tracker IPs
 
 * **Status:** on
-* **Revision:** 20-01-2018
-* **Description:** The Feodo Tracker Feodo IP Blocklist contains IP addresses (IPv4) used as C&C communication channel by the Feodo Trojan. This lists contains two types of IP address: Feodo C&C servers used by version A, version C and version D of the Feodo Trojan (these IP addresses are usually compromised servers running an nginx daemon on port 8080 TCP or 7779 TCP that is acting as proxy, forwarding all traffic to a tier 2 proxy node) and Feodo C&C servers used by version B which are usually used for the exclusive purpose of hosting a Feodo C&C server. Attention: Since Feodo C&C servers associated with version A, version C and version D are usually hosted on compromised servers, its likely that you also block/drop legit traffic e.g. towards websites hosted on a certain IP address acting as Feodo C&C for version A, version C and version D. If you only want to block/drop traffic to Feodo C&C servers hosted on bad IPs (version B), please use the blocklist BadIPs documented below.
+* **Revision:** 25-03-2019
+* **Description:** List of botnet Command&Control servers (C&Cs) tracked by Feodo Tracker, associated with Dridex and Emotet (aka Heodo).
+* **Additional Information:** https://feodotracker.abuse.ch/
 
 ### Collector
 
 * **Module:** intelmq.bots.collectors.http.collector_http
 * **Configuration Parameters:**
-*  * `http_url`: `https://feodotracker.abuse.ch/blocklist/?download=ipblocklist`
+*  * `http_url`: `https://feodotracker.abuse.ch/downloads/ipblocklist.csv`
 *  * `name`: `Feodo Tracker IPs`
 *  * `provider`: `Abuse.ch`
-*  * `rate_limit`: `129600`
+*  * `rate_limit`: `3600`
 
 ### Parser
 
@@ -116,6 +98,31 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 
 * **Module:** intelmq.bots.parsers.abusech.parser_ransomware
 * **Configuration Parameters:**
+
+
+## URLhaus
+
+* **Status:** on
+* **Revision:** 14-02-2019
+* **Description:** URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution. URLhaus offers a country, ASN (AS number) and Top Level Domain (TLD) feed for network operators / Internet Service Providers (ISPs), Computer Emergency Response Teams (CERTs) and domain registries.
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.http.collector_http
+* **Configuration Parameters:**
+*  * `http_url`: `https://urlhaus.abuse.ch/feeds/tld/<TLD>/, https://urlhaus.abuse.ch/feeds/country/<CC>/, or https://urlhaus.abuse.ch/feeds/asn/<ASN>/`
+*  * `name`: `URLhaus`
+*  * `provider`: `Abuse.ch`
+*  * `rate_limit`: `129600`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.generic.parser_csv
+* **Configuration Parameters:**
+*  * `columns`: `time.source,source.url,status,extra.urlhaus.threat_type,source.fqdn,source.ip,source.asn,source.geolocation.cc`
+*  * `default_url_protocol`: `http://`
+*  * `skip_header`: `False`
+*  * `type_translation`: `{"malware_download": "malware-distribution"}`
 
 
 ## Zeus Tracker Domains
@@ -556,6 +563,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 * **Status:** on
 * **Revision:** 20-01-2018
 * **Description:** Blueliv Crimeserver Collector is the bot responsible to get the report through the API.
+* **Additional Information:** The service uses a different API for free users and paying subscribers. In 'CrimeServer' feed the difference lies in the data points present in the feed. The non-free API available from Blueliv contains, for this specific feed, following extra fields not present in the free API; "_id" - Internal unique ID "subType" - Subtype of the Crime Server "countryName" - Country name where the Crime Server is located, in English "city" - City where the Crime Server is located "domain" - Domain of the Crime Server "host" - Host of the Crime Server "createdAt" - Date when the Crime Server was added to Blueliv CrimeServer database "asnCidr" - Range of IPs that belong to an ISP (registered via Autonomous System Number (ASN)) "asnId" - Identifier of an ISP registered via ASN "asnDesc" Description of the ISP registered via ASN
 
 ### Collector
 
@@ -1115,6 +1123,28 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 * **Configuration Parameters:**
 
 
+# McAfee Advanced Threat Defense
+
+## Sandbox Reports
+
+* **Status:** on
+* **Revision:** 05-07-2018
+* **Description:** Processes reports from McAfee's sandboxing solution via the openDXL API.
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.opendxl.collector
+* **Configuration Parameters:**
+*  * `dxl_config_file`: `{{location of dxl configuration file}}`
+*  * `dxl_topic`: `/mcafee/event/atd/file/report`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.mcafee.parser_atd
+* **Configuration Parameters:**
+*  * `verdict_severity`: `4`
+
+
 # Microsoft
 
 ## BingMURLs
@@ -1547,6 +1577,27 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 ### Parser
 
 * **Module:** intelmq.bots.parsers.sucuri.parser
+* **Configuration Parameters:**
+
+
+# Surbl
+
+## Malicious Domains
+
+* **Status:** on
+* **Revision:** 04-09-2018
+* **Description:** Detected malicious domains. Note that you have to opened up Sponsored Datafeed Service (SDS) access to the SURBL data via rsync for your IP address.
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.rsync.collector_rsync
+* **Configuration Parameters:**
+*  * `file`: `wild.surbl.org.rbldnsd`
+*  * `rsync_path`: `blacksync.prolocation.net::surbl-wild/`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.surbl.parser
 * **Configuration Parameters:**
 
 

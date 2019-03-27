@@ -44,6 +44,9 @@ DATA = [
     ('/opt/intelmq/var/lib/bots/file-output/',
      [],
      ),
+    ('/opt/intelmq/var/lib/bots/rsync_collector',
+     [],
+     ),
 ]
 
 exec(open(os.path.join(os.path.dirname(__file__),
@@ -118,5 +121,6 @@ setup(
         'intelmq/bots/experts/tor_nodes/update-tor-nodes',
         'intelmq/bots/experts/maxmind_geoip/update-geoip-data',
         'intelmq/bots/experts/asn_lookup/update-asn-data',
+        'intelmq/bots/experts/recordedfuture_iprisk/update-rfiprisk-data',
     ],
 )

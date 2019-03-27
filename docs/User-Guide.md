@@ -119,6 +119,8 @@ You can set these parameters per bot as well. The settings will take effect afte
 
 * **`rate_limit`** - time interval (in seconds) between messages processing.  int value.
 
+* **`ssl_ca_certificate`** - trusted CA certificate for IMAP connections (supported by some bots).
+
 * **`source_pipeline_host`** - broker IP, FQDN or Unix socket that the bot will use to connect and receive messages.
 
 * **`source_pipeline_port`** - broker port that the bot will use to connect and receive messages. Can be empty for Unix socket.
@@ -579,6 +581,8 @@ Processing dragon-research-group-ssh-parser: 2 dumps
 recover (a)ll, delete (e)ntries, (d)elete file, (q)uit, (s)how by ids, (r)ecover by ids? d
 Deleted file /opt/intelmq/var/log/dragon-research-group-ssh-parser.dump
 ```
+
+Bots and the intelmqdump tool use file locks to prevent writing to already opened files. Bots are trying to lock the file for up to 60 seconds if the dump file is locked already by another process (intelmqdump) and then give up. Intelmqdump does not wait and instead only shows an error message.
 
 ## Monitoring Logs
 

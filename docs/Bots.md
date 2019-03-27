@@ -138,6 +138,8 @@
     - [Information:](#information)
     - [Configuration Parameters:](#configuration-parameters)
 - [Outputs](#outputs)
+  - [Elasticsearch](#elasticsearch)
+    - [Configuration Parameters:](#configuration-parameters)
   - [File](#file)
     - [Information:](#information)
     - [Configuration Parameters:](#configuration-parameters)
@@ -239,6 +241,7 @@ This configuration resides in the file `runtime.conf` in your intelmq's configur
 * `http_user_agent`: user agent to use for the request.
 * `http_verify_cert`: path to trusted CA bundle or directory, `false` to ignore verifying SSL certificates,  or `true` (default) to verify SSL certificates
 * `ssl_client_certificate`: SSL client certificate to use.
+* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Only used by some bots.
 * `http_header`: HTTP request headers
 
 **Cache parameters**: Common redis cache parameters used in multiple bots (mainly lookup experts):
@@ -266,13 +269,12 @@ This configuration resides in the file `runtime.conf` in your intelmq's configur
 
 * **Feed parameters** (see above)
 * **HTTP parameters** (see above)
-* `extract_files`: To extract the archive:
-  * `true` for auto-detection / all files
-  * a string of file names separated by `,`
-  * otherwise `null` or `false` for no extraction
+* `extract_files`: Optional, boolean or list of strings. If it is not false, the retrieved (compressed) file or archived will be uncompressed/unpacked and the files are extracted. If the parameter is a list for strings, only the files matching the filenames are extracted. Extraction handles gziped files and both compressed and uncompressed tar-archives.
 * `http_url`: location of information resource (e.g. https://feodotracker.abuse.ch/blocklist/?download=domainblocklist)
-* `http_url_formatting`: If `True` (default `False`) `{time[format]}` will be replaced by the current time formatted by the given format. E.g. if the URL is `http://localhost/{time[%Y]}`, then the resulting URL is `http://localhost/2018` for the year 2018. Currently only the time in local timezone is available. Python's [Format Specification Mini-Language¶](https://docs.python.org/3/library/string.html) is used for this.
+* `http_url_formatting`: (`bool|JSON`, default: `false`) If `true`, `{time[format]}` will be replaced by the current time in local timezone formatted by the given format. E.g. if the URL is `http://localhost/{time[%Y]}`, then the resulting URL is `http://localhost/2019` for the year 2019. (Python's [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec) is used for this.)
+You may use `a JSON` specifiying [time-delta](https://docs.python.org/3/library/datetime.html#datetime.timedelta) parameters to shift the current time accordingly. Ex: type in `{"days": -1}` to use yesterday's date; the URL `http://localhost/{time[%Y-%m-%d]}` will get translated to "http://localhost/2018-12-31" for the 1st Jan of 2019.
 
+Zipped files are automatically extracted if detected.
 
 * * *
 
@@ -321,6 +323,7 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `url_regex`: regular expression of the feed URL to search for in the mail body
 * `sent_from`: filter messages by sender
 * `sent_to`: filter messages by recipient
+* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
 * * *
 
@@ -347,6 +350,7 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `attach_unzip`: whether to unzip the attachment (default: `true`)
 * `sent_from`: filter messages by sender
 * `sent_to`: filter messages by recipient
+* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
 * * *
 
@@ -371,6 +375,7 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `subject_regex`: regular expression to look for a subject
 * `sent_from`: filter messages by sender
 * `sent_to`: filter messages by recipient
+* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 * `content_types`: Which bodies to use based on the content_type. Default: `true`/`['html', 'plain']` for all:
   - string with comma separated values, e.g. `['html', 'plain']`
   - `true`, `false`, `null`: Same as default value
@@ -394,6 +399,25 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `postfix`: FIXME
 * `delete_file`: whether to delete the file after reading (default: `false`)
 
+* * *
+
+### Rsync
+
+Requires the rsync executable
+
+#### Information:
+* `name:` intelmq.bots.collectors.rsync.collector_rsync
+* `lookup:` yes
+* `public:` yes
+* `cache (redis db):` none
+* `description:` Bot download file by rsync and then load data from downloaded file. Downloaded file is located in var/lib/bots/rsync_collector.
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `file`: Name of downloaded file.
+* `rsync_path`: Path to file. It can be "/home/username/directory" or "username@remote_host:/home/username/directory"
+* `temp_directory`: Path of a temporary state directory to use for rsync'd files. Optional. Default: `/opt/intelmq/var/run/rsync_collector/`.
 
 * * *
 
@@ -545,6 +569,24 @@ See the README.md
 
 * **Feed parameters** (see above)
 * `api_key`: location of information resource
+* `api_url`: The optional API endpoint, by default `https://freeapi.blueliv.com`.
+
+* * *
+
+### McAfee openDXL
+
+#### Information:
+* `name:` intelmq.bots.collectors.opendxl.collector
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` collect messages via openDXL
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `dxl_config_file`: location of the config file containing required information to connect $
+* `dxl_topic`: the name of the DXL topix to subscribe
 
 * * *
 
@@ -641,6 +683,25 @@ Collects tweets from target_timelines. Up to tweet_count tweets from each user a
 * `acces_token_key`: Twitter api login data
 * `access_token_secret`: Twitter api login data
 
+### API collector bot
+
+#### Information:
+* `name:` intelmq.bots.collectors.api.collector_api
+* `lookup:` no
+* `public:` no
+* `cache (redis db):` none
+* `description:` Bot for collecting data using API, you need to post JSON to /intelmq/push endpoint
+
+example usage:
+```
+curl -X POST http://localhost:5000/intelmq/push -H 'Content-Type: application/json' --data '{"source.ip": "127.0.0.101", "classification.type": "backdoor"}'
+```
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `port`: 5000
+
 ## Parsers
 
 TODO
@@ -703,6 +764,7 @@ Lines starting with `'#'` will be ignored. Headers won't be interpreted.
      ```
  * `"type_translation"`: If the source does have a field with information for `classification.type`, but it does not correspond to intelmq's types,
 you can map them to the correct ones. The `type_translation` field can hold a JSON field with a dictionary which maps the feed's values to intelmq's.
+ * `"columns_required"`: A list of true/false for each column. By default, it is true for every column.
 
 
 ### Cymru CAP Program
@@ -727,6 +789,54 @@ http://www.team-cymru.com/bogon-reference.html
 * `public:` no
 * `cache (redis db):` none
 * `description:` Parses data from full bogons feed.
+
+### McAfee Advanced Threat Defense File
+
+#### Information:
+* `name:` intelmq.bots.parsers.mcafee.parser_atd_file
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` parses file hash information off ATD reports
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `verdict_severity`: min report severity to parse
+
+* * *
+
+### McAfee Advanced Threat Defense IP
+
+#### Information:
+* `name:` intelmq.bots.parsers.mcafee.parser_atd_file
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` parses IP addresses off ATD reports
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `verdict_severity`: min report severity to parse
+
+* * *
+
+### McAfee Advanced Threat Defense URL
+
+#### Information:
+* `name:` intelmq.bots.parsers.mcafee.parser_atd_file
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` parses URLs off ATD reports
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `verdict_severity`: min report severity to parse
+
+* * *
 
 ### Twitter
 
@@ -1036,8 +1146,6 @@ Documentation about IDEA: https://idea.cesnet.cz/en/index
 
 ### MaxMind GeoIP
 
-See the README.md
-
 #### Information:
 * `name:` maxmind-geoip
 * `lookup:` local database
@@ -1045,10 +1153,73 @@ See the README.md
 * `cache (redis db):` none
 * `description:` IP to geolocation
 
+#### Setup
+
+The bot requires the maxmind's `geoip2` Python library, version 2.2.0 has been tested.
+
+The database is available at https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
+You need to unzip it.
+
+You may want to use a shell script provided in the contrib directory to keep the database up to date: `contrib/cron-jobs/update-geoip-data`
+
 #### Configuration Parameters:
 
-FIXME
+* `database`: Path to the local database, e.g. `"/opt/intelmq/var/lib/bots/maxmind_geoip/GeoLite2-City.mmdb"`
+* `overwrite`: boolean
+* `use_registered`: boolean. MaxMind has two country ISO codes: One for the physical location of the address and one for the registered location. Default is `false` (backwards-compatibility). See also https://github.com/certtools/intelmq/pull/1344 for a short explanation.
 
+* * *
+
+### McAfee Active Response Hash lookup
+
+#### Information:
+* `name:` intelmq.bots.experts.mcafee.expert_mar
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` Queries occurrences of hashes within local environment
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `dxl_config_file`: location of file containing required information to connect to DXL bus
+* `lookup_type`: One of:
+  - `Hash`: looks up `malware.hash.md5`, `malware.hash.sha1` and `malware.hash.sha256`
+  - `DestSocket`: looks up `destination.ip` and `destination.port`
+  - `DestIP`: looks up `destination.ip`
+  - `DestFQDN`: looks up in `destination.fqdn`
+
+* * *
+
+### McAfee Active Response IP lookup
+
+#### Information:
+* `name:` intelmq.bots.experts.mcafee.expert_mar_ip
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` Queries occurrences of connection attempts to destination ip/port within local environment
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `dxl_config_file`: location of file containing required information to connect to DXL bus
+
+* * *
+
+### McAfee Active Response URL lookup
+
+#### Information:
+* `name:` intelmq.bots.experts.mcafee.expert_mar_url
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` Queries occurrences of FQDN lookups within local environment
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `dxl_config_file`: location of file containing required information to connect to DXL bus
 
 * * *
 
@@ -1143,6 +1314,8 @@ You can set the value of the field to a string literal or number.
 In addition you can use the [standard Python string format syntax](https://docs.python.org/3/library/string.html#format-string-syntax)
 to access the values from the processed event as `msg` and the match groups
 of the conditions as `matches`, see the bitdefender example above.
+Group 0 (`[0]`) contains the full matching string. See also the documentation on [`re.Match.group`](https://docs.python.org/3/library/re.html?highlight=re%20search#re.Match.group).
+
 Note that `matches` will also contain the match groups
 from the default conditions if there were any.
 
@@ -1171,6 +1344,25 @@ If the rule is a string, a regex-search is performed, also for numeric values (`
 
 * `filter`: (true/false) act as a a filter for AT.
 * `overwrite_cc`: set to true if you want to overwrite any potentially existing cc fields in the event.
+
+* * *
+
+### RecordedFuture IP risk
+For both `source.ip` and `destination.ip` the corresponding risk score is fetched from a local database created from Recorded Future's API. The score is recorded in `extra.rf_iprisk.source` and `extra.rf_iprisk.destination`. If a lookup for an IP fails a score of 0 is recorded.
+
+See https://www.recordedfuture.com/products/api/ and speak with your recorded future representative for more information.
+
+#### Information:
+* `name:` recordedfuture_iprisk
+* `lookup:` local database
+* `public:` no
+* `cache (redis db):` none
+* `description:` Record risk score associated to source and destination IP if they are present. Assigns 0 to to IPs not in the RF list.
+
+### Configuration Parameters:
+
+* `database`: Location of csv file obtained from recorded future API (a script is provided to download the large IP set)
+* `overwrite`: set to true if you want to overwrite any potentially existing risk score fields in the event.
 
 * * *
 
@@ -1218,9 +1410,9 @@ Sources:
 
 * * *
 
-### RipeNCC Abuse Contact
+### Ripe
 
-RIPE NCC online Abuse Contact Finder for IP addresses and Autonomous Systems.
+Online RIPE Abuse Contact and Geolocation Finder for IP addresses and Autonomous Systems.
 
 #### Information:
 * `name:` ripencc-abuse-contact
@@ -1237,6 +1429,7 @@ RIPE NCC online Abuse Contact Finder for IP addresses and Autonomous Systems.
 * `query_ripe_db_ip`: Query for ASNs at `http://rest.db.ripe.net/abuse-contact/as%s.json`, default `true`
 * `query_ripe_stat_asn`: Query for ASNs at `https://stat.ripe.net/data/abuse-contact-finder/data.json?resource=%s`, default `true`
 * `query_ripe_stat_ip`: Query for IPs at `https://stat.ripe.net/data/abuse-contact-finder/data.json?resource=%s`, default `true`
+* `query_ripe_stat_geolocation`: Query for IPs at `https://stat.ripe.net/data/maxmind-geo-lite/data.json?resource=%s`, default `true`
 
 * * *
 
@@ -1328,6 +1521,58 @@ Note that SIGHUPs and reloads interrupt the sleeping.
 
 ## Outputs
 
+### Blackhole
+
+This output bot discards all incoming messages.
+
+#### Information
+* `name`: blackhole
+* `lookup`: no
+* `public`: yes
+* `cache`: no
+* `description`: discards messages
+
+* * *
+
+
+### Elasticsearch Output Bot
+
+Output Bot that sends events to Elasticsearch
+
+#### Configuration parameters:
+
+* elastic_host       : Name/IP for the Elasticsearch server, defaults to 127.0.0.1
+* elastic_port       : Port for the Elasticsearch server, defaults to 9200
+* elastic_index      : Index for the Elasticsearch output, defaults to intelmq
+* rotate_index       : If set, will index events using the date information associated with the event.
+                       Options: 'never', 'daily', 'weekly', 'monthly', 'yearly'. Using 'intelmq' as the elastic_index, the following are examples of the generated index names:
+
+                       'never' --> intelmq
+                       'daily' --> intelmq-2018-02-02
+                       'weekly' --> intelmq-2018-42
+                       'monthly' --> intelmq-2018-02
+                       'yearly' --> intelmq-2018
+* elastic_doctype    : Elasticsearch document type for the event. Default: events
+* http_username      : http_auth basic username
+* http_password      : http_auth basic password
+* replacement_char   : If set, dots ('.') in field names will be replaced with this character prior to indexing. This is for backward compatibility with ES 2.X. Default: null. Recommended for ES2.X: '_'
+* flatten_fields     : In ES, some query and aggregations work better if the fields are flat and not JSON. Here you can provide a list of fields to convert.
+                       Can be a list of strings (fieldnames) or a string with field names separated by a comma (,). eg `extra,field2` or `['extra', 'field2']`
+                       Default: ['extra']
+
+See contrib/elasticsearch/elasticmapper for a utility for creating Elasticsearch mappings and templates.
+
+If using rotate_index, the resulting index name will be of the form [elastic_index]-[event date].
+To query all intelmq indices at once, use an alias (https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html), or a multi-index query.
+
+The data in ES can be retrieved with the HTTP-Interface:
+
+```bash
+> curl -XGET 'http://localhost:9200/intelmq/events/_search?pretty=True'
+```
+* * *
+
+
 ### File
 
 #### Information:
@@ -1377,6 +1622,25 @@ If the field used in the format string is not defined, `None` will be used as fa
 
 * * *
 
+### McAfee Enterprise Security Manager
+
+#### Information:
+* `name:` intelmq.bots.outputs.mcafee.output_esm_ip
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` Writes information out to McAfee ESM watchlist
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `esm_ip`: IP address of ESM instance
+* `esm_user`: username of user entitled to write to watchlist
+* `esm_pw`: password of user
+* `esm_watchlist`: name of the watchlist to write to
+* `field`: name of the intelMQ field to be written to ESM
+
+* * *
 
 ### MongoDB
 
@@ -1515,7 +1779,7 @@ Client certificates are not supported. If `http_verify_cert` is true, TLS certif
 * `lookup:` no
 * `public:` yes
 * `cache (redis db):` none
-* `description:` TCP is the bot responsible to send events to a TCP port (Splunk, ElasticSearch, another IntelMQ, etc..).
+* `description:` TCP is the bot responsible to send events to a TCP port (Splunk, another IntelMQ, etc..).
 
 #### Configuration Parameters:
 
