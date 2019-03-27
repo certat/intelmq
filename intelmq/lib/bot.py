@@ -97,7 +97,7 @@ class Bot(object):
             self.__load_harmonization_configuration()
 
             self.monitoring_interval = getattr(self.parameters, 'bot_monitoring_interval', 86400)
-            self.heartbeat_time = datetime.timedelta(seconds=self.parameters.bot_heartbeat_min_wait)
+            self.heartbeat_time = timedelta(seconds=self.parameters.bot_heartbeat_min_wait)
             if not getattr(self.parameters, 'enabled', True):
                 self.logger.warn('The bot was disabled by configuration. '
                                  'It will not be started as long as this '
