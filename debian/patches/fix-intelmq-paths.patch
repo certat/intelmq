@@ -1,11 +1,11 @@
 Description: Set all paths to LSB
 Author: Sebastian Wagner <wagner@cert.at>
-Last-Update: 2017-09-20
+Last-Update: 2019-03-28
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/intelmq/__init__.py
 +++ b/intelmq/__init__.py
-@@ -1,14 +1,13 @@
+@@ -1,15 +1,14 @@
  from .version import __version__
  import os
  
@@ -22,6 +22,6 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  PIPELINE_CONF_FILE = os.path.join(CONFIG_DIR, "pipeline.conf")
  RUNTIME_CONF_FILE = os.path.join(CONFIG_DIR, "runtime.conf")
 -VAR_RUN_PATH = os.path.join(ROOT_DIR, "var/run/")
-+VAR_RUN_PATH = "/var/run/intelmq/"
 -VAR_STATE_PATH = os.path.join(ROOT_DIR, "var/lib/bots/")
++VAR_RUN_PATH = "/var/run/intelmq/"
 +VAR_STATE_PATH = "/var/lib/intelmq/bots/"
