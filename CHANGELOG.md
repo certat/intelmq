@@ -17,8 +17,11 @@ CHANGELOG
   - New class `ListHandler`: new handler for logging purpose which saves the messages in a list.
   - Add function `seconds_to_human`.
   - Add function `drop_privileges`.
+  - `parse_relative`: Strip string before parsing.
+  - `parse_logline`: Do not convert the timestamps to UTC, leave them as is.
 - `lib/cache`:
   - Allow ttl to be None explicitly.
+  - Overwrite existing cache keys in the database instead of discarding the new data.
 
 ### Harmonization
 
@@ -42,7 +45,9 @@ CHANGELOG
   - New parameter `columns_required` to optionally ignore parse errors for columns.
 - added `intelmq.bots.parsers.cert_eu.parser_csv` (#1287).
   - Do not overwrite the local `time.observation` with the data from the feed. The feed's field 'observation time' is now saved in the field `extra.cert_eu_time_observation`.
+  - Fix parsing of `asn` (renamed to `source asn`, `source.asn` internally) and handle existing `feed.accuracy` for parsing `confidence`.
 - added `intelmq.bots.parsers.surbl.surbl`
+- `intelmq.bot.parsers.netlab_360.parser`: Handle empty lines containing blank characters (#1393).
 
 #### Experts
 - added `intelmq.bots.experts.recordedfuture_iprisk` (#1267).
@@ -83,6 +88,8 @@ CHANGELOG
 - `malware_name_mapping`:
   - Added the script `apply_mapping_eventdb.py` to apply the mapping to an eventdb.
   - Possibility to add local rules using the download tool.
+- `check_mk`:
+  - Added scripts for monitoring queues and statistics.
 
 ### Known issues
 
