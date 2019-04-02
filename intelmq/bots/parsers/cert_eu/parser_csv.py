@@ -60,7 +60,7 @@ class CertEUCSVParserBot(ParserBot):
             raise ValueError("Unknown version %r. Please report this with an example."
                              "" % line["version"])
         for unknown in self.unknown_fields:
-            if unknown in line:
+            if line[unknown]:
                 raise ValueError("Unable to parse field %r. Please report this with an example"
                                  "" % unknown)
 
