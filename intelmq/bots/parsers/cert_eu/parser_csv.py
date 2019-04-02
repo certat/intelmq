@@ -64,8 +64,7 @@ class CertEUCSVParserBot(ParserBot):
                 raise ValueError("Unable to parse field %r. Please report this with an example"
                                  "" % unknown)
 
-        if "feed code" in line:
-            event["extra.datasource"] = line["feed code"]
+        event["extra.datasource"] = line["feed code"]
         event.add("source.ip", line["source ip"])
         event.add("source.network", line["source bgp prefix"])
         event.add("extra.cert_eu_time_observation",
@@ -73,8 +72,8 @@ class CertEUCSVParserBot(ParserBot):
         event.add("tlp", line["tlp"])
         event.add("event_description.text", line["description"])
         event.add("classification.type", self.abuse_to_intelmq[line["type"]])
-        if "count" in line:
-            event["extra.count"] = int(line["count"]) if line["count"] else None
+        if line["count"]:
+            event["extra.count"] = int(line["count"])
         event.add("time.source", line["source time"])
         event.add("source.geolocation.country", line["source country"])
         event.add("protocol.application", line["protocol"])
@@ -84,23 +83,20 @@ class CertEUCSVParserBot(ParserBot):
         event.add("source.geolocation.geoip_cc", line["source cc"])
         event.add("source.geolocation.longitude", line["source longitude"])
         event.add("extra.source.geolocation.geohash", line["source geohash"])
-        if "first_seen" in line:
+        if line["first_seen"]:
             event["extra.first_seen"] = line["first_seen"]
-        if "num_sensors" in line:
-            event["extra.num_sensors"] = line["num_sensors"]
-        if line["confidence level"] != '':
+        if line["confidence level"]:
             event.add('feed.accuracy',
                       event.get('feed.accuracy', 100) * int(line["confidence level"]) / 100,
                       overwrite=True)
-        if "last_seen" in line:
+        if line["last_seen"]:
             event["extra.last_seen"] = line["last_seen"]
-        if "expiration date" in line:
+        if line["expiration date"]:
             event["extra.expiration_date"] = line["expiration date"]
-        if "status" in line:
+        if line["status"]:
             event["status"] = line["status"]
         event.add("event_description.target", line["target"])
         event.add("source.url", line["url"])
-        event.add("source.port", line["port"])
         event.add("source.abuse_contact", line["abuse contact"])
         event.add("source.asn", line["source asn"])
         event.add("source.as_name", line["source as name"])
