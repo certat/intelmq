@@ -83,14 +83,14 @@ class CertEUCSVParserBot(ParserBot):
         event.add("source.geolocation.geoip_cc", line["source cc"])
         event.add("source.geolocation.longitude", line["source longitude"])
         event.add("extra.source.geolocation.geohash", line["source geohash"])
-        if line["first_seen"]:
-            event["extra.first_seen"] = line["first_seen"]
+        if line["first seen"]:
+            event["extra.first_seen"] = line["first seen"]
         if line["confidence level"]:
             event.add('feed.accuracy',
                       event.get('feed.accuracy', 100) * int(line["confidence level"]) / 100,
                       overwrite=True)
-        if line["last_seen"]:
-            event["extra.last_seen"] = line["last_seen"]
+        if line["last seen"]:
+            event["extra.last_seen"] = line["last seen"]
         if line["expiration date"]:
             event["extra.expiration_date"] = line["expiration date"]
         if line["status"]:
