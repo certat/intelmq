@@ -31,21 +31,26 @@ class CertEUCSVParserBot(ParserBot):
         "vulnerable service": "vulnerable service"
     })
 
-    csv_fieldnames = [
-        "feed code", "source ip", "source time", "observation time", "tlp", "description",
-        "type", "protocol", "destination port", "first_seen", "last_seen",
-        "count", "source cc", "source country", "source city",
-        "source longitude", "source latitude",
-        "city",  # empty
-        "threat type",
-        "source location",  # just a combination of long and lat
-        "source as name", "source bgp prefix", "source geohash", "confidence level",
-        "source asn", "target", "url", "domain name",
-        "version", "expiration date", "source port", "status", "source",
-        "scanner", "abuse_contact", "ns1", "ns2",
-        "response", "recent", "country",  # empty
-        "as name",  # empty
-        ]
+#    csv_fieldnames = [
+#        "feed code", "source ip", "source time", "observation time", "tlp",
+#        "description",
+#        "type", "protocol", "destination port", "first_seen", "last_seen",
+#        "count", "source cc", "source country", "source city",
+#        "source longitude", "source latitude",
+#        "city",  # empty
+#        "threat type",
+#        "source location",  # just a combination of long and lat
+#        "source as name", "source bgp prefix", "source geohash", "confidence level",
+#        "source asn",
+#        "reported asn",
+#        "target", "url", "domain name",
+#        "version", "expiration date", "source port", "status", "source",
+#        "scanner", "abuse_contact", "ns1", "ns2",
+#        "response", "recent", "country",  # empty
+#        "as name",  # empty
+#        "reported cc",
+#        "reported as name",
+#        ]
     unknown_fields = ["threat type", "ns1", "ns2", "response", "recent"]
     ignore_lines_starting = ["#"]
 
