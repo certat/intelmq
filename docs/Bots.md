@@ -62,6 +62,8 @@
     - [Information:](#information)
   - [Cymru Full Bogons](#cymru-full-bogons)
     - [Information:](#information)
+  - [HTML Table Parser](#html-table-parser)
+    - [Configuration parameters](#configuration-parameters)
   - [Twitter](#twitter)
     - [Information:](#information)
     - [Configuration Parameters:](#configuration-parameters)
@@ -241,7 +243,7 @@ This configuration resides in the file `runtime.conf` in your intelmq's configur
 * `http_user_agent`: user agent to use for the request.
 * `http_verify_cert`: path to trusted CA bundle or directory, `false` to ignore verifying SSL certificates,  or `true` (default) to verify SSL certificates
 * `ssl_client_certificate`: SSL client certificate to use.
-* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Only used by some bots.
+* `ssl_ca_certificate`: Optional string of path to trusted CA certificate. Only used by some bots.
 * `http_header`: HTTP request headers
 
 **Cache parameters**: Common redis cache parameters used in multiple bots (mainly lookup experts):
@@ -776,6 +778,16 @@ you can map them to the correct ones. The `type_translation` field can hold a JS
 * `cache (redis db):` none
 * `description:` Parses data from cymru's cap program feed.
 
+#### Description
+
+There are two different feeds available:
+ * infected_$date.txt ("old")
+ * $certname_$date.txt ("new")
+
+The new will replace the old at some point in time, currently you need to fetch both. The parser handles both formats.
+
+##### Old feed
+
 As little information on the format is available, the mappings might not be correct in all cases.
 Some reports are not implemented at all as there is no data available to check if the parsing is correct at all. If you do get errors like `Report ... not implement` or similar please open an issue and report the (anonymized) example data. Thanks.
 
@@ -790,6 +802,86 @@ http://www.team-cymru.com/bogon-reference.html
 * `public:` no
 * `cache (redis db):` none
 * `description:` Parses data from full bogons feed.
+
+### HTML Table Parser
+
+#### Configuration parameters
+
+ * `"columns"`: A list of strings or a string of comma-separated values with field names. The names must match the harmonization's field names. Empty column specifications and columns named `"__IGNORE__"` are ignored. E.g.
+   ```json
+   "columns": [
+        "",
+        "source.fqdn",
+        "extra.http_host_header",
+        "__IGNORE__"
+   ],
+   ```
+   is equivalent to:
+   ```json
+   "columns": ",source.fqdn,extra.http_host_header,"
+   ```
+   The first and the last column are not used in this example.
+    It is possible to specify multiple columns using the `|` character. E.g.
+    ```
+        "columns": "source.url|source.fqdn|source.ip"
+    ```
+    First, bot will try to parse the value as url, if it fails, it will try to parse it as FQDN, if that fails, it will try to parse it as IP, if that fails, an error wil be raised.
+    Some use cases -
+
+        - mixed data set, e.g. URL/FQDN/IP/NETMASK  `"columns": "source.url|source.fqdn|source.ip|source.network"`
+
+        - parse a value and ignore if it fails  `"columns": "source.url|__IGNORE__"`
+
+ * `"ignore_values"`:  A list of strings or a string of comma-separated values which will not considered while assigning to the corresponding fields given in `columns`. E.g.
+   ```json
+   "ignore_values": [
+        "",
+        "unknown",
+        "Not listed",
+   ],
+   ```
+   is equivalent to:
+   ```json
+   "ignore_values": ",unknown,Not listed,"
+   ```
+   The following configuration will lead to assigning all values to malware.name and extra.SBL except `unknown` and `Not listed` respectively.
+   ```json
+   "columns": [
+        "source.url",
+        "malware.name",
+        "extra.SBL",
+   ],
+   "ignore_values": [
+        "",
+        "unknown",
+        "Not listed",
+   ],
+   ```
+   Parameters **columns and ignore_values must have same length**
+ * `"attribute_name"`: Filtering table with table attributes, to be used in conjunction with `attribute_value`, optional. E.g. `class`, `id`, `style`.
+ * `"attribute_value"`: String.
+    To filter all tables with attribute `class='details'` use
+    ```json
+    "attribute_name": "class",
+    "attribute_value": "details"
+    ```
+ * `"table_index"`: Index of the table if multiple tables present. If `attribute_name` and `attribute_value` given, index according to tables remaining after filtering with table attribute. Default: `0`.
+ * `"split_column"`: Padded column to be splitted to get values, to be used in conjection with `split_separator` and `split_index`, optional.
+ * `"split_separator"`: Delimiter string for padded column.
+ * `"split_index"`: Index of unpadded string in returned list from splitting `split_column` with `split_separator` as delimiter string. Default: `0`.
+    E.g.
+    ```json
+    "split_column": "source.fqdn",
+    "split_separator": " ",
+    "split_index": 1,
+    ```
+    With above configuration, column corresponding to `source.fqdn` with value `[D] lingvaworld.ru` will be assigned as `"source.fqdn": "lingvaworld.ru"`.
+ * `"skip_table_head"`: Boolean, skip the first row of the table, optional. Default: `true`.
+ * `"default_url_protocol"`: For URLs you can give a defaut protocol which will be pretended to the data. Default: `"http://"`.
+ * `"time_format"`: Optional. If `"timestamp"`, `"windows_nt"` or `"epoch_millis"` the time will be converted first. With the default `null` fuzzy time parsing will be used.
+ * `"type"`: set the `classification.type` statically, optional
+
+* * *
 
 ### McAfee Advanced Threat Defense File
 
@@ -996,6 +1088,22 @@ Please check this [README](../intelmq/bots/experts/deduplicator/README.md) file.
 
 * * *
 
+### DO Portal Expert Bot
+
+#### Information:
+* `name:` do_portal
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` The DO portal retrieves the contact information from a DO portal instance: http://github.com/certat/do-portal/
+
+#### Configuration Parameters:
+* `mode` - Either `replace` or `append` the new abuse contacts in case there are existing ones.
+* `portal_url` - The URL to the portal, without the API-path. The used URL is `$portal_url + '/api/1.0/ripe/contact?cidr=%s'`.
+* `portal_api_key` - The API key of the user to be used. Must have sufficient privileges.
+
+* * *
+
 ### Field Reducer Bot
 
 #### Information:
@@ -1021,7 +1129,7 @@ The fields in `keys` will be removed from events.
 
 ### Filter
 
-See the README.md
+The filter bot is capable of filtering specific events.
 
 #### Information:
 * `name:` filter
@@ -1032,7 +1140,42 @@ See the README.md
 
 #### Configuration Parameters:
 
-FIXME
+##### Parameters for filtering with key/value attributes:
+* `filter_key` - key from data harmonization
+* `filter_value` - value for the key
+* `filter_action` - action when a message match to the criteria (possible actions: keep/drop)
+* `filter_regex` - attribute determines if the `filter_value` shall be treated as regular expression or not.
+   If this attribute is not empty, the bot uses python's "search" function to evaluate the filter.
+
+##### Parameters for time based filtering:
+* `not_before` - events before this time will be dropped
+* `not_after` - events after this time will be dropped
+
+Both parameters accept string values describing absolute or relative time:
+* absolute
+ * basically anything parseable by datetime parser, eg. "2015-09-012T06:22:11+00:00"
+ * `time.source` taken from the event will be compared to this value to decide the filter behavior
+* relative
+ * accepted string formatted like this "<integer> <epoch>", where epoch could be any of following strings (could optionally end with trailing 's'): hour, day, week, month, year
+ * time.source taken from the event will be compared to the value (now - relative) to decide the filter behavior
+
+Examples of time filter definition:
+* ```"not_before" : "2015-09-012T06:22:11+00:00"``` events older than the specified time will be dropped
+* ```"not_after" : "6 months"``` just events older than 6 months will be passed through the pipeline
+
+#### Possible paths
+
+ * `_default`: default path, according to the configuration
+ * `action_other`: Negation of the default path
+ * `filter_match`: For all events the filter matched on
+ * `filter_no_match`: For all events the filter does not match
+
+| action | match |  `_default` | `action_other` | `filter_match` | `filter_no_match` |
+| ------ | ----- | ----------- | -------------- | -------------- | ----------------- |
+| keep   | ✓     | ✓           | ✗              | ✓              | ✗                 |
+| keep   | ✗     | ✗           | ✓              | ✗              | ✓                 |
+| drop   | ✓     | ✗           | ✓              | ✓              | ✗                 |
+| drop   | ✗     | ✓           | ✗              | ✗              | ✓                 |
 
 * * *
 

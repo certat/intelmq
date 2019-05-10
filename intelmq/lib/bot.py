@@ -2,6 +2,7 @@
 """
 
 """
+import atexit
 import csv
 import fcntl
 import io
@@ -11,13 +12,14 @@ import os
 import re
 import signal
 import sys
+import threading
 import time
 import traceback
 import types
 import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 import psutil
 
@@ -48,7 +50,10 @@ class Bot(object):
 
     _message_processed_verb = 'Processed'
 
-    def __init__(self, bot_id: str):
+    # True for (non-main) threads of a bot instance
+    is_multithreaded = False
+
+    def __init__(self, bot_id: str, start=False, sighup_event=None):
         self.__log_buffer = []
         self.parameters = Parameters()
 
@@ -81,8 +86,9 @@ class Bot(object):
 
             self.__load_defaults_configuration()
 
-            self.__check_bot_id(bot_id)
-            self.__bot_id = bot_id
+            self.__bot_id_full, self.__bot_id, self.__instance_id = self.__check_bot_id(bot_id)
+            if self.__instance_id:
+                self.is_multithreaded = True
             self.__init_logger()
         except Exception:
             self.__log_buffer.append(('critical', traceback.format_exc()))
@@ -94,6 +100,34 @@ class Bot(object):
         try:
             self.logger.info('Bot is starting.')
             self.__load_runtime_configuration()
+
+            """ Multithreading """
+            if hasattr(self.parameters, 'instances_threads') and not self.is_multithreaded:
+                self.logger.handlers = []
+                num_instances = int(self.parameters.instances_threads)
+                instances = []
+                sighup_events = []
+
+                def handle_sighup_signal_threading(signum: int,
+                                                   stack: Optional[object]):
+                    for event in sighup_events:
+                        event.set()
+                signal.signal(signal.SIGHUP, handle_sighup_signal_threading)
+
+                for i in range(num_instances):
+                    sighup_events.append(threading.Event())
+                    threadname = '%s.%d' % (bot_id, i)
+                    instances.append(threading.Thread(target=self.__class__,
+                                                      kwargs={'bot_id': threadname,
+                                                              'start': True,
+                                                              'sighup_event': sighup_events[-1]},
+                                                      name=threadname,
+                                                      daemon=False))
+                    instances[i].start()
+                for i, thread in enumerate(instances):
+                    thread.join()
+                return
+
             self.__load_pipeline_configuration()
             self.__load_harmonization_configuration()
 
@@ -107,11 +141,19 @@ class Bot(object):
 
             self.init()
 
-            self.__sighup = False
-            signal.signal(signal.SIGHUP, self.__handle_sighup_signal)
-            # system calls should not be interrupted, but restarted
-            signal.siginterrupt(signal.SIGHUP, False)
-            signal.signal(signal.SIGTERM, self.__handle_sigterm_signal)
+            if not self.__instance_id:
+                self.__sighup = threading.Event()
+                signal.signal(signal.SIGHUP, self.__handle_sighup_signal)
+                # system calls should not be interrupted, but restarted
+                signal.siginterrupt(signal.SIGHUP, False)
+                signal.signal(signal.SIGTERM, self.__handle_sigterm_signal)
+                signal.signal(signal.SIGINT, self.__handle_sigterm_signal)
+            else:
+                self.__sighup = sighup_event
+
+                @atexit.register
+                def catch_shutdown():
+                    self.stop()
         except Exception as exc:
             if self.parameters.error_log_exception:
                 self.logger.exception('Bot initialization failed.')
@@ -133,6 +175,8 @@ class Bot(object):
                                                           None),
                                          ttl=None,
                                          )
+        if start:
+            self.start()
 
     def __handle_sigterm_signal(self, signum: int, stack: Optional[object]):
         """
@@ -145,7 +189,7 @@ class Bot(object):
         """
         Called when signal is received and postpone.
         """
-        self.__sighup = True
+        self.__sighup.set()
         self.logger.info('Received SIGHUP, initializing again later.')
         if not self.sighup_delay:
             self.__handle_sighup()
@@ -154,7 +198,7 @@ class Bot(object):
         """
         Handle SIGHUP.
         """
-        if not self.__sighup:
+        if not self.__sighup.is_set():
             return False
         self.logger.info('Handling SIGHUP, initializing again now.')
         self.__disconnect_pipelines()
@@ -163,7 +207,8 @@ class Bot(object):
         except Exception:
             self.logger.exception('Error during shutdown of bot.')
         self.logger.handlers = []  # remove all existing handlers
-        self.__init__(self.__bot_id)
+        self.__sighup.clear()
+        self.__init__(self.__bot_id_full, sighup_event=self.__sighup)
         self.__connect_pipelines()
 
     def init(self):
@@ -334,30 +379,34 @@ class Bot(object):
         try:
             for path, n in self.__message_counter["path"].items():
                 # current queue traffic
-                self.__stats_cache.set(".".join((self.__bot_id, "temporary", path)), n, ttl=2)
+                self.__stats_cache.set(".".join((self.__bot_id_full, "temporary", path)), n, ttl=2)
                 self.__message_counter["path_total"][path] += n
                 self.__message_counter["path"][path] = 0
             for path, total in self.__message_counter["path_total"].items():
                 # total queue traffic
-                self.__stats_cache.set(".".join((self.__bot_id, "total", path)), total)
-            self.__stats_cache.set(".".join((self.__bot_id, "stats", "success")),
+                self.__stats_cache.set(".".join((self.__bot_id_full, "total", path)), total)
+            self.__stats_cache.set(".".join((self.__bot_id_full, "stats", "success")),
                                    self.__message_counter["success"])
-            self.__stats_cache.set(".".join((self.__bot_id, "stats", "failure")),
+            self.__stats_cache.set(".".join((self.__bot_id_full, "stats", "failure")),
                                    self.__message_counter["failure"])
             self.__message_counter["stats_timestamp"] = datetime.now()
         except Exception:
             self.logger.debug('Failed to write statistics to cache.', exc_info=True)
 
-    def __sleep(self):
+    def __sleep(self, remaining: Optional[float] = None):
         """
         Sleep handles interrupts and changed rate_limit-parameter.
 
         time.sleep is stopped by signals such as SIGHUP. As rate_limit could
         have been changed, we initialize again and continue to sleep, if
         necessary at all.
+
+        Parameters:
+            remaining: Time to sleep. 'rate_limit' parameter by default if None
         """
         starttime = time.time()
-        remaining = self.parameters.rate_limit
+        if remaining is None:
+            remaining = self.parameters.rate_limit
         while remaining > 0:
             self.logger.info("Idling for {:.1f}s ({}) now.".format(remaining,
                                                                    utils.seconds_to_human(remaining)))
@@ -413,27 +462,32 @@ class Bot(object):
         self.__log_buffer = []
 
     def __check_bot_id(self, name: str):
-        res = re.search(r'[^0-9a-zA-Z\-]+', name)
+        res = re.fullmatch(r'([0-9a-zA-Z\-]+)(\.[0-9]+)?', name)
         if res:
-            self.__log_buffer.append(('error',
-                                      "Invalid bot id, must match '"
-                                      r"[^0-9a-zA-Z\-]+'."))
-            self.stop()
+            if not(res.group(2) and threading.current_thread() == threading.main_thread()):
+                return name, res.group(1), res.group(2)[1:] if res.group(2) else None
+        self.__log_buffer.append(('error',
+                                  "Invalid bot id, must match '"
+                                  r"[^0-9a-zA-Z\-]+'."))
+        self.stop()
 
     def __connect_pipelines(self):
         if self.__source_queues:
             self.logger.debug("Loading source pipeline and queue %r.", self.__source_queues)
-            self.__source_pipeline = PipelineFactory.create(self.parameters)
-            self.__source_pipeline.set_queues(self.__source_queues, "source")
+            self.__source_pipeline = PipelineFactory.create(self.parameters,
+                                                            logger=self.logger,
+                                                            direction="source",
+                                                            queues=self.__source_queues)
             self.__source_pipeline.connect()
             self.logger.debug("Connected to source queue.")
 
         if self.__destination_queues:
             self.logger.debug("Loading destination pipeline and queues %r.",
                               self.__destination_queues)
-            self.__destination_pipeline = PipelineFactory.create(self.parameters)
-            self.__destination_pipeline.set_queues(self.__destination_queues,
-                                                   "destination")
+            self.__destination_pipeline = PipelineFactory.create(self.parameters,
+                                                                 logger=self.logger,
+                                                                 direction="destination",
+                                                                 queues=self.__destination_queues)
             self.__destination_pipeline.connect()
             self.logger.debug("Connected to destination queues.")
         else:
@@ -452,7 +506,8 @@ class Bot(object):
             self.__destination_pipeline = None
             self.logger.debug("Disconnected from destination pipeline.")
 
-    def send_message(self, *messages, path="_default", auto_add=None):
+    def send_message(self, *messages, path="_default", auto_add=None,
+                     path_permissive=False):
         """
         Parameters:
             messages: Instances of intelmq.lib.message.Message class
@@ -480,7 +535,8 @@ class Bot(object):
                 self.__message_counter["start"] = datetime.now()
 
             raw_message = libmessage.MessageFactory.serialize(message)
-            self.__destination_pipeline.send(raw_message, path=path)
+            self.__destination_pipeline.send(raw_message, path=path,
+                                             path_permissive=path_permissive)
 
     def receive_message(self):
         self.logger.debug('Waiting for incoming message.')
@@ -615,7 +671,7 @@ class Bot(object):
             syslog = self.parameters.logging_syslog
         else:
             syslog = False
-        self.logger = utils.log(self.__bot_id, syslog=syslog,
+        self.logger = utils.log(self.__bot_id_full, syslog=syslog,
                                 log_path=self.parameters.logging_path,
                                 log_level=self.parameters.logging_level)
 
@@ -663,8 +719,10 @@ class Bot(object):
     def run(cls):
         if len(sys.argv) < 2:
             sys.exit('No bot ID given.')
+
         instance = cls(sys.argv[1])
-        instance.start()
+        if not instance.is_multithreaded:
+            instance.start()
 
     def set_request_parameters(self):
         self.http_header = getattr(self.parameters, 'http_header', {})
@@ -844,7 +902,7 @@ class ParserBot(Bot):
             if self._Bot__destination_queues and '_on_error' in self._Bot__destination_queues:
                 self.send_message(report_dump, path='_on_error')
 
-        self.logger.info('Sent %d events and found %d error(s).' % (events_count, len(self.__failed)))
+        self.logger.info('Sent %d events and found %d problem(s).' % (events_count, len(self.__failed)))
 
         self.acknowledge_message()
 
@@ -911,12 +969,7 @@ class CollectorBot(Bot):
         return True
 
     def __add_report_fields(self, report: dict):
-        if hasattr(self.parameters, 'feed'):
-            report.add("feed.name", self.parameters.feed)
-            warnings.warn("The parameter 'feed' is deprecated and will be "
-                          "removed in version 2.0. Use 'name' instead.",
-                          DeprecationWarning)
-        else:
+        if hasattr(self.parameters, 'name'):
             report.add("feed.name", self.parameters.name)
         if hasattr(self.parameters, 'code'):
             report.add("feed.code", self.parameters.code)

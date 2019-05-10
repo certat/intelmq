@@ -3,9 +3,58 @@ CHANGELOG
 
 1.2.0 (unreleased)
 ------------------
-- use pyupgrade to upgrade all files to python3-only syntax, e.g. use `super()` instead of `super(..., ...)` in all files. Migration from old to new string formatting has not been applied if the resulting code would be longer.
 
 ### Core
+- Add more and fix some existing type annotations.
+
+### Development
+- Applied isort to all core files and core-related test files, sorting the imports there (every thing except bots and bots' tests).
+
+### Harmonization
+
+### Bots
+#### Collectors
+
+#### Parsers
+
+#### Experts
+- added `intelmq.bots.experts.do_portal.expert`.
+
+#### Outputs
+
+### Documentation
+
+### Packaging
+
+### Tests
+- `test_conf`: For yaml use `safe_load` instead of unsafe `load`.
+- Travis: Switch distribution from trusty to xenial, adapt scripts.
+  - Add Python 3.7 to tests.
+- Don't use Cerberus 1.3 because of https://github.com/pyeve/cerberus/issues/489
+
+### Tools
+
+### Contrib
+
+### Known issues
+
+
+1.2.0.beta1 (2019-04-10)
+------------------------
+There are some features considered as beta and marked as such in the documentation, do not use them in production yet.
+
+### Removals of deprecated code:
+- Removed compatibility shim `intelmq.bots.collectors.n6.collector_stomp`, use `intelmq.bots.collectors.stomp.collector` instead (see #1124).
+- Removed compatibility shim `intelmq.bots.parsers.cymru_full_bogons.parser`, use `intelmq.bots.parsers.cymru.parser_full_bogons` instead.
+- Removed compatibility shim handling deprecated parameter `feed` for collectors. Use `name` instead.
+- Removed deprecated and unused method `intelmq.lib.pipeline.Pipeline.sleep`.
+- Removed support for deprecated parameter `query_ripe_stat` in `intelmq.bots.experts.ripe.expert`, use `query_ripe_stat_asn` and `query_ripe_stat_ip` instead (#1291).
+- Removed deprecated and unused function `intelmq.lib.utils.extract_tar`.
+
+### Core
+- `lib/pipeline`:
+  - Allow setting the broker of source and destination independently.
+  - Support for a new AMQP broker. See User Guide for configuration. (#1179)
 - `lib/bot`:
   - Dump messages locks the dump file using unix file locks (#574).
   - Print idle/rate limit time also in human readable format (#1332).
@@ -22,8 +71,13 @@ CHANGELOG
 - `lib/cache`:
   - Allow ttl to be None explicitly.
   - Overwrite existing cache keys in the database instead of discarding the new data.
+- `lib/bot`:
+  - Basic, but easy-to-configure multi-threading using python's `threading` library. See the User-Guide for more information (#111, #186).
+- `bin/intelmqctl`:
+  - Support for Supervisor as process manager (#693, #1360).
 
-### Harmonization
+### Development
+- upgraded all files to python3-only syntax, e.g. use `super()` instead of `super(..., ...)` in all files. Migration from old to new string formatting has not been applied if the resulting code would be longer.
 
 ### Bots
 #### Collectors
@@ -48,20 +102,28 @@ CHANGELOG
   - Fix parsing of `asn` (renamed to `source asn`, `source.asn` internally) and handle existing `feed.accuracy` for parsing `confidence`.
   - Update columns and mapping to current (2019-04-02) data.
 - added `intelmq.bots.parsers.surbl.surbl`
+- added `intelmq.bots.parsers.html_table` (#1381).
 - `intelmq.bot.parsers.netlab_360.parser`: Handle empty lines containing blank characters (#1393).
 - `intelmq.bots.parsers.n6.parser_n6stomp`: Handle events without IP addresses.
+- `intelmq.bots.parsers.cymru.parser_cap_program`: Handle new feed format.
+- `intelmq.bots.parsers.shadowserver`:
+  - Add support for the `Accessible-FTP` feed (#1391).
+- `intelmq.bots.parsers.dataplane.parser`:
+  - Fix parse errors and log more context (#1396).
+- added `intelmq.bots.parsers.fraunhofer.parser_ddosattack_cnc.py` and `intelmq.bots.parsers.fraunhofer.parser_ddosattack_target.py` (#1373).
 
 #### Experts
 - added `intelmq.bots.experts.recordedfuture_iprisk` (#1267).
 - added `intelmq.bots.experts.mcafee.expert_mar` (1265).
 - renamed `intelmq.bots.experts.ripencc_abuse_contact.expert` to `intelmq.bots.experts.ripe.expert`, compatibility shim will be removed in version 3.0.
   - Added support for geolocation information in ripe expert with a new parameter `query_ripe_stat_geolocation` (#1317).
-  - Restructurize the expert and de-duplicataion (#1384).
+  - Restructurize the expert and code de-duplicataion (#1384).
   - Handle '?' in geolocation country data (#1384).
 - `intelmq.bots.experts.ripe.expert`:
   - Use a requests session (#1363).
   - Set the requests parameters once per session.
 - `intelmq.bots.experts.maxmind_geoip.expert`: New parameter `use_registered` to use the registered country (#1344).
+- `intelmq.bots.experts.filter.expert`: Support for paths (#1208).
 
 #### Outputs
 - added `intelmq.bots.experts.mcafee.output_esm` (1265).
@@ -71,13 +133,17 @@ CHANGELOG
 - `intelmq.bots.outputs.redis`:
   - New parameter `hierarchichal_output` (#1388).
   - New parameter `with_type`.
+- `intelmq.bots.outputs.amqptopic.output`: Compatibility with pika 1.0.0 (#1084, #1394).
 
 ### Documentation
+- added documentation for feeds
+  - CyberCrime Tracker
+  - Feodo Tracker Latest
 - Feeds: Document abuse.ch URLhaus feed (#1379).
-
-### Packaging
+- Install and Upgrading: Use `intelmqsetup` tool.
 
 ### Tests
+- Add tests of AMQP broker.
 - Travis: Change the ownership of `/opt/intelmq` to the current user.
 
 ### Tools
@@ -86,6 +152,7 @@ CHANGELOG
 - `intelmqdump`: Inspecting dumps locks the dump file using unix file locks (#574).
 - `intelmqctl`:
   - After the check if the program runs as root, it tries to drop privileges. Only if this does not work, a warning is shown.
+- `intelmqsetup`: New tool for initialize an IntelMQ environment.
 
 ### Contrib
 - `malware_name_mapping`:
@@ -95,6 +162,18 @@ CHANGELOG
   - Added scripts for monitoring queues and statistics.
 
 ### Known issues
+- Multi-threaded bots require multiple SIGTERMs (#1403)
+- Stats can't be saved with AMQP if redis is password-protected (#1402)
+- Update taxonomies to current RSIT and vice-versa (#1380)
+- stomp collector bot constantly uses 100% of CPU (#1364)
+- tests: capture logging with context manager (#1342)
+- Consistent message counter log messages for all kind of bots (#1278)
+- pymongo 3.0 deprecates used insert method  (#1063)
+- pymongo >= 3.5: authentication changes  (#1062)
+- Bots started with IntelMQ-Manager stop when the webserver is restarted. (#952)
+- n6 parser: mapping is modified within each run (#905)
+- reverse DNS: Only first record is used (#877)
+- Corrupt dump files when interrupted during writing (#870)
 
 
 1.1.2 (2019-03-25)
@@ -187,7 +266,7 @@ CHANGELOG
 - `bin/rewrite_config_files.py`: Fix ordering of BOTS file (#1327).
 
 ### Harmonization
-Update to 2018-09-26 version. New values are per taxonomy:
+Update allowed classification fields to 2018-09-26 version (#802, #1350, #1380). New values for `classification.type` are per taxonomy:
 - Taxonomy 'intrusions':
   - "application-compromise"
   - "burglary"
@@ -268,7 +347,7 @@ Update to 2018-09-26 version. New values are per taxonomy:
 - `intelmq.bots.experts.ripencc_abuse_contact.expert`:
   - Handle not installed dependency library `requests` gracefully.
 - `intelmq.bots.experts.sieve.expert`:
-  - check method: Add missing of the harmonization for the check, caused an error for every check.
+  - check method: Load missing harmonization, caused an error for every check.
   - Add text and more context to error messages.
   - README: Fix 'modify' to 'update' (#1340).
   - Handle empty rules file (#1343).
@@ -447,7 +526,7 @@ Update to 2018-09-26 version. New values are per taxonomy:
 - added `intelmq.bots.parsers.microsoft.parser_bingmurls`
 - added `intelmq.bots.parsers.calidog.parser_certstream` for parsing certstream data (#1120).
 - added `intelmq.bots.parsers.shodan.parser` for parsing shodan data (#1096).
-- change the classification type from 'botnet drone' to infected system' in various parses.
+- change the classification type from 'botnet drone' to 'infected system' in various parses.
 - `intelmq.bots.parsers.spamhaus.parser_cert`: Added support for all known bot types.
 
 #### Experts
@@ -573,7 +652,7 @@ Update to 2018-09-26 version. New values are per taxonomy:
 ### Bots
 #### Collectors
 - `bots.collectors.mail.collector_mail_url`: handle empty downloaded reports (#988).
-- `bots.collectos.file.collector_file`: handle empty files (#1244).
+- `bots.collectors.file.collector_file`: handle empty files (#1244).
 
 #### Parsers
 - Shadowserver parser:
@@ -681,14 +760,18 @@ no known issues
 ### Bots
 #### Collectors
 - `bots.collectors.mail.collector_mail_attach`: Support attachment file parsing for imbox versions newer than 0.9.5 (#1134).
-- `bots.outputs.smtp.output`: Fix STARTTLS, threw an exception (#1152, #1153).
 
 #### Parsers
 - All CSV parsers ignore NULL-bytes now, because the csv-library cannot handle it (#967, #1114).
-- `bots.experts.modify` default ruleset: changed conficker rule to catch more spellings.
 - `bots.parsers.shadowserver.parser`: Add Accessible Cisco Smart Install (#1122).
 - `bots.parsers.cleanmx.parser`: Handle new columns `first` and `last`, rewritten for XML feed. See NEWS.md for upgrade instructions (#1131, #1136, #1163).
 - `bots.parsers.n6.parser`: Fix classification mappings. See NEWS file for changes values (#738, #1127).
+
+#### Experts
+- `bots.experts.modify` default ruleset: changed conficker rule to catch more spellings.
+
+#### Outputs
+- `bots.outputs.smtp.output`: Fix STARTTLS, threw an exception (#1152, #1153).
 
 ### Documentation
 - `Release.md` add release procedure documentation
@@ -851,13 +934,20 @@ v1.0.0.dev7 Beta release (2017-05-09)
 ### Documentation
 - more verbose installation and upgrade instructions
 
-### Bot changes
-- added bots.experts.field_reducer, bots.outputs.smtp
+### Bots
+#### Collectors
 - bots.collectors.alienvault_otx: OTX library has been removed, install it as package instead
+
+#### Parsers
+- API keys will be removed from feed.url if possible
+- `intelmq.bots.parsers.shadowserver.config`:
+  - Added support for Compromised-Website, Open-Netis, NTP-Version, Sandbox-URL, Spam-URL, Vulnerable-ISAKMP, Botnet-CCIP, Accessible-RDP, Open-LDAP, Blacklisted-IP, Accessible-Telnet, Accessible-CWMP (#748).
+
+#### Experts
+- added bots.experts.field_reducer, bots.outputs.smtp
 - bots.experts.deduplicator: `ignore_keys` has been renamed to `filter_keys` and `filter_type` has been removed.
 - bots.experts.modify: The configration is now list-based for a consistent ordering
 - bots.experts.tor_node as an optional parameter `overwrite`
-- API keys will be removed from feed.url if possible
 
 ### Harmonization
 - New parameter and field named feed.documentation to link to documentation of the feed
@@ -881,7 +971,7 @@ Changes between 0.9 and 1.0.0.dev6
 - unittests for library and bots
 - bots/BOTS now contains only generic and specific collectors. For a list of feeds, see docs/Feeds.md
 
-### executables
+### Tools
 - DEV: intelmq_gen_harm_docs: added to generate Harmonization documentation
 - intelmq_psql_initdb: creates a table for a postgresql database using the harmonization fields
 - intelmqctl: reworked argument parsing, many bugfixes
@@ -889,7 +979,7 @@ Changes between 0.9 and 1.0.0.dev6
 - DEV: rewrite_config_files: added to rewrite configuration files with consistent style
 
 
-### Bot changes
+### Bots
 #### Collectors
 - added alienvault, alienvault otx, bitsight, blueiv, file, ftp, misp, n6, rtir, xmpp collector
 - removed hpfeeds collector

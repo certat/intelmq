@@ -417,6 +417,18 @@
             "module": "intelmq.bots.parsers.dyn.parser",
             "parameters": {}
         },
+        "Fraunhofer DDoS Attack C&C": {
+            "description": "Fraunhofer DDoS Attack C&C Feed Parser is the bot responsible to parse the report and sanitize the information.",
+            "module": "intelmq.bots.parsers.fraunhofer.parser_ddosattack_cnc",
+            "parameters": {
+                "unknown_messagetype_accuracy": 10.0
+            }
+        },
+        "Fraunhofer DDoS Attack Target": {
+            "description": "Fraunhofer DDoS Attack Target Feed Parser is the bot responsible to parse the report and sanitize the information.",
+            "module": "intelmq.bots.parsers.fraunhofer.parser_ddosattack_target",
+            "parameters": {}
+        },
         "Fraunhofer DGA": {
             "description": "Fraunhofer DGA Parser is the bot responsible to parse the report and sanitize the information.",
             "module": "intelmq.bots.parsers.fraunhofer.parser_dga",
@@ -439,6 +451,30 @@
                 "time_format": null,
                 "type": "c&c",
                 "type_translation": null
+            }
+        },
+        "HTML Table": {
+            "description": "HTML Table Parser is a bot configurable to parse different html table data.",
+            "module": "intelmq.bots.parsers.html_table.parser",
+            "parameters": {
+                "columns": [
+                    "",
+                    "source.fqdn"
+                ],
+                "ignore_values": [
+                    "",
+                    ""
+                ],
+                "table_index": 0,
+                "skip_table_head": true,
+                "attribute_name": "",
+                "attribute_value": "",
+                "split_column": "",
+                "split_separator": "",
+                "split_index": 0,
+                "default_url_protocol": "http://",
+                "time_format": null,
+                "type": "c&c"
             }
         },
         "HpHosts": {
@@ -692,6 +728,14 @@
                 "redis_cache_password": null,
                 "redis_cache_port": "6379",
                 "redis_cache_ttl": "86400"
+            }
+        },
+        "DO-Portal": {
+            "description": "Retrieves contact information for the affected CIDR from a do-portal instance.",
+            "module": "intelmq.bots.experts.do_portal.expert",
+            "parameters": {
+                "portal_api_key": "<INSERT KEY>",
+                "portal_url": "<INSERT URL HERE>"
             }
         },
         "Domain Suffix": {

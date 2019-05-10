@@ -3,9 +3,8 @@
 Tests the Bot class itself.
 """
 
-import unittest
 import sys
-
+import unittest
 
 import intelmq.lib.test as test
 from intelmq.tests.lib import test_parser_bot
@@ -22,6 +21,7 @@ class TestBot(test.BotTestCase, unittest.TestCase):
     def test_bot_name(self):
         pass
 
+    @test.skip_travis()
     def test_pipeline_raising(self):
         self.sysconfig = {"raise_on_connect": True}
         self.default_input_message = None
