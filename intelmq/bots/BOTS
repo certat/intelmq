@@ -449,7 +449,7 @@
                 "filter_type": null,
                 "skip_header": true,
                 "time_format": null,
-                "type": "c&c",
+                "type": "c2server",
                 "type_translation": null
             }
         },
@@ -474,7 +474,7 @@
                 "split_index": 0,
                 "default_url_protocol": "http://",
                 "time_format": null,
-                "type": "c&c"
+                "type": "c2server"
             }
         },
         "HpHosts": {
@@ -964,6 +964,10 @@
                 "elastic_doctype": "events",
                 "http_username": null,
                 "http_password": null,
+                "use_ssl": false,
+                "http_verify_cert": false,
+                "ssl_ca_certificate": null,
+                "ssl_show_warnings": true,
                 "flatten_fields": "extra",
                 "replacement_char": null
             }
