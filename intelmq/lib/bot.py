@@ -52,10 +52,13 @@ class Bot(object):
 
     # True for (non-main) threads of a bot instance
     is_multithreaded = False
+    # True if the bot is thread-safe and it makes sense
+    is_multithreadable = True
     # Collectors with an empty process() should set this to true, prevents endless loops (#1364)
     collector_empty_process = False
 
-    def __init__(self, bot_id: str, start=False, sighup_event=None):
+    def __init__(self, bot_id: str, start=False, sighup_event=None,
+                 disable_multithreading=None):
         self.__log_buffer = []
         self.parameters = Parameters()
 
@@ -103,8 +106,16 @@ class Bot(object):
             self.logger.info('Bot is starting.')
             self.__load_runtime_configuration()
 
+            broker = getattr(self.parameters, "source_pipeline_broker",
+                             getattr(self.parameters, "broker", "redis")).title()
+            if broker != 'Amqp':
+                self.is_multithreadable = False
+
             """ Multithreading """
-            if getattr(self.parameters, 'instances_threads', 0) > 1 and not self.is_multithreaded:
+            if (getattr(self.parameters, 'instances_threads', 0) > 1 and
+                not self.is_multithreaded and
+                    self.is_multithreadable and
+                    not disable_multithreading):
                 self.logger.handlers = []
                 num_instances = int(self.parameters.instances_threads)
                 instances = []
@@ -129,6 +140,15 @@ class Bot(object):
                 for i, thread in enumerate(instances):
                     thread.join()
                 return
+            elif (getattr(self.parameters, 'instances_threads', 1) > 1 and
+                  not self.is_multithreadable):
+                self.logger.error('Multithreading is configured, but is not '
+                                  'available for this bot. Look at the FAQ '
+                                  'for a list of reasons for this. '
+                                  'https://github.com/certtools/intelmq/blob/master/docs/FAQ.md')
+            elif disable_multithreading:
+                self.logger.warning('Multithreading is configured, but is not '
+                                    'available for interactive runs.')
 
             self.__load_pipeline_configuration()
             self.__load_harmonization_configuration()
@@ -782,7 +802,8 @@ class ParserBot(Bot):
     handle = None
     current_line = None
 
-    def __init__(self, bot_id: str, start=False, sighup_event=None):
+    def __init__(self, bot_id: str, start=False, sighup_event=None,
+                 disable_multithreading=None):
         super().__init__(bot_id=bot_id)
         if self.__class__.__name__ == 'ParserBot':
             self.logger.error('ParserBot can\'t be started itself. '
@@ -956,7 +977,10 @@ class CollectorBot(Bot):
     Does some sanity checks on message sending.
     """
 
-    def __init__(self, bot_id: str, start=False, sighup_event=None):
+    is_multithreadable = False
+
+    def __init__(self, bot_id: str, start=False, sighup_event=None,
+                 disable_multithreading=None):
         super().__init__(bot_id=bot_id)
         if self.__class__.__name__ == 'CollectorBot':
             self.logger.error('CollectorBot can\'t be started itself. '

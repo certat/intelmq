@@ -670,15 +670,6 @@
                 "redis_cache_ttl": "86400"
             }
         },
-        "CERT.at Contact Database": {
-            "description": "Cert.at Contact Database is the bot responsible to get CERT. Set filter to true if you want to filter out events for cert.at. Set add_cc to true if you want to overwrite an existing CC value.",
-            "module": "intelmq.bots.experts.national_cert_contact_certat.expert",
-            "parameters": {
-                "filter": false,
-                "http_verify_cert": true,
-                "overwrite_cc": false
-            }
-        },
         "CERT.at Contact Database intern": {
             "description": "Fetches abuse contacts from a database per ASN.",
             "module": "intelmq.bots.experts.certat_contact_intern.expert",
@@ -821,6 +812,15 @@
             "parameters": {
                 "case_sensitive": true,
                 "configuration_path": "/opt/intelmq/var/lib/bots/modify/modify.conf"
+            }
+        },
+        "National CERT by CERT.at": {
+            "description": "Cert.at Contact Database is the bot responsible to get CERT. Set filter to true if you want to filter out events for cert.at. Set add_cc to true if you want to overwrite an existing CC value.",
+            "module": "intelmq.bots.experts.national_cert_contact_certat.expert",
+            "parameters": {
+                "filter": false,
+                "http_verify_cert": true,
+                "overwrite_cc": false
             }
         },
         "RecordedFuture IPRisk": {
@@ -1095,10 +1095,11 @@
             "description": "TCP is the bot responsible to send events to a TCP port (Splunk, ElasticSearch, another IntelMQ, etc..).",
             "module": "intelmq.bots.outputs.tcp.output",
             "parameters": {
+                "counterpart_is_intelmq": true,
                 "hierarchical_output": false,
                 "ip": "<ip>",
                 "port": "<port>",
-                "separator": "<nothing or \n or sth>"
+                "separator": "<nothing or \\n or sth>"
             }
         },
         "UDP": {
