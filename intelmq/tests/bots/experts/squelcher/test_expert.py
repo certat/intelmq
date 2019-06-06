@@ -22,7 +22,7 @@ INSERT INTO {table}(
 '''
 INPUT1 = {"__type": "Event",
           "classification.identifier": "zeus",
-          "classification.type": "botnet drone",
+          "classification.type": "infected-system",
           "notify": False,
           "source.asn": 1,
           "source.ip": "192.0.2.1",
@@ -68,7 +68,7 @@ OUTPUT8['notify'] = False
 
 INPUT_INFINITE = {"__type": "Event",
                   "classification.identifier": "zeus",
-                  "classification.type": "botnet drone",
+                  "classification.type": "infected-system",
                   "source.asn": 12312,
                   "source.ip": "192.0.2.1",
                   }
@@ -77,7 +77,7 @@ OUTPUT_INFINITE['notify'] = False
 
 INPUT_RANGE = {"__type": "Event",
                "classification.identifier": "zeus",
-               "classification.type": "botnet drone",
+               "classification.type": "infected-system",
                "source.asn": 789,
                "source.ip": "10.0.0.10",
                }
@@ -148,7 +148,7 @@ INSERT INTO {table}(
 
     def test_ttl_1(self):
         "event exists in db -> squelch"
-        self.insert('zeus', 'botnet drone', True, 1, '192.0.2.1', '0')
+        self.insert('zeus', 'infected-system', True, 1, '192.0.2.1', '0')
         self.input_message = INPUT1
         self.run_bot()
         self.truncate()
@@ -280,7 +280,7 @@ INSERT INTO {table}(
 
     def test_extra_list(self):
         """ lists in extra data is handled. """
-        self.insert('zeus', 'botnet drone', True, 1, '192.0.2.1', '0')
+        self.insert('zeus', 'infected-system', True, 1, '192.0.2.1', '0')
         self.input_message = INPUT9
         self.run_bot()
         self.truncate()
