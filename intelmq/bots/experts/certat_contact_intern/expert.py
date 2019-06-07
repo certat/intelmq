@@ -49,7 +49,7 @@ class CERTatContactExpertBot(Bot):
         event = self.receive_message()
 
         if 'source.asn' not in event:
-            self.logger.warning('source.asn not present in event. Skipping event.')
+            self.logger.info('source.asn not present in event. Skipping event.')
             event.add('destination_visible', False, overwrite=self.parameters.overwrite)
             self.send_message(event)
             self.acknowledge_message()
