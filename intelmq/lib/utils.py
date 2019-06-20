@@ -25,7 +25,7 @@ import re
 import sys
 import tarfile
 import traceback
-from typing import Generator, Iterator, Optional, Sequence, Union
+from typing import Any, Generator, Iterator, Optional, Sequence, Union
 
 import dateutil.parser
 from dateutil.relativedelta import relativedelta
@@ -45,11 +45,14 @@ LOG_FORMAT_SYSLOG = '%(name)s: %(levelname)s %(message)s'
 
 # Regex for parsing the above LOG_FORMAT
 LOG_REGEX = (r'^(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+) -'
-             r' (?P<bot_id>([-\w]+|py\.warnings)) - '
+             r' (?P<bot_id>([-\w]+|py\.warnings))'
+             r'(?P<thread_id>\.[0-9]+)? - '
              r'(?P<log_level>[A-Z]+) - '
              r'(?P<message>.+)$')
 SYSLOG_REGEX = (r'^(?P<date>\w{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<hostname>[-\.\w]+) '
-                r'(?P<bot_id>([-\w]+|py\.warnings)): (?P<log_level>[A-Z]+) (?P<message>.+)$')
+                r'(?P<bot_id>([-\w]+|py\.warnings))'
+                r'(?P<thread_id>\.[0-9]+)?'
+                r': (?P<log_level>[A-Z]+) (?P<message>.+)$')
 
 
 class Parameters(object):
@@ -361,7 +364,7 @@ def parse_logline(logline: str, regex: str = LOG_REGEX) -> Union[dict, str]:
     """
 
     match = re.match(regex, logline)
-    fields = ("date", "bot_id", "log_level", "message")
+    fields = ("date", "bot_id", "thread_id", "log_level", "message")
 
     try:
         value = dict(list(zip(fields, match.group(*fields))))
@@ -369,6 +372,8 @@ def parse_logline(logline: str, regex: str = LOG_REGEX) -> Union[dict, str]:
         value['date'] = date.isoformat()
         if value['date'].endswith('+00:00'):
             value['date'] = value['date'][:-6]
+        if value["thread_id"]:
+            value["thread_id"] = int(value["thread_id"][1:])
         return value
     except AttributeError:
         return logline
@@ -540,3 +545,49 @@ def drop_privileges() -> bool:
     if os.geteuid() != 0:  # For the unprobably possibility that intelmq is root
         return True
     return False
+
+
+def setup_list_logging(name='intelmq', logging_level='INFO'):
+    check_logger = logging.getLogger('check')  # name does not matter
+    list_handler = ListHandler()
+    list_handler.setLevel('INFO')
+    check_logger.addHandler(list_handler)
+    check_logger.setLevel('INFO')
+
+
+def version_smaller(version1: tuple, version2: tuple) -> Optional[bool]:
+    """
+    Parameters:
+        version1: A tuple of integer and string values
+        version2: Same as version1
+        Integer values are expected as integers (__version_info__).
+
+    Returns:
+        True if version1 is smaller
+        False if version1 is greater
+        None if both are equal
+    """
+    if len(version1) == 3:
+        version1 = version1 + ('stable', 0)
+    if len(version1) == 4:
+        version1 = version1 + (0, )
+    if len(version2) == 3:
+        version2 = version2 + ('stable', 0)
+    if len(version2) == 4:
+        version2 = version2 + (0, )
+    for level1, level2 in zip(version1, version2):
+        if level1 > level2:
+            return False
+        if level1 < level2:
+            return True
+    return None
+
+
+def lazy_int(value: Any) -> Any:
+    """
+    Tries to conver the value to int if possible. Original value otherwise
+    """
+    try:
+        return int(value)
+    except ValueError:
+        return value
