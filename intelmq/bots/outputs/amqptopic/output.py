@@ -101,7 +101,7 @@ class AMQPTopicBot(Bot):
                                               mandatory=True):
                 if self.require_confirmation and not self.publish_raises_nack:
                     raise ValueError('Message sent but not confirmed.')
-                else:
+                elif not self.publish_raises_nack:
                     self.logger.info('Message sent but not confirmed.')
         except (pika.exceptions.ChannelError, pika.exceptions.AMQPChannelError,
                 pika.exceptions.NackError):
