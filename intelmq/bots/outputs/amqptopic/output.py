@@ -24,6 +24,11 @@ class AMQPTopicBot(Bot):
             self.kwargs['heartbeat_interval'] = self.parameters.connection_heartbeat
         else:
             self.kwargs['heartbeat'] = self.parameters.connection_heartbeat
+        if pika_version < (1, ):
+            # https://groups.google.com/forum/#!topic/pika-python/gz7lZtPRq4Q
+            self.publish_raises_nack = False
+        else:
+            self.publish_raises_nack = True
 
         self.keep_raw_field = self.parameters.keep_raw_field
         self.delivery_mode = self.parameters.delivery_mode
@@ -94,7 +99,7 @@ class AMQPTopicBot(Bot):
                                               body=event.to_json().encode(errors='backslashreplace'),
                                               properties=self.properties,
                                               mandatory=True):
-                if self.require_confirmation:
+                if self.require_confirmation and not self.publish_raises_nack:
                     raise ValueError('Message sent but not confirmed.')
                 else:
                     self.logger.info('Message sent but not confirmed.')
