@@ -777,6 +777,14 @@
                 "user": "intelmq"
             }
         },
+        "Geohash": {
+            "description": "Computes the geohashes from longitude/latitude information.",
+            "module": "intelmq.bots.experts.geohash.expert",
+            "parameters": {
+                "overwrite": false,
+                "precision": 7
+            }
+        },
         "Gethostbyname": {
             "description": "fqdn2ip is the bot responsible to parsing the ip from the fqdn.",
             "module": "intelmq.bots.experts.gethostbyname.expert",
@@ -942,6 +950,9 @@
                 "exchange_name": "<your exchange name>",
                 "exchange_type": "topic",
                 "keep_raw_field": false,
+                "message_hierarchical_output": false,
+                "message_with_type": false,
+                "message_jsondict_as_string": false,
                 "password": "<your amqp password>",
                 "require_confirmation": true,
                 "routing_key": "<your routing key>",

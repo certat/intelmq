@@ -2,6 +2,54 @@ CHANGELOG
 ==========
 
 
+2.1.0 (unreleased)
+-----------------
+
+### Configuration
+
+### Core
+- `intelmq.lib.harmonization`:
+  - Use correct parent classes.
+  - Add `DateTime.convert` as interface for all existing conversion functions.
+  - add `DateTime.convert_from_format`.
+  - add `DateTime.convert_from_format_midnight`.
+  - add `DateTime.convert_fuzzy`.
+
+### Development
+
+### Harmonization
+- Add extra to reports.
+
+### Bots
+#### Collectors
+
+#### Parsers
+- `intelmq.bot.parsers.html_table.parser`:
+  * New parameter "html_parser".
+  * Use time conversion functions directly from `intelmq.lib.harmonization.DateTime.convert`.
+
+#### Experts
+- Add geohash expert.
+
+#### Outputs
+- `intelmq.bots.outputs.amqptopic.output`: New parameters `message_hierarchical_output`, `message_with_type`, `message_jsondict_as_string`.
+
+### Documentation
+- Feeds: Add ViriBack feed.
+- `intelmq.tests.bots.outputs.amqptopic.test_output`: Added.
+
+### Packaging
+
+### Tests
+- Travis: Use UTC timezone.
+
+### Tools
+
+### Contrib
+
+### Known issues
+
+
 2.0.1 (unreleased)
 ------------------
 
@@ -571,7 +619,7 @@ Update allowed classification fields to 2018-09-26 version (#802, #1350, #1380).
     False: An existing value will not be overwritten (previously an exception has been raised when the value was given).
     None (default): If the value exists an `KeyExists` exception is thrown (previously the same as False).
     This allows shorter code in the bots, as an 'overwrite' configuration parameter can be directly passed to the function.
-  - The message class has now the possibility to return a default value for non-exisiting fields, see `Message.set_default_value`.
+  - The message class has now the possibility to return a default value for non-existing fields, see `Message.set_default_value`.
   - Message.get behaves the same like `Message.__getitem__` (#1305).
 - Add `RewindableFileHandle` to utils making handling of CSV files more easy (optionally)
 - lib/pipeline:
