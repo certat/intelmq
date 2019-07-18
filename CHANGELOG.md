@@ -66,6 +66,7 @@ CHANGELOG
 - `intelmq.lib.upgrades`: New library file `upgrades` with upgrade functions.
 - `intelmq.lib.utils`:
   - New function `setup_list_logging` for intelmqctl check an possibly others.
+    - Fix return values (#1423).
   - New function `version_smaller` for version comparisons.
   - New function `lazy_int` for version conversions.
   - `parse_logline`: Handle thread IDs.
@@ -101,6 +102,7 @@ CHANGELOG
   - Add support for pika > 1, the way the (Non-)Acknowledgments are provided has been changed.
   - Gracefully handle unroutable messages and give advice.
   - Support for no used authentication.
+- `intelmq.bots.outputs.mongodb.output`: Support for pymongo >= 3.0.0 (#1063, PR#1421).
 
 ### Documentation
 - Add certbund-contact to the ecosystem document.
