@@ -5,6 +5,7 @@ Utilities for intelmqcli.
 Static data (queries)
 """
 import argparse
+import datetime
 import json
 import os
 import rt
@@ -393,6 +394,9 @@ class IntelMQCLIContollerTemplate():
         self.logger = utils.log('intelmqcli', syslog='/dev/log',
                                 log_level=self.config['log_level'].upper(),
                                 stream=stream, log_format_stream='%(message)s')
+        self.logger.info('Started %r at %s.',
+                         ' '.join(sys.argv),
+                         datetime.datetime.now().isoformat())
 
         self.rt = rt.Rt(self.config['rt']['uri'], self.config['rt']['user'],
                         self.config['rt']['password'])
