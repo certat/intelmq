@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import argparse
+import datetime
 import distutils.version
 import getpass
 import http.client
@@ -15,16 +16,18 @@ import socket
 import subprocess
 import sys
 import textwrap
+import traceback
 import time
 import xmlrpc.client
 from collections import OrderedDict
 
 import pkg_resources
 import psutil
+from termstyle import red, green
 
 from intelmq import (BOTS_FILE, DEFAULT_LOGGING_LEVEL, DEFAULTS_CONF_FILE,
                      HARMONIZATION_CONF_FILE, PIPELINE_CONF_FILE,
-                     RUNTIME_CONF_FILE, VAR_RUN_PATH, VAR_STATE_PATH,
+                     RUNTIME_CONF_FILE, VAR_RUN_PATH, STATE_FILE_PATH,
                      __version_info__)
 from intelmq.lib import utils
 from intelmq.lib.bot_debugger import BotDebugger
@@ -46,7 +49,7 @@ STATUSES = {
 MESSAGES = {
     'disabled': 'Bot %s is disabled.',
     'starting': 'Starting %s...',
-    'running': 'Bot %s is running.',
+    'running': green('Bot %s is running.'),
     'stopped': 'Bot %s is stopped.',
     'stopping': 'Stopping bot %s...',
     'reloading': 'Reloading bot %s ...',
@@ -54,13 +57,13 @@ MESSAGES = {
 }
 
 ERROR_MESSAGES = {
-    'starting': 'Bot %s failed to START.',
-    'running': 'Bot %s is still running.',
+    'starting': red('Bot %s failed to START.'),
+    'running': red('Bot %s is still running.'),
     'stopped': 'Bot %s was NOT RUNNING.',
-    'stopping': 'Bot %s failed to STOP.',
-    'not found': 'Bot %s failed to START because the file cannot be found.',
-    'access denied': 'Bot %s failed to %s because of missing permissions.',
-    'unknown': 'Status of Bot %s is unknown: %r.',
+    'stopping': red('Bot %s failed to STOP.'),
+    'not found': red('Bot %s failed to START because the file cannot be found.'),
+    'access denied': red('Bot %s failed to %s because of missing permissions.'),
+    'unknown': red('Status of Bot %s is unknown: %r.'),
 }
 
 LOG_LEVEL = OrderedDict([
@@ -678,7 +681,7 @@ class IntelMQController():
         intelmqctl run bot-id console
         intelmqctl clear queue-id
         intelmqctl check
-        intelmqctl upgrade-conf
+        intelmqctl upgrade-config
 
 Starting a bot:
     intelmqctl start bot-id
@@ -730,7 +733,8 @@ Default is INFO. Number of lines defaults to 10, -1 gives all. Result
 can be longer due to our logging format!
 
 Upgrade from a previous version:
-    intelmqctl upgrade-conf
+    intelmqctl upgrade-config
+Make a backup of your configuration first, also including bot's configuration files.
 
 Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
 
@@ -896,17 +900,20 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
                                        choices=self.runtime_configuration.keys())
             parser_status.set_defaults(func=self.bot_disable)
 
-            parser_upgrade = subparsers.add_parser('upgrade-conf',
-                                                   help='Upgrade IntelMQ configuration to a newer version.')
-            parser_upgrade.add_argument('-p', '--previous',
-                                        help='Use this version as the previous one.')
-            parser_upgrade.add_argument('-d', '--function',
-                                        help='Run this upgrade function.',
-                                        choices=upgrades.__all__)
-            parser_upgrade.add_argument('-f', '--force',
-                                        action='store_true',
-                                        help='Force running the upgrade procedure.')
-            parser_upgrade.set_defaults(func=self.upgrade)
+            parser_upgrade_conf = subparsers.add_parser('upgrade-config',
+                                                        help='Upgrade IntelMQ configuration to a newer version.')
+            parser_upgrade_conf.add_argument('-p', '--previous',
+                                             help='Use this version as the previous one.')
+            parser_upgrade_conf.add_argument('-d', '--dry-run',
+                                             action='store_true', default=False,
+                                             help='Do not write any files.')
+            parser_upgrade_conf.add_argument('-u', '--function',
+                                             help='Run this upgrade function.',
+                                             choices=upgrades.__all__)
+            parser_upgrade_conf.add_argument('-f', '--force',
+                                             action='store_true',
+                                             help='Force running the upgrade procedure.')
+            parser_upgrade_conf.set_defaults(func=self.upgrade_conf)
 
             self.parser = parser
 
@@ -1109,9 +1116,7 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
 
     def write_updated_runtime_config(self, filename=RUNTIME_CONF_FILE):
         try:
-            with open(RUNTIME_CONF_FILE, 'w') as handle:
-                json.dump(self.runtime_configuration, fp=handle, indent=4, sort_keys=True,
-                          separators=(',', ': '))
+            utils.write_configuration(filename, self.runtime_configuration)
         except PermissionError:
             self.abort('Can\'t update runtime configuration: Permission denied.')
         return True
@@ -1426,8 +1431,15 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
                                        bot['module'], bot_id)
                     retval = 1
 
-        # TODO: Check migrations from state file, and if the latter exists
-        # check if all functions have been executed successfully
+        if os.path.isfile(STATE_FILE_PATH):
+            state = utils.load_configuration(STATE_FILE_PATH)
+            for functionname in upgrades.__all__:
+                if not state['upgrades'].get(functionname, False):
+                    check_logger.error("Upgrade function %s not completed (successfully). "
+                                       "Please run 'intelmqctl upgrade-config'.",
+                                       functionname)
+        else:
+            check_logger.error("No state file found. Please call 'intelmqctl upgrade-config'.")
 
         if RETURN_TYPE == 'json':
             if retval:
@@ -1442,7 +1454,7 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
                 self.logger.info('No issues found.')
                 return retval, 'success'
 
-    def upgrade(self, previous=None, function=None, force=None):
+    def upgrade_conf(self, previous=None, dry_run=None, function=None, force=None):
         """
         Upgrade the IntelMQ configuration after a version upgrade.
 
@@ -1451,72 +1463,133 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
             function: Only execute this upgrade function
             force: Also upgrade if not necessary
 
-        state:
-            version_history = [[2, 0, 1]]
+        state file:
+
+            version_history = [..., [2, 0, 0], [2, 0, 1]]
             upgrades = {
                 "v112_feodo_tracker_domains": true,
                 "v112_feodo_tracker_ips": false,
                 "v200beta1_ripe_expert": false
                 }
             results = [
-                {"function": "v112_feodo_tracker_domains", "success": true, "time": "..."},
-                {"function": "v112_feodo_tracker_domains", "success": false, "time": "..."},
-                {"function": "v112_feodo_tracker_ips", "success": false, "message": "...", "time": "..."},
-                {"function": "v200beta1_ripe_expert", "success": false, "traceback": "...", "time": "..."}
+                {"function": "v112_feodo_tracker_domains",
+                 "success": true,
+                 "retval": null,
+                 "time": "..."},
+                {"function": "v112_feodo_tracker_domains",
+                 "success": false,
+                 "retval": "fix it manually",
+                 "message": "fix it manually",
+                 "time": "..."},
+                {"function": "v200beta1_ripe_expert",
+                 "success": false,
+                 "traceback": "...",
+                 "time": "..."}
                 ]
         """
-        state_file_path = os.path.join(VAR_STATE_PATH, '../state.json')
-        print(state_file_path)
-        if os.path.isfile(state_file_path):
-            with open(state_file_path, 'r') as state_handle:
-                state = json.load(state_handle)
+        if os.path.isfile(STATE_FILE_PATH):
+            if not os.access(STATE_FILE_PATH, os.W_OK) and not dry_run:
+                self.logger.error("State file %r is not writable.")
+                return 1, "State file %r is not writable."
+            state = utils.load_configuration(STATE_FILE_PATH)
         else:
+            """
+            We create the state file directly before any upgrade function.
+            Otherwise we might run into the situation, that we can't write the state but we already upgraded.
+            """
+            self.logger.info('Writing intial state file.')
             state = {"version_history": [],
                      "upgrades": {},
                      "results": []}
+            if dry_run:
+                self.logger.info('Would create state file now at %r.', STATE_FILE_PATH)
+                return 0, 'success'
+            try:
+                utils.write_configuration(STATE_FILE_PATH, state)
+            except Exception as exc:
+                self.logger.error('Error writing state file %r: %s.', STATE_FILE_PATH, exc)
+                return 1, 'Error writing state file %r: %s.' % (STATE_FILE_PATH, exc)
+            self.logger.error('Successfully wrote initial state file. Please re-run this program.')
+            return 0, 'success'
+
+        defaults = utils.load_configuration(DEFAULTS_CONF_FILE)
+        runtime = utils.load_configuration(RUNTIME_CONF_FILE)
+        if dry_run:
+            self.logger.info('Doing a dry run, not writing anything now.')
 
         if function:
+            if not force and state['upgrades'].get(function, False):
+                # already performed
+                self.logger.info('This upgrade has been performed previously successfully already. Force with -f.')
+                return 0, 'success'
+
+            result = {"function": function,
+                      "time": datetime.datetime.now().isoformat()
+                      }
             if not hasattr(upgrades, function):
                 self.logger.error('This function does not exist. '
                                   'Available functions are %s'
                                   '' % ', '.join(upgrades.__all__))
                 return 1, 'error'
             try:
-                retval = getattr(upgrades, function)()
+                retval, defaults_new, runtime_new = getattr(upgrades, function)(defaults, runtime, dry_run)
+                # Handle changed configurations
+                if retval is True and not dry_run:
+                    utils.write_configuration(DEFAULTS_CONF_FILE, defaults_new)
+                    utils.write_configuration(RUNTIME_CONF_FILE, runtime_new)
             except Exception:
-                self.logger.exception('Upgrade failed, please report this bug '
-                                      'with the traceback.')
-                return 1, 'error'
-            if type(retval) is str:
-                self.logger.error('Upgrade failed: %s', retval)
-            elif retval is None:
-                self.logger.info('Upgrade successful: Nothing to do.')
-            elif retval is True:
-                self.logger.info('Upgrade successful.')
+                self.logger.exception('Upgrade %r failed, please report this bug '
+                                      'with the shown traceback.',
+                                      function)
+                result['traceback'] = traceback.format_exc()
+                result['success'] = False
             else:
-                self.logger.error('Unknown return value %r. Please report this '
-                                  'as bug.' % retval)
+                if type(retval) is str:
+                    self.logger.error('Upgrade %r failed: %s', function, retval)
+                    result['message'] = retval
+                    result['success'] = False
+                elif retval is None:
+                    self.logger.info('Upgrade %r successful: Nothing to do.',
+                                     function)
+                    result['success'] = True
+                elif retval is True:
+                    self.logger.info('Upgrade %r successful.', function)
+                    result['success'] = True
+                else:
+                    self.logger.error('Unknown return value %r for %r. '
+                                      'Please report this as bug.',
+                                      retval, function)
+                    result['success'] = False
+
+                result['retval'] = retval
+
+            state['results'].append(result)
+            state['upgrades'][function] = result['success']
+            if not dry_run:
+                utils.write_configuration(STATE_FILE_PATH, state)
+
+            if result['success']:
+                return 0, 'success'
+            else:
+                return 1, 'error'
 
         if previous:
             previous = tuple(utils.lazy_int(v) for v in previous.split('.'))
-            self.logger.info("Using previous version %r from parameter.", previous)
+            self.logger.info("Using previous version %r from parameter.",
+                             '.'.join(str(x) for x in previous))
 
         if __version_info__ in state["version_history"] and not force:
-            return 0, {'message': "Nothing to do."}
+            return 0, "Nothing to do."
         else:
-            if not (os.access(state_file_path, os.W_OK) or
-                    os.access(os.path.dirname(state_file_path), os.W_OK)):
-                self.logger.error('File %s cannot be written. Check the permissions.',
-                                  state_file_path)
-                return 1, 'error'
-            if state["version_history"] and not previous:
+            if state["version_history"] and not previous and not force:
                 previous = state["version_history"][-1]
-                self.logger.info("Found previous version %r in state file.", previous)
+                self.logger.info("Found previous version %s in state file.",
+                                 '.'.join(str(x) for x in previous))
             if previous:
                 todo = []
                 for version, functions in upgrades.UPGRADES.items():
-                    if utils.version_smaller(previous, version):
-                        todo.append(version, functions)
+                    if utils.version_smaller(tuple(previous), version):
+                        todo.append((version, functions))
             else:
                 self.logger.info("Found no previous version, doing all upgrades.")
                 todo = upgrades.UPGRADES.items()
@@ -1524,28 +1597,84 @@ Outputs are additionally logged to /opt/intelmq/var/log/intelmqctl'''
             # todo is now a list of tuples of functions.
             # all functions in a tuple (bunch) must be processed successfully to continue
 
+            error = False
             for version, bunch in todo:
                 self.logger.info('Upgrading to version %s.' % '.'.join(map(str, version)))
                 for function in bunch:
+                    if not force and state['upgrades'].get(function.__name__, False):
+                        # already performed
+                        continue
+
                     docstring = textwrap.dedent(function.__doc__).strip()
+                    result = {"function": function.__name__,
+                              "time": datetime.datetime.now().isoformat()
+                              }
                     try:
-                        retval = function()
+                        retval, defaults, runtime = function(defaults, runtime, dry_run)
                     except Exception:
                         self.logger.exception('%s: Upgrade failed, please report this bug '
                                               'with the traceback.', docstring)
-                        return 1, 'error'
-                    if type(retval) is str:
-                        self.logger.error('%s: Upgrade failed: %s', docstring, retval)
-                    elif retval is None:
-                        self.logger.info('%s: Nothing to do.', docstring)
-                    elif retval is True:
-                        self.logger.info('%s: Upgrade successful.', docstring)
+                        result['traceback'] = traceback.format_exc()
+                        result['success'] = False
                     else:
-                        self.logger.error('%s: Unknown return value %r. Please report this '
-                                          'as bug.', docstring, retval)
-            # TODO: Write results to state file
+                        if type(retval) is str:
+                            self.logger.error('%s: Upgrade failed: %s', docstring, retval)
+                            result['message'] = retval
+                            result['success'] = False
+                        elif retval is None:
+                            self.logger.info('%s: Nothing to do.', docstring)
+                            result['success'] = True
+                        elif retval is True:
+                            self.logger.info('%s: Upgrade successful.', docstring)
+                            result['success'] = True
+                        else:
+                            self.logger.error('%s: Unknown return value %r. Please report this '
+                                              'as bug.', docstring, retval)
+                            result['success'] = False
+                        result['retval'] = retval
+                    state['results'].append(result)
+                    state['upgrades'][function.__name__] = result['success']
 
-            return 1, {'message': 'something is missing'}
+                    if not result['success']:
+                        error = True
+                        break
+                if error:
+                    break
+                state['version_history'].append(version)
+
+            if error:
+                # some upgrade function had a problem
+                if not dry_run:
+                    utils.write_configuration(STATE_FILE_PATH, state)
+                self.logger.error('Some migration did not succeed or '
+                                  'manual intervention is needed. Look at '
+                                  'the output above. Afterwards, re-run '
+                                  'this program.')
+
+            try:
+                if not dry_run:
+                    utils.write_configuration(DEFAULTS_CONF_FILE, defaults)
+                    utils.write_configuration(RUNTIME_CONF_FILE, runtime)
+            except Exception as exc:
+                self.logger.error('Writing defaults or runtime configuration '
+                                  'did not succeed: %s\nFix the problem and '
+                                  'afterwards, re-run this program.',
+                                  exc)
+                return 1, 'error'
+
+            if not error:
+                if todo:
+                    self.logger.info('Configuration upgrade successful!')
+                else:
+                    self.logger.info('Nothing to do!')
+
+            if not dry_run:
+                utils.write_configuration(STATE_FILE_PATH, state)
+
+        if error:
+            return 1, 'error'
+        else:
+            return 0, 'success'
 
 
 def main():  # pragma: no cover

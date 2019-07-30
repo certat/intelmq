@@ -14,6 +14,8 @@ CHANGELOG
   - add `DateTime.convert_from_format`.
   - add `DateTime.convert_from_format_midnight`.
   - add `DateTime.convert_fuzzy`.
+- `intelmq.lib.pipeline`:
+  - Redis: Use single connection client if calling bot is not multithreaded. Gives a small speed advantage.
 
 ### Development
 
@@ -41,9 +43,13 @@ CHANGELOG
 ### Packaging
 
 ### Tests
-- Travis: Use UTC timezone.
+- Travis:
+  - Use UTC timezone.
+  - Limit lxml dependency on 3.4 to < 4.4.0 (incompatibility).
 
 ### Tools
+- intelmqctl:
+  - Use green and red text color for some interactive output to indicate obvious errors or the absence of them.
 
 ### Contrib
 
@@ -72,7 +78,9 @@ CHANGELOG
   - `parse_logline`: Handle thread IDs.
   - `log` takes a new argument `logging_level_stream` for the logging level of the console handler.
   - New constant `LOG_FORMAT_SIMPLE`, used by intelmqctl.
+  - New function `write_configuration` to write dicts to files in the correct json formatting.
 - `intelmq.lib.pipeline`: AMQP: Actually use `source/destination_pipeline_amqp_virtual_host` parameter.
+- Variable `STATE_FILE_PATH` added.
 
 ### Development
 - `intelmq.bin.intelmq_gen_docs`: For yaml use `safe_load` instead of unsafe `load`.
@@ -102,30 +110,38 @@ CHANGELOG
   - Add support for pika > 1, the way the (Non-)Acknowledgments are provided has been changed.
   - Gracefully handle unroutable messages and give advice.
   - Support for no used authentication.
+  - Replace deprecated parameter `type` with `exchange_type` for `exchange_declare`, supporting pika >= 0.11 (#1425).
 - `intelmq.bots.outputs.mongodb.output`: Support for pymongo >= 3.0.0 (#1063, PR#1421).
 
 ### Documentation
 - Add certbund-contact to the ecosystem document.
 - Rename the IDEA expert to "IDEA Converter".
+- Add the new configuration upgrade function to the docs.
 
 ### Packaging
 
 ### Tests
 - `intelmq.lib.test`: Disable statistics for test runs of bots.
+- `contrib.malware_name_mapping`: Added tests.
+- Travis: Also run tests of contrib.
 
 ### Tools
 - `intelmqsetup`: Only change directory ownerships if necessary.
 - `intelmqctl`:
   - Provide new command `upgrade-conf` to uprade configuration to a newer version.
+    - Makes backups of configurations files itself.
   - Provide logging level on on class layer.
   - Fix `-q` flag for `intelmqctl list queues` by renaming (providing an additional variant) it to `--non-zero`.
   - For console output `intemqctl: ` at the beginning of each line is no longer present.
+  - `check`: Support for the state file added. Checks if it exists and all upgrade functions have been executed successfully.
 
 ### Contrib
 * logcheck rules: Adapt ignore rule to cover the instance id of bot names.
 * malware name mapping:
   - Ignore lines in mapping starting with '#'.
   - Optionally include malpedia data.
+  - Fix command line parsing for not arguments (#1427).
+- bash-completion: Support for `intelmqctl upgrade-config` added.
 
 ### Known issues
 
@@ -182,6 +198,7 @@ See also the changelog for 2.0.0.beta1 below.
 - Travis: Switch distribution from trusty to xenial, adapt scripts.
   - Add Python 3.7 to tests.
 - Don't use Cerberus 1.3 because of https://github.com/pyeve/cerberus/issues/489
+- Add tests for `intelmqctl.lib.upgrades`.
 
 ### Tools
 - intelmqdump: Fix creation of pipeline object by providing a logger.

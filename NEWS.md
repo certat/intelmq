@@ -25,6 +25,7 @@ See the changelog for a full list of changes.
 ### Requirements
 
 ### Tools
+intelmqctl has a new function `upgrade-config` to upgrade the configuration from previous installations. It is recommended to call this function after every upgrade.
 
 ### Harmonization
 
