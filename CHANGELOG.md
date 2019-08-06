@@ -65,7 +65,9 @@ CHANGELOG
 - `intelmq.lib.harmonization`:
   - `IPAddress`: Remove Scope/Zone IDs for IPv6 addresses in sanitation.
   - All types: Handle `None` for validation and sanitation gracefully.
-- `intelmq.lib.bot`: fix parameters of ParserBot and CollectorBot constructors, allowing `intelmqctl run` with these bots again (#1414).
+- `intelmq.lib.bot`:
+  - fix parameters of ParserBot and CollectorBot constructors, allowing `intelmqctl run` with these bots again (#1414).
+  - Also run `rate_limit` after retry counter reset (#1431).
 - `__version_info__` is now available in the top level module.
 - `__version__`: uses now integer values if possible.
 - Also provide (empty) `ROOT_DIR` for non-pip installations.
@@ -87,6 +89,7 @@ CHANGELOG
 
 ### Harmonization
 - IPAddress type: Remove Scope/Zone IDs for IPv6 addresses in sanitation.
+- TLP: Sanitation handles now more cases: case-insensitive prefixes and arbitary whitespace between the prefix and the value (#1420).
 
 ### Bots
 #### Collectors
@@ -102,6 +105,8 @@ CHANGELOG
 - `intelmq.bots.experts.modify.expert`:
   - Compile regular expressions (all string rules) at initializations, improves the speed.
   - Warn about old configuration style deprecation.
+- `intelmq.bots.experts.do_portal.expert`: Use `http_timeout_max_tries` parameter for retries on connection timeouts (#1432).
+- `intelmq.bots.experts.ripe.expert`: Use `http_timeout_max_tries` parameter for retries on connection timeouts.
 
 #### Outputs
 - `intelmq.bots.outputs.postgresql`: Recommend psycopg2-binary package.
@@ -112,13 +117,19 @@ CHANGELOG
   - Support for no used authentication.
   - Replace deprecated parameter `type` with `exchange_type` for `exchange_declare`, supporting pika >= 0.11 (#1425).
 - `intelmq.bots.outputs.mongodb.output`: Support for pymongo >= 3.0.0 (#1063, PR#1421).
+- `intelmq.bots.outputs.file`: `time.*` field serialization: support for microseconds.
+- `intelmq.bots.outputs.mongodb.output`: Support for authentication in pymongo >= 3.5 (#1062).
+- `intelmq.bots.outputs.restapi.output`: Use `http_timeout_max_tries` parameter for retries on connection timeouts.
 
 ### Documentation
 - Add certbund-contact to the ecosystem document.
 - Rename the IDEA expert to "IDEA Converter".
 - Add the new configuration upgrade function to the docs.
+- User Guide:
+  - Clarify on Uninstallation
 
 ### Packaging
+- Do not execute the tcp collector tests during debian and ubuntu builds as they fail there.
 
 ### Tests
 - `intelmq.lib.test`: Disable statistics for test runs of bots.
@@ -130,6 +141,7 @@ CHANGELOG
 - `intelmqctl`:
   - Provide new command `upgrade-conf` to uprade configuration to a newer version.
     - Makes backups of configurations files itself.
+    - Also checks for previously skipped or new functions of older versions and catches up.
   - Provide logging level on on class layer.
   - Fix `-q` flag for `intelmqctl list queues` by renaming (providing an additional variant) it to `--non-zero`.
   - For console output `intemqctl: ` at the beginning of each line is no longer present.
