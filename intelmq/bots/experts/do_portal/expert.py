@@ -34,6 +34,8 @@ class DoPortalExpertBot(Bot):
         while timeoutretries < self.http_timeout_max_tries and req is None:
             try:
                 req = requests.get(self.url % event['source.ip'],
+                                   headers=self.http_header,
+                                   auth=self.auth,
                                    proxies=self.proxy,
                                    verify=self.http_verify_cert,
                                    cert=self.ssl_client_cert,
