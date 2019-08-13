@@ -36,7 +36,10 @@ class MailAttachCollectorBot(MailCollectorBot):
                     raw_report = attach['content'].read()
 
                 report = self.new_report()
-                report.add("raw", raw_report)
+                report["raw"] = raw_report
+                report["extra.email_subject"] = message.subject
+                report["extra.email_from"] = message.sent_from
+                report["extra.email_message_id"] = message.message_id
 
                 self.send_message(report)
 

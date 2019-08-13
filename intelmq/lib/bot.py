@@ -181,6 +181,7 @@ class Bot(object):
 
             self.stop()
             raise
+        self.logger.info("Bot initialization completed.")
 
         self.__stats_cache = cache.Cache(host=getattr(self.parameters,
                                                       "statistics_host",
@@ -512,6 +513,7 @@ class Bot(object):
                                                             queues=self.__source_queues,
                                                             bot=self)
             self.__source_pipeline.connect()
+            self.__current_message = None
             self.logger.debug("Connected to source queue.")
 
         if self.__destination_queues:
@@ -525,8 +527,6 @@ class Bot(object):
             self.logger.debug("Connected to destination queues.")
         else:
             self.logger.debug("No destination queues to load.")
-
-        self.logger.info("Pipeline ready.")
 
     def __disconnect_pipelines(self):
         """ Disconnecting pipelines. """
@@ -572,6 +572,10 @@ class Bot(object):
                                              path_permissive=path_permissive)
 
     def receive_message(self):
+        if self.__current_message:
+            self.logger.debug("Reusing existing current message as incoming.")
+            return self.__current_message
+
         self.logger.debug('Waiting for incoming message.')
         message = None
         while not message:

@@ -60,6 +60,8 @@ class PipelineFactory(object):
 
 class Pipeline(object):
     has_internal_queues = False
+    # If the class currently holds a message, restricts the actions
+    _has_message = False
 
     def __init__(self, parameters, logger, bot):
         self.parameters = parameters
@@ -110,10 +112,34 @@ class Pipeline(object):
         else:
             raise exceptions.InvalidArgument('queues_type', got=queues_type, expected=['source', 'destination'])
 
-    def nonempty_queues(self) -> set:
+    def send(self, message, path="_default", path_permissive=False):
         raise NotImplementedError
 
-    def send(self, message, path="_default", path_permissive=False):
+    def receive(self) -> str:
+        if self._has_message:
+            raise exceptions.PipelineError("There's already a message, first "
+                                           "acknowledge the existing one.")
+
+        retval = self._receive()
+        self._has_message = True
+        return retval
+
+    def _receive(self) -> str:
+        raise NotImplementedError
+
+    def acknowledge(self):
+        if not self._has_message:
+            raise exceptions.PipelineError("No message to acknowledge.")
+        self._acknowledge()
+        self._has_message = False
+
+    def _acknowledge(self):
+        raise NotImplementedError
+
+    def clear_queue(self, queue):
+        raise NotImplementedError
+
+    def nonempty_queues(self) -> set:
         raise NotImplementedError
 
 
@@ -196,7 +222,7 @@ class Redis(Pipeline):
                                       'Look at redis\'s logs.')
                 raise exceptions.PipelineError(exc)
 
-    def receive(self):
+    def _receive(self) -> str:
         if self.source_queue is None:
             raise exceptions.ConfigurationError('pipeline', 'No source queue given.')
         try:
@@ -214,13 +240,18 @@ class Redis(Pipeline):
         except Exception as exc:
             raise exceptions.PipelineError(exc)
 
-    def acknowledge(self):
+    def _acknowledge(self):
         try:
-            return self.pipe.rpop(self.internal_queue)
+            retval = self.pipe.rpop(self.internal_queue)
         except Exception as e:
             raise exceptions.PipelineError(e)
+        else:
+            if not retval:
+                raise exceptions.PipelineError("Could not pop message from internal queue"
+                                               "for acknowledgement. Return value was %r."
+                                               "" % retval)
 
-    def count_queued_messages(self, *queues):
+    def count_queued_messages(self, *queues) -> dict:
         queue_dict = {}
         for queue in queues:
             try:
@@ -233,9 +264,13 @@ class Redis(Pipeline):
         """Clears a queue by removing (deleting) the key,
         which is the same as an empty list in Redis"""
         try:
-            return self.pipe.delete(queue)
+            retval = self.pipe.delete(queue)
         except Exception as exc:
             raise exceptions.PipelineError(exc)
+        else:
+            if retval not in (0, 1):
+                raise exceptions.PipelineError("Error on redis queue deletion: Return value"
+                                               " was not 0 or 1 but %r." % retval)
 
     def nonempty_queues(self) -> set:
         """ Returns a list of all currently non-empty queues. """
@@ -290,7 +325,7 @@ class Pythonlist(Pipeline):
             else:
                 self.state[destination_queue] = [utils.encode(message)]
 
-    def receive(self):
+    def _receive(self) -> str:
         """
         Receives the last not yet acknowledged message.
 
@@ -308,11 +343,11 @@ class Pythonlist(Pipeline):
 
         return utils.decode(first_msg)
 
-    def acknowledge(self):
+    def _acknowledge(self):
         """Removes a message from the internal queue and returns it"""
-        return self.state.get(self.internal_queue, [None]).pop(0)
+        self.state.get(self.internal_queue, [None]).pop(0)
 
-    def count_queued_messages(self, *queues):
+    def count_queued_messages(self, *queues) -> dict:
         """Returns the amount of queued messages
            over all given queue names.
         """
@@ -442,7 +477,7 @@ class Amqp(Pipeline):
         for destination_queue in queues:
             self._send(destination_queue, message)
 
-    def receive(self) -> str:
+    def _receive(self) -> str:
         if self.source_queue is None:
             raise exceptions.ConfigurationError('pipeline', 'No source queue given.')
         try:
@@ -453,7 +488,7 @@ class Amqp(Pipeline):
         except Exception as exc:
             raise exceptions.PipelineError(exc)
 
-    def acknowledge(self):
+    def _acknowledge(self):
         try:
             self.channel.basic_ack(delivery_tag=self.delivery_tag)
         except pika.exceptions.ConnectionClosed:

@@ -214,12 +214,14 @@ The `tornado` library is required.
 
 * **Feed parameters** (see above)
 * **HTTP parameters** (see above)
-* `extract_files`: Optional, boolean or list of strings. If it is not false, the retrieved (compressed) file or archived will be uncompressed/unpacked and the files are extracted. If the parameter is a list for strings, only the files matching the filenames are extracted. Extraction handles gziped files and both compressed and uncompressed tar-archives.
+* `extract_files`: Optional, boolean or list of strings. If it is true, the retrieved (compressed) file or archived will be uncompressed/unpacked and the files are extracted. If the parameter is a list for strings, only the files matching the filenames are extracted. Extraction handles gziped files and both compressed and uncompressed tar-archives as well as zip archives.
 * `http_url`: location of information resource (e.g. https://feodotracker.abuse.ch/blocklist/?download=domainblocklist)
 * `http_url_formatting`: (`bool|JSON`, default: `false`) If `true`, `{time[format]}` will be replaced by the current time in local timezone formatted by the given format. E.g. if the URL is `http://localhost/{time[%Y]}`, then the resulting URL is `http://localhost/2019` for the year 2019. (Python's [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec) is used for this.)
 You may use `a JSON` specifiying [time-delta](https://docs.python.org/3/library/datetime.html#datetime.timedelta) parameters to shift the current time accordingly. Ex: type in `{"days": -1}` to use yesterday's date; the URL `http://localhost/{time[%Y-%m-%d]}` will get translated to "http://localhost/2018-12-31" for the 1st Jan of 2019.
 
 Zipped files are automatically extracted if detected.
+
+For extracted files, every extracted file is sent in it's own report. Every report has a field named `extra.file_name` with the file name in the archive the content was extracted from.
 
 * * *
 
@@ -270,6 +272,11 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `sent_to`: filter messages by recipient
 * `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
+The resulting reports contains the following special fields:
+ * `extra.email_subject`: The subject of the email
+ * `extra.email_from`: The email's from address
+ * `extra.email_message_id`: The email's message ID
+
 * * *
 
 ### Generic Mail Attachment Fetcher
@@ -297,6 +304,10 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `sent_to`: filter messages by recipient
 * `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
+The resulting reports contains the following special fields:
+ * `extra.email_subject`: The subject of the email
+ * `extra.email_from`: The email's from address
+ * `extra.email_message_id`: The email's message ID
 * * *
 
 ### Generic Mail Body Fetcher
@@ -325,6 +336,11 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
   - string with comma separated values, e.g. `['html', 'plain']`
   - `true`, `false`, `null`: Same as default value
   - `string`, e.g. `'plain'`
+
+The resulting reports contains the following special fields:
+ * `extra.email_subject`: The subject of the email
+ * `extra.email_from`: The email's from address
+ * `extra.email_message_id`: The email's message ID
 
 * * *
 
@@ -409,13 +425,22 @@ Requires the rsync executable
 * `search_queue`: queue of the ticket to search for (default: `Incident Reports`)
 * `search_status`: status of the ticket to search for (default: `new`)
 * `search_subject_like`: part of the subject of the ticket to search for (default: `Report`)
-* `set_status`: status to set the ticket to after processing (default: `open`)
+* `set_status`: status to set the ticket to after processing (default: `open`). `false` or `null` to not set a different status.
 * `take_ticket`: whether to take the ticket (default: `true`)
 * `url_regex`: regular expression of an URL to search for in the ticket
 * `attachment_regex`: regular expression of an attachment in the ticket
-* `unzip_attachment`: whether to unzip a found attachment
+* `unzip_attachment`: whether to unzip a found attachment. Only the first file in the archive is used.
 
 The parameter `http_timeout_max_tries` is of no use in this collector.
+
+The resulting reports contains the following special fields:
+ * `rtir_id`: The ticket ID
+ * `extra.email_subject` and `extra.ticket_subject`: The subject of the ticket
+ * `extra.email_from` and `extra.ticket_requestors`: Comma separated list of requestor's email addresses.
+ * `extra.ticket_owner`: The ticket's owner name
+ * `extra.ticket_status`: The ticket's status
+ * `extra.ticket_queue`: The ticket's queue
+ * `time.observation`: The creation time of the ticket or attachment.
 
 * * *
 

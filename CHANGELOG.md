@@ -16,6 +16,20 @@ CHANGELOG
   - add `DateTime.convert_fuzzy`.
 - `intelmq.lib.pipeline`:
   - Redis: Use single connection client if calling bot is not multithreaded. Gives a small speed advantage.
+  - Require the bot instance as parameter for all pipeline classes.
+  - New internal variable `_has_message` to keep the state of the pipeline.
+  - Split receive and acknowledge into public-facing and private methods.
+- `intelmq.lib.bot`:
+  - Log message after successful bot initialization, no log message anymore for ready pipeline.
+  - Use existing current message if receive is called and the current message still exists.
+- `intelmq.lib.test`:
+  - Fix the tests broker by providing the testing pipeline.
+- `intelmq.lib.utils`:
+  - `unzip`:
+    - new parameter `return_names` to optionally return the file names.
+    - support for zip
+    - new parameters `try_zip`, `try_gzip` and `try_tar` to control which compressions are tried.
+    - rewritten to an iterative approach
 
 ### Development
 
@@ -24,6 +38,11 @@ CHANGELOG
 
 ### Bots
 #### Collectors
+- `intelmq.bots.collectors.http.collector_http`:
+  - More extensive usage of `intelmq.lib.utils.unzip`.
+  - Save the file names in the report if files have been extracted form an archive.
+- `intelmq.bots.collectors.rt.collector_rt`: Save ticket information/metadata in the extra fields of the report.
+- `intelmq.bots.collectos.mail.*`: Save email information/metadata in the extra fields of the report.
 
 #### Parsers
 - `intelmq.bot.parsers.html_table.parser`:
@@ -46,6 +65,8 @@ CHANGELOG
 - Travis:
   - Use UTC timezone.
   - Limit lxml dependency on 3.4 to < 4.4.0 (incompatibility).
+- Tests for `utils.unzip`.
+- Add a new asset: Zip archive with two files, same as with tar.gz archive.
 
 ### Tools
 - intelmqctl:
@@ -68,8 +89,9 @@ CHANGELOG
 - `intelmq.lib.bot`:
   - fix parameters of ParserBot and CollectorBot constructors, allowing `intelmqctl run` with these bots again (#1414).
   - Also run `rate_limit` after retry counter reset (#1431).
-- `__version_info__` is now available in the top level module.
-- `__version__`: uses now integer values if possible.
+- `__version_info__`:
+  - is now available in the top level module.
+  - uses now integer values instead of strings for numerical version parts
 - Also provide (empty) `ROOT_DIR` for non-pip installations.
 - `intelmq.lib.upgrades`: New library file `upgrades` with upgrade functions.
 - `intelmq.lib.utils`:
@@ -81,7 +103,11 @@ CHANGELOG
   - `log` takes a new argument `logging_level_stream` for the logging level of the console handler.
   - New constant `LOG_FORMAT_SIMPLE`, used by intelmqctl.
   - New function `write_configuration` to write dicts to files in the correct json formatting.
-- `intelmq.lib.pipeline`: AMQP: Actually use `source/destination_pipeline_amqp_virtual_host` parameter.
+- `intelmq.lib.pipeline`:
+  - AMQP: Actually use `source/destination_pipeline_amqp_virtual_host` parameter.
+  - pipeline base class: add missing dummy methods.
+  - Add missing return types.
+  - Redis: Evaluate return parameter of queue/key deletion.
 - Variable `STATE_FILE_PATH` added.
 
 ### Development
