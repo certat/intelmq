@@ -49,13 +49,13 @@ CHANGELOG
 - `intelmq.bot.parsers.html_table.parser`:
   * New parameter "html_parser".
   * Use time conversion functions directly from `intelmq.lib.harmonization.DateTime.convert`.
+  - Limit lxml dependency on 3.4 to < 4.4.0 (incompatibility).
 - `intelmq.bots.parsers.netlab_360.parser`: Add support for hajime scanners.
 
 #### Experts
 - Add geohash expert.
 
 #### Outputs
-- `intelmq.bots.outputs.amqptopic.output`: New parameters `message_hierarchical_output`, `message_with_type`, `message_jsondict_as_string`.
 
 ### Documentation
 - Feeds: Add ViriBack feed.
@@ -66,7 +66,6 @@ CHANGELOG
 ### Tests
 - Travis:
   - Use UTC timezone.
-  - Limit lxml dependency on 3.4 to < 4.4.0 (incompatibility).
 - Tests for `utils.unzip`.
 - Add a new asset: Zip archive with two files, same as with tar.gz archive.
 
@@ -81,11 +80,41 @@ CHANGELOG
 
 ### Known issues
 
-
-2.0.1 (unreleased)
-------------------
+2.0.2 (unreleased)
+-----------------
 
 ### Configuration
+
+### Core
+
+### Development
+
+### Harmonization
+
+### Bots
+#### Collectors
+
+#### Parsers
+
+#### Experts
+
+#### Outputs
+
+### Documentation
+
+### Packaging
+
+### Tests
+
+### Tools
+
+### Contrib
+
+### Known issues
+
+
+2.0.1 (2019-08-23)
+------------------
 
 ### Core
 - `intelmq.lib.harmonization`:
@@ -96,7 +125,7 @@ CHANGELOG
   - Also run `rate_limit` after retry counter reset (#1431).
 - `__version_info__`:
   - is now available in the top level module.
-  - uses now integer values instead of strings for numerical version parts
+  - uses integer values now instead of strings for numerical version parts
 - Also provide (empty) `ROOT_DIR` for non-pip installations.
 - `intelmq.lib.upgrades`: New library file `upgrades` with upgrade functions.
 - `intelmq.lib.utils`:
@@ -110,7 +139,9 @@ CHANGELOG
   - New function `write_configuration` to write dicts to files in the correct json formatting.
   - New function `create_request_session_from_bot`.
 - `intelmq.lib.pipeline`:
-  - AMQP: Actually use `source/destination_pipeline_amqp_virtual_host` parameter.
+  - AMQP:
+    - Actually use `source/destination_pipeline_amqp_virtual_host` parameter.
+    - Support for SSL with `source/destination_pipeline_ssl` parameter.
   - pipeline base class: add missing dummy methods.
   - Add missing return types.
   - Redis: Evaluate return parameter of queue/key deletion.
@@ -121,10 +152,16 @@ CHANGELOG
 
 ### Harmonization
 - IPAddress type: Remove Scope/Zone IDs for IPv6 addresses in sanitation.
-- TLP: Sanitation handles now more cases: case-insensitive prefixes and arbitary whitespace between the prefix and the value (#1420).
+- TLP: Sanitation handles now more cases: case-insensitive prefixes and arbitrary whitespace between the prefix and the value (#1420).
 
 ### Bots
 #### Collectors
+- `intelmq.bots.collectors.http.collector_http`: Use `utils.create_request_session_from_bot`.
+- `intelmq.bots.collectors.http.collector_http_stream`: Use `utils.create_request_session_from_bot` and thus fix some retries on connection timeouts.
+- `intelmq.bots.collectors.mail.collector_mail_url`: Use `utils.create_request_session_from_bot`.
+- `intelmq.bots.collectors.microsoft.collector_interflow`: Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts.
+- `intelmq.bots.collectors.rt.collector_rt`: Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts.
+- `intelmq.bots.collectors.twitter.collector_twitter`: Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts for non-twitter connections.
 
 #### Parsers
 - `intelmq.bots.parsers.n6.parser_n6stomp`: use `malware-generic` instead of `generic-n6-drone` for unknown infected system events.
@@ -136,23 +173,26 @@ CHANGELOG
 #### Experts
 - `intelmq.bots.experts.generic_db_lookup`: Recommend psycopg2-binary package.
 - `intelmq.bots.experts.modify.expert`:
-  - Compile regular expressions (all string rules) at initializations, improves the speed.
+  - Compile regular expressions (all string rules) at initialization, improves the speed.
   - Warn about old configuration style deprecation.
 - `intelmq.bots.experts.do_portal.expert`:
   - Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts (#1432).
   - Treat "502 Bad Gateway" as timeout which can be retried.
 - `intelmq.bots.experts.ripe.expert`: Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts.
 - `intelmq.bots.experts.url2fqdn.expert`: Support for IP addresses in hostnames (#1416).
+- `intelmq.bots.experts.national_cert_contact_certat.expert`: Use `utils.create_request_session_from_bot` and thus fix retries on connection timeouts.
 
 #### Outputs
 - `intelmq.bots.outputs.postgresql`: Recommend psycopg2-binary package.
 - `intelmq.bots.outputs.amqptopic`:
   - Shutdown: Close connection only if connection exists.
-  - Add support for pika > 1, the way the (Non-)Acknowledgments are provided has been changed.
+  - Add support for pika > 1. Pika changed the way it indicates (Non-)Acknowledgments of sent messages.
   - Gracefully handle unroutable messages and give advice.
-  - Support for no used authentication.
+  - Support for connections without authentication.
   - Replace deprecated parameter `type` with `exchange_type` for `exchange_declare`, supporting pika >= 0.11 (#1425).
   - New parameters `message_hierarchical_output`, `message_with_type`, `message_jsondict_as_string`.
+  - New parameter `use_ssl` for SSL connections.
+  - New parameter `single_key` for sending single fields instead of the full event.
 - `intelmq.bots.outputs.mongodb.output`: Support for pymongo >= 3.0.0 (#1063, PR#1421).
 - `intelmq.bots.outputs.file`: `time.*` field serialization: support for microseconds.
 - `intelmq.bots.outputs.mongodb.output`: Support for authentication in pymongo >= 3.5 (#1062).
@@ -177,17 +217,19 @@ CHANGELOG
 - `intelmqsetup`: Only change directory ownerships if necessary.
 - `intelmqctl`:
   - Provide new command `upgrade-conf` to uprade configuration to a newer version.
-    - Makes backups of configurations files itself.
+    - Makes backups of configurations files on its own.
     - Also checks for previously skipped or new functions of older versions and catches up.
-  - Provide logging level on on class layer.
-  - Fix `-q` flag for `intelmqctl list queues` by renaming (providing an additional variant) it to `--non-zero`.
-  - For console output `intemqctl: ` at the beginning of each line is no longer present.
+  - Provides logging level on class layer.
+  - Fix `-q` flag for `intelmqctl list queues` by renaming its alternative name to `--non-zero` to avoid a name collision with the global `--quiet` parameter.
+  - For console output the string `intelmqctl: ` at the beginning of each line is no longer present.
   - `check`: Support for the state file added. Checks if it exists and all upgrade functions have been executed successfully.
-  - Wait for up to 2 seconds when stopping a bot (#1434).
-  - Exit early on restart if stopping a bot did not work (#1434).
+  - Waits for up to 2 seconds when stopping a bot (#1434).
+  - Exits early on restart when stopping a bot did not work (#1434).
+  - `intelmqctl run process -m` debugging: Mock acknowledge method if incoming message is mocked too, otherwise a different message is acknowledged.
+  - Queue listing for AMQP: Support non-default monitoring URLs, see User-Guide.
 
 ### Contrib
-* logcheck rules: Adapt ignore rule to cover the instance id of bot names.
+* logcheck rules: Adapt ignore rule to cover the instance IDs of bot names.
 * malware name mapping:
   - Ignore lines in mapping starting with '#'.
   - Optionally include malpedia data.
@@ -195,6 +237,12 @@ CHANGELOG
 - bash-completion: Support for `intelmqctl upgrade-config` added.
 
 ### Known issues
+- http stream collector: retry on regular connection problems? (#1435)
+- tests: capture logging with context manager (#1342)
+- Bots started with IntelMQ-Manager stop when the webserver is restarted. (#952)
+- n6 parser: mapping is modified within each run (#905)
+- reverse DNS: Only first record is used (#877)
+- Corrupt dump files when interrupted during writing (#870)
 
 
 2.0.0 (2019-05-22)
