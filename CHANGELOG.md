@@ -19,9 +19,11 @@ CHANGELOG
   - Require the bot instance as parameter for all pipeline classes.
   - New internal variable `_has_message` to keep the state of the pipeline.
   - Split receive and acknowledge into public-facing and private methods.
+  - Add `reject_message` method to the Pipeline class for explicit requeue of messages.
 - `intelmq.lib.bot`:
   - Log message after successful bot initialization, no log message anymore for ready pipeline.
   - Use existing current message if receive is called and the current message still exists.
+  - Fix handling of received messaged after a sighup that happend during a blocking receving connection using explicit rejection (#1438).
 - `intelmq.lib.test`:
   - Fix the tests broker by providing the testing pipeline.
 - `intelmq.lib.utils`:
@@ -72,11 +74,15 @@ CHANGELOG
 ### Tools
 - intelmqctl:
   - Use green and red text color for some interactive output to indicate obvious errors or the absence of them.
+- intelmqdump:
+  - New edit action `v` to modify a message saved in the dump (#1284).
 
 ### Contrib
 * malware name mapping:
   * Add support for MISP treat actors data, see it's README for more information.
     * And handle empty synonyms in misp's galxies data.
+  * Move apply-Script to the new EventDB directory
+* EventDB: Scripts for applying malware name mapping and domain suffixes to an EventDB.
 
 ### Known issues
 
@@ -93,6 +99,10 @@ CHANGELOG
 
 ### Bots
 #### Collectors
+- `intelmq.bots.collectors.api.collector_api`:
+  - Handle non-existing IO loop in shutdown.
+  - Close socket on shutdown, fixes reloading.
+  - Marked as non-threadable.
 
 #### Parsers
 
@@ -103,10 +113,17 @@ CHANGELOG
 ### Documentation
 
 ### Packaging
+- Rules:
+  - Exclude intelmqsetup tool in packages
+  - Include update-rfiprisk-data in packages
 
 ### Tests
 
 ### Tools
+- intelmqctl:
+  - More and more precise logging messages for botnet starting and restarting, enable and disable.
+  - No error message for disabled bots on botnet reload.
+  - Fix `upgrade-conf` is state file is empty or not existing.
 
 ### Contrib
 - Check MK Statistics Cronjob:
