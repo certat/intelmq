@@ -45,7 +45,9 @@ CHANGELOG
   - Save the file names in the report if files have been extracted form an archive.
 - `intelmq.bots.collectors.rt.collector_rt`: Save ticket information/metadata in the extra fields of the report.
   - Support for RT 3.8 and RT 4.4.
-- `intelmq.bots.collectos.mail.*`: Save email information/metadata in the extra fields of the report.
+- `intelmq.bots.collectors.mail.*`: Save email information/metadata in the extra fields of the report. See the bots documentation for a complete list of provided data.
+  - `intelmq.bots.collectors.mail.collector_mail_attach`: Check for existence/validity of the `attach_regex` parameter.
+  - Use the lib's `unzip` function for uncompressing attachments and use the .
 
 #### Parsers
 - `intelmq.bot.parsers.html_table.parser`:
@@ -70,6 +72,7 @@ CHANGELOG
   - Use UTC timezone.
 - Tests for `utils.unzip`.
 - Add a new asset: Zip archive with two files, same as with tar.gz archive.
+- Added first tests for the Mail Attachment collector.
 
 ### Tools
 - intelmqctl:
@@ -92,6 +95,11 @@ CHANGELOG
 ### Configuration
 
 ### Core
+- `intelmq.lib.bot.CollectorBot`: Support the deprecated parameter `feed` until version 2.2 as the documentation was not properly updated (#1445).
+- `intelmq.lib.upgrades.v202_fixes`
+  - Migration of deprecated parameter `feed` for Collectors.
+  - Ripe expert parameter `query_ripe_stat_ip` was not correctly configured in `v110_deprecations`, now use `query_ripe_stat_asn` as default if it does not exist.
+- `intelmq.lib.upgrades.v110_deprecations`: Fix upgrade of ripe expert configuration.
 
 ### Development
 
@@ -118,6 +126,8 @@ CHANGELOG
   - Include update-rfiprisk-data in packages
 
 ### Tests
+- Tests for `intelmq.lib.upgrades.v202_fixes`.
+- Tests for `intelmq.lib.upgrades.v110_deprecations`.
 
 ### Tools
 - intelmqctl:

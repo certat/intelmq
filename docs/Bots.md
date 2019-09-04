@@ -121,7 +121,7 @@ For example:
     "abusech-feodo-domains-collector": {
         "parameters": {
             "provider": "Abuse.ch",
-            "feed": "Abuse.ch Feodo Domains",
+            "name": "Abuse.ch Feodo Domains",
             "http_url": "http://example.org/feodo-domains.txt"
         },
         "name": "Generic URL Fetcher",
@@ -148,7 +148,7 @@ This configuration resides in the file `runtime.conf` in your intelmq's configur
 
 **Feed parameters**: Common configuration options for all collectors.
 
-* `feed`: Name for the feed (`feed.name`).
+* `name`: Name for the feed (`feed.name`). In IntelMQ versions smaller than 2.2 the parameter name `feed` is also supported.
 * `accuracy`: Accuracy for the data of the feed (`feed.accuracy`).
 * `code`: Code for the feed (`feed.code`).
 * `documentation`: Link to documentation for the feed (`feed.documentation`).
@@ -274,6 +274,7 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
 The resulting reports contains the following special fields:
+ * `feed.url`: The URL the data was downloaded from
  * `extra.email_subject`: The subject of the email
  * `extra.email_from`: The email's from address
  * `extra.email_message_id`: The email's message ID
@@ -293,6 +294,7 @@ The resulting reports contains the following special fields:
 #### Configuration Parameters:
 
 * **Feed parameters** (see above)
+* `extract_files`: Optional, boolean or list of strings. See documentation of the Generic URL Fetcher for more details.
 * `mail_host`: FQDN or IP of mail server
 * `mail_user`: user account of the email account
 * `mail_password`: password associated with the user account
@@ -300,15 +302,16 @@ The resulting reports contains the following special fields:
 * `folder`: folder in which to look for mails (default: `INBOX`)
 * `subject_regex`: regular expression to look for a subject
 * `attach_regex`: regular expression of the name of the attachment
-* `attach_unzip`: whether to unzip the attachment (default: `true`)
+* `attach_unzip`: whether to unzip the attachment. Only extracts the first file. Deprecated, use `extract_files` instead.
 * `sent_from`: filter messages by sender
 * `sent_to`: filter messages by recipient
-* `ssl_ca_certificate`: Optional string of path to trusted CA certicate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
+* `ssl_ca_certificate`: Optional string of path to trusted CA certificate. Applies only to IMAP connections, not HTTP. If the provided certificate is not found, the IMAP connection will fail on handshake. By default, no certificate is used.
 
 The resulting reports contains the following special fields:
  * `extra.email_subject`: The subject of the email
  * `extra.email_from`: The email's from address
  * `extra.email_message_id`: The email's message ID
+ * `extra.file_name`: The file name of the attachment or the file name in the attached archive if attachment is to uncompress.
 * * *
 
 ### Generic Mail Body Fetcher
@@ -360,6 +363,10 @@ The resulting reports contains the following special fields:
 * `path`: path to file
 * `postfix`: FIXME
 * `delete_file`: whether to delete the file after reading (default: `false`)
+
+The resulting reports contains the following special fields:
+ * `feed.url`: The URI using the `file://` scheme and localhost, with the full path to the processed file.
+ * `extra.file_name`: The file name (without path) of the processed file.
 
 * * *
 
