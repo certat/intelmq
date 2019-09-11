@@ -18,12 +18,13 @@ __all__ = ['v100_dev7_modify_syntax',
            'v200_defaults_ssl_ca_certificate',
            'v111_defaults_process_manager',
            'v202_fixes',
+           'v210_deprecations',
            ]
 
 
 def v200_defaults_statistics(defaults, runtime, dry_run):
     """
-    Inserting "statistics_*" parameters into defaults.conf file
+    Inserting `statistics_*` parameters into defaults configuration file
     """
     values = {"statistics_database": 3,
               "statistics_host": "127.0.0.1",
@@ -40,7 +41,7 @@ def v200_defaults_statistics(defaults, runtime, dry_run):
 
 def v200_defaults_broker(defaults, runtime, dry_run):
     """
-    Inserting "*_pipeline_broker" and deleting broker into/from defaults configuration
+    Inserting `*_pipeline_broker` and deleting broker into/from defaults configuration
     """
     changed = None
     values = {"destination_pipeline_broker": defaults.get("broker", "redis"),
@@ -110,7 +111,7 @@ def v110_shadowserver_feednames(defaults, runtime, dry_run):
 
 def v110_deprecations(defaults, runtime, dry_run):
     """
-    Checking for deprecated runtime configurations
+    Checking for deprecated runtime configurations (stomp collector, cymru parser, ripe expert)
     """
     mapping = {
         "intelmq.bots.collectors.n6.collector_stomp": "intelmq.bots.collectors.stomp.collector",
@@ -218,10 +219,7 @@ def v111_defaults_process_manager(defaults, runtime, dry_run):
 
 def v202_fixes(defaults, runtime, dry_run):
     """
-    Migrating parameter `feed` to `name`.
-
-    ripe expert: query_ripe_stat_ip was not correctly set in v110_deprecations
-    Set query_ripe_stat_ip to value of query_ripe_stat_asn if query_ripe_stat_ip does not exist
+    Migrating collector parameter `feed` to `name`. RIPE expert set: `query_ripe_stat_ip` with `query_ripe_stat_asn` as default
     """
     changed = None
     for bot_id, bot in runtime.items():
@@ -242,6 +240,22 @@ def v202_fixes(defaults, runtime, dry_run):
     return changed, defaults, runtime
 
 
+def v210_deprecations(defaults, runtime, dry_run):
+    """
+    Migrating RT collector's `unzip_attachment` to `extract_files`.
+    """
+    changed = None
+    for bot_id, bot in runtime.items():
+        if bot["module"] == "intelmq.bots.collectors.rt.collector_rt":
+            if "unzip_attachment" not in bot["parameters"]:
+                continue
+            if "extract_files" not in bot["parameters"]:
+                bot["parameters"]["extract_files"] = bot["parameters"]["unzip_attachment"]
+            del bot["parameters"]["unzip_attachment"]
+            changed = True
+    return changed, defaults, runtime
+
+
 UPGRADES = OrderedDict([
     ((1, 0, 0, 'dev7'), (v100_dev7_modify_syntax, )),
     ((1, 1, 0), (v110_shadowserver_feednames, v110_deprecations)),
@@ -251,4 +265,5 @@ UPGRADES = OrderedDict([
                  v200_defaults_ssl_ca_certificate)),
     ((2, 0, 1), ()),
     ((2, 0, 2), (v202_fixes, )),
+    ((2, 1, 0), (v210_deprecations, )),
 ])
