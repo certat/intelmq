@@ -17,6 +17,15 @@ See the changelog for a full list of changes.
 
 The Shadowserver Parser is now able to detect the feed base on the report's field `extra.file_name`, added by collectors. Have a look at their documentation for more details.
 
+#### PostgreSQL Output
+The PostgreSQL Output Bot has been integrated into the new and generic SQL Output Bot
+* module name:
+  * old: `intelmq.bots.outputs.postgresql.output`
+  * new: `intelmq.bots.outputs.sql.output`
+* parameters:
+  * new: `engine` = `postgresql`
+IntelMQ versions 2.x will be compatible with previous configurations. `intelmqctl upgrade-config` migrates configurations.
+
 ### Libraries
 
 ### Postgres databases
@@ -40,6 +49,9 @@ In the upgrade function for version 1.1.0 (in effect in version 2.0.1) the addit
 #### Cymru CAP Feed Migration
 
 The Cymru CAP Feed is (being) migrated to a new URL with a different format and more data. Look at the feed's documentation for more information.
+
+#### Cymru Whois Expert, Modify Expert & Reverse DNS Expert
+These bots overwrite existing fields by default. A parameter `overwrite` has been added to make this optional, with the default value of `True` for backwards compatibility. If the parameter is not set, a warning is logged. The default value will change to `False` in version 3.0.0. The default for all new bots (in `BOTS`) is `False` already.
 
 ### Libraries
 

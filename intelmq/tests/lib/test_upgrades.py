@@ -19,7 +19,13 @@ V202 = {"test-collector": {
     "parameters": {
         "query_ripe_stat_asn": True,
     },
-}
+},
+    "reversedns-expert": {
+    "group": "Expert",
+    "module": "intelmq.bots.experts.reverse_dns.expert",
+    "parameters": {
+    },
+},
 }
 V202_EXP = {"test-collector": {
     "group": "Collector",
@@ -35,7 +41,14 @@ V202_EXP = {"test-collector": {
         "query_ripe_stat_asn": True,
         "query_ripe_stat_ip": True,
     },
-}
+},
+    "reversedns-expert": {
+    "group": "Expert",
+    "module": "intelmq.bots.experts.reverse_dns.expert",
+    "parameters": {
+        "overwrite": True,
+    },
+},
 }
 
 DEP_110 = {"n6-collector": {
@@ -91,6 +104,41 @@ V210 = {"test-collector": {
     "module": "intelmq.bots.collectors.rt.collector_rt",
     "parameters": {
     },
+},
+    "postgresql-output": {
+    "group": "Output",
+    "module": "intelmq.bots.outputs.postgresql.output",
+    "parameters": {
+        "autocommit": True,
+        "database": "intelmq-events",
+        "host": "localhost",
+                "jsondict_as_string": True,
+                "password": "<password>",
+                "port": "5432",
+                "sslmode": "require",
+                "table": "events",
+                "user": "intelmq"
+    },
+},
+    "db-lookup": {
+    "module": "intelmq.bots.experts.generic_db_lookup.expert",
+    "parameters": {
+        "database": "intelmq",
+        "host": "localhost",
+                "match_fields": {
+                    "source.asn": "asn"
+                },
+        "overwrite": False,
+        "password": "<password>",
+        "port": "5432",
+                "replace_fields": {
+                    "contact": "source.abuse_contact",
+                    "note": "comment"
+                },
+        "sslmode": "require",
+        "table": "contacts",
+        "user": "intelmq"
+    }
 }
 }
 V210_EXP = {"test-collector": {
@@ -105,6 +153,43 @@ V210_EXP = {"test-collector": {
     "module": "intelmq.bots.collectors.rt.collector_rt",
     "parameters": {
     },
+},
+    "postgresql-output": {
+    "group": "Output",
+    "module": "intelmq.bots.outputs.sql.output",
+    "parameters": {
+        "autocommit": True,
+        "database": "intelmq-events",
+        "engine": "postgresql",
+        "host": "localhost",
+                "jsondict_as_string": True,
+                "password": "<password>",
+                "port": "5432",
+                "sslmode": "require",
+                "table": "events",
+                "user": "intelmq"
+    },
+},
+    "db-lookup": {
+    "module": "intelmq.bots.experts.generic_db_lookup.expert",
+    "parameters": {
+        "engine": "postgresql",
+        "database": "intelmq",
+        "host": "localhost",
+                "match_fields": {
+                    "source.asn": "asn"
+                },
+        "overwrite": False,
+        "password": "<password>",
+        "port": "5432",
+                "replace_fields": {
+                    "contact": "source.abuse_contact",
+                    "note": "comment"
+                },
+        "sslmode": "require",
+        "table": "contacts",
+        "user": "intelmq"
+    }
 }
 }
 
