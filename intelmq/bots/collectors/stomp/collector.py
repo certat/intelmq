@@ -88,7 +88,7 @@ class StompCollectorBot(CollectorBot):
         self.conn.set_listener('', StompListener(self))
         self.conn.start()
         self.conn.destination = self.exchange
-        self.conn.connect_and_subscribe()
+        self.connect_and_subscribe()
 
     def shutdown(self):
         try:
