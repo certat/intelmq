@@ -18,16 +18,7 @@ else:
 
         def on_heartbeat_timeout(self):
             self.stompbot.logger.info("Heartbeat timeout. Attempting to re-connect.")
-            self.connect_and_subscribe()
-
-        def connect_and_subscribe(self):
-            self.conn.start()
-            connect_status = self.conn.connect(wait=True)
-            subscribe_status = self.conn.subscribe(destination=self.destination,
-                                                   id=1, ack='auto')
-            self.stompbot.logger.info('Successfully connected and subscribed. '
-                                      'Connect status: %r, subscribe status: %r.',
-                                      connect_status, subscribe_status)
+            connect_and_subscribe(self.conn, self.logger, self.destination)
 
         def on_error(self, headers, message):
             self.stompbot.logger.error('Received an error: %r.', message)
@@ -44,8 +35,17 @@ else:
 
         def on_disconnected(self):
             self.stompbot.logger.debug('Detected disconnect')
-            self.connect_and_subscribe()
+            connect_and_subscribe(self.conn, self.logger, self.destination)
 
+
+def connect_and_subscribe(conn, logger, destination):
+    conn.start()
+    connect_status = conn.connect(wait=True)
+    subscribe_status = conn.subscribe(destination=destination,
+                                      id=1, ack='auto')
+    logger.info('Successfully connected and subscribed. '
+                'Connect status: %r, subscribe status: %r.',
+                connect_status, subscribe_status)
 
 
 class StompCollectorBot(CollectorBot):
@@ -88,7 +88,7 @@ class StompCollectorBot(CollectorBot):
         self.conn.set_listener('', StompListener(self))
         self.conn.start()
         self.conn.destination = self.exchange
-        self.conn.connect_and_subscribe()
+        connect_and_subscribe(self.conn, self.logger, self.exchange)
 
     def shutdown(self):
         try:
