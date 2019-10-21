@@ -3,7 +3,7 @@ NEWS
 
 See the changelog for a full list of changes.
 
-2.1.0 Feature release (unreleased)
+2.2.0 Feature release (unreleased)
 ----------------------------------
 
 ### Requirements
@@ -11,6 +11,34 @@ See the changelog for a full list of changes.
 ### Tools
 
 ### Harmonization
+
+### Configuration
+
+### Libraries
+
+### Postgres databases
+
+
+2.1.1 Bugfix release (unreleased)
+---------------------------------
+
+### Requirements
+
+### Tools
+
+### Harmonization
+
+### Configuration
+
+### Libraries
+
+### Postgres databases
+
+
+2.1.0 Feature release (2019-10-15)
+----------------------------------
+
+Run `intelmqctl upgrade-config` and `intelmqctl check` after the upgrade.
 
 ### Configuration
 #### Shadowserver Parser
@@ -26,19 +54,11 @@ The PostgreSQL Output Bot has been integrated into the new and generic SQL Outpu
   * new: `engine` = `postgresql`
 IntelMQ versions 2.x will be compatible with previous configurations. `intelmqctl upgrade-config` migrates configurations.
 
-### Libraries
 
-### Postgres databases
-
-
-2.0.2 Bugfix release (unreleased)
+2.0.2 Bugfix release (2019-10-14)
 ---------------------------------
 
-### Requirements
-
-### Tools
-
-### Harmonization
+Run `intelmqctl upgrade-config` and `intelmqctl check` after the upgrade.
 
 ### Configuration
 The deprecated parameter `feed` for collectors is again supported as the documentation as not properly updated. The support will be removed before version 2.2.
@@ -52,10 +72,6 @@ The Cymru CAP Feed is (being) migrated to a new URL with a different format and 
 
 #### Cymru Whois Expert, Modify Expert & Reverse DNS Expert
 These bots overwrite existing fields by default. A parameter `overwrite` has been added to make this optional, with the default value of `True` for backwards compatibility. If the parameter is not set, a warning is logged. The default value will change to `False` in version 3.0.0. The default for all new bots (in `BOTS`) is `False` already.
-
-### Libraries
-
-### Postgres databases
 
 
 2.0.1 Bugfix release (2019-08-23)

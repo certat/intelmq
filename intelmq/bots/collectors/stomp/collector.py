@@ -13,12 +13,14 @@ else:
         the stomp listener gets called asynchronously for
         every STOMP message
         """
-        def __init__(self, n6stompcollector):
+        def __init__(self, n6stompcollector, conn, destination):
             self.stompbot = n6stompcollector
+            self.conn = conn
+            self.destination = destination
 
         def on_heartbeat_timeout(self):
             self.stompbot.logger.info("Heartbeat timeout. Attempting to re-connect.")
-            connect_and_subscribe(self.conn, self.logger, self.destination)
+            connect_and_subscribe(self.conn, self.stompbot.logger, self.destination)
 
         def on_error(self, headers, message):
             self.stompbot.logger.error('Received an error: %r.', message)
@@ -35,7 +37,7 @@ else:
 
         def on_disconnected(self):
             self.stompbot.logger.debug('Detected disconnect')
-            connect_and_subscribe(self.conn, self.logger, self.destination)
+            connect_and_subscribe(self.conn, self.stompbot.logger, self.destination)
 
 
 def connect_and_subscribe(conn, logger, destination):
@@ -85,9 +87,8 @@ class StompCollectorBot(CollectorBot):
                                      heartbeats=(self.heartbeat,
                                                  self.heartbeat))
 
-        self.conn.set_listener('', StompListener(self))
+        self.conn.set_listener('', StompListener(self, self.conn, self.exchange))
         self.conn.start()
-        self.conn.destination = self.exchange
         connect_and_subscribe(self.conn, self.logger, self.exchange)
 
     def shutdown(self):

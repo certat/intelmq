@@ -11,7 +11,7 @@ import intelmq.lib.utils as utils
 from intelmq.bots.parsers.hibp.parser_callback import HIBPCallbackParserBot
 
 BREACHREQUEST = json.load(open(pkg_resources.resource_filename('intelmq', 'tests/bots/parsers/hibp/breach_callbacktest.json')))
-BREACHRAW = utils.base64_encode(json.dumps(BREACHREQUEST))
+BREACHRAW = utils.base64_encode(json.dumps(BREACHREQUEST, sort_keys=True))
 BR_REP = {"feed.name": "HIBP Enterprise",
           "time.observation": "2019-03-01T01:01:01+00:00",
           "__type": "Report",
@@ -24,13 +24,14 @@ BR_EV = {"feed.name": "HIBP Enterprise",
          "extra.breach": BREACHREQUEST["Breach"],
          "classification.taxonomy": "information content security",
          "classification.type": "leak",
+         "classification.identifier": "breach",
          "source.account": "test2@example.com",
          "source.fqdn": "example.com",
          "__type": "Event"
          }
 
 PASTEREQUEST = json.load(open(pkg_resources.resource_filename('intelmq', 'tests/bots/parsers/hibp/paste_callbacktest.json')))
-PASTERAW = utils.base64_encode(json.dumps(PASTEREQUEST))
+PASTERAW = utils.base64_encode(json.dumps(PASTEREQUEST, sort_keys=True))
 PA_REP = {"feed.name": "HIBP Enterprise",
           "time.observation": "2019-03-01T01:01:01+00:00",
           "__type": "Report",
@@ -43,6 +44,7 @@ PA_EV = {"feed.name": "HIBP Enterprise",
          "extra.paste": PASTEREQUEST["Paste"],
          "classification.taxonomy": "information content security",
          "classification.type": "leak",
+         "classification.identifier": "paste",
          "source.account": "test2@example.com",
          "source.fqdn": "example.com",
          "__type": "Event"
@@ -50,7 +52,7 @@ PA_EV = {"feed.name": "HIBP Enterprise",
 
 
 BREACHREALREQUEST = json.load(open(pkg_resources.resource_filename('intelmq', 'tests/bots/parsers/hibp/breach_real.json')))
-BREACHREALRAW = utils.base64_encode(json.dumps(BREACHREALREQUEST))
+BREACHREALRAW = utils.base64_encode(json.dumps(BREACHREALREQUEST, sort_keys=True))
 BR_REAL_REP = {"feed.name": "HIBP Enterprise",
                "time.observation": "2019-03-01T01:01:01+00:00",
                "__type": "Report",
@@ -64,6 +66,7 @@ BR_REAL_EV = {"feed.name": "HIBP Enterprise",
               "extra.breach": BREACHREALREQUEST["Breach"],
               "classification.taxonomy": "information content security",
               "classification.type": "leak",
+              "classification.identifier": "breach",
               "source.fqdn": "example.com",
               "__type": "Event"
               }

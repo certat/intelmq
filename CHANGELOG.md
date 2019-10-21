@@ -2,10 +2,75 @@ CHANGELOG
 ==========
 
 
-2.1.0 (unreleased)
------------------
+2.2.0 (unreleased)
+------------------
 
 ### Configuration
+
+### Core
+
+### Development
+
+### Harmonization
+
+### Bots
+#### Collectors
+
+#### Parsers
+
+#### Experts
+
+#### Outputs
+
+### Documentation
+
+### Packaging
+
+### Tests
+
+### Tools
+
+### Contrib
+
+### Known issues
+
+
+2.1.1 (unreleased)
+------------------
+
+### Configuration
+
+### Core
+
+### Development
+
+### Harmonization
+
+### Bots
+#### Collectors
+
+#### Parsers
+
+#### Experts
+
+#### Outputs
+- `intelmq.bots.outputs.smtp`: Allow non-existent field in text formatting by using a default value `None` instead of throwing errors.
+
+### Documentation
+
+### Packaging
+
+### Tests
+
+### Tools
+
+### Contrib
+
+### Known issues
+
+
+2.1.0 (2019-10-15)
+-----------------
 
 ### Core
 - `intelmq.lib.harmonization`:
@@ -38,8 +103,6 @@ CHANGELOG
     - rewritten to an iterative approach
   - add `file_name_from_response` to extract a file name from a Response object for downloaded files.
 - `intelmq.lib.upgrades`: Added `v210_deprecations` for deprecated parameters.
-
-### Development
 
 ### Harmonization
 - Add extra to reports.
@@ -89,9 +152,7 @@ CHANGELOG
   - Add ViriBack feed.
   - Add Have I Been Pwned Enterprise Callback.
 - `intelmq.tests.bots.outputs.amqptopic.test_output`: Added.
-- Moved the Shadowserver Parser documentation from a separate README to the central Bots.md file.
-
-### Packaging
+- Move the documentation of most bots from separate README files to the central Bots.md and feeds.yaml files.
 
 ### Tests
 - Travis:
@@ -99,6 +160,7 @@ CHANGELOG
 - Tests for `utils.unzip`.
 - Add a new asset: Zip archive with two files, same as with tar.gz archive.
 - Added tests for the Mail Attachment & Mail URL collectors.
+- Ignore logging-tests on Python 3.7 temporarily (#1342).
 
 ### Tools
 - intelmqctl:
@@ -114,11 +176,18 @@ CHANGELOG
 * EventDB: Scripts for applying malware name mapping and domain suffixes to an EventDB.
 
 ### Known issues
+- MongoDB authentication: compatibility on different MongoDB and pymongo versions (#1439)
+- ctl: shell colorizations are logged (#1436)
+- http stream collector: retry on regular connection problems? (#1435)
+- tests: capture logging with context manager (#1342)
+- Bots started with IntelMQ-Manager stop when the webserver is restarted. (#952)
+- n6 parser: mapping is modified within each run (#905)
+- reverse DNS: Only first record is used (#877)
+- Corrupt dump files when interrupted during writing (#870)
 
-2.0.2 (unreleased)
+
+2.0.2 (2019-10-14)
 -----------------
-
-### Configuration
 
 ### Core
 - `intelmq.lib.bot.CollectorBot`: Support the deprecated parameter `feed` until version 2.2 as the documentation was not properly updated (#1445).
@@ -134,10 +203,6 @@ CHANGELOG
 - `intelmq.lib.pipeline.Amqp`:
   - use default SSL context for client purposes, fixes compatibility with python < 3.6 if TLS is used.
   - Reconnect once on sending messages if disconnect detected.
-
-### Development
-
-### Harmonization
 
 ### Bots
 #### Collectors
@@ -168,8 +233,6 @@ CHANGELOG
 #### Outputs
 - `intelmq.bots.outputs.amqptopic.output`: use default SSL context for client purposes, fixes compatibility with python < 3.6 if TLS is used.
 
-### Documentation
-
 ### Packaging
 - Rules:
   - Exclude intelmqsetup tool in packages
@@ -197,6 +260,14 @@ CHANGELOG
   - Add `PIDFile` parameter to service file.
 
 ### Known issues
+- MongoDB authentication: compatibility on different MongoDB and pymongo versions (#1439)
+- ctl: shell colorizations are logged (#1436)
+- http stream collector: retry on regular connection problems? (#1435)
+- tests: capture logging with context manager (#1342)
+- Bots started with IntelMQ-Manager stop when the webserver is restarted. (#952)
+- n6 parser: mapping is modified within each run (#905)
+- reverse DNS: Only first record is used (#877)
+- Corrupt dump files when interrupted during writing (#870)
 
 
 2.0.1 (2019-08-23)

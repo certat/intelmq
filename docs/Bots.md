@@ -309,6 +309,20 @@ The resulting reports contains the following special fields:
  * `extra.email_message_id`: The email's message ID
  * `extra.file_name`: The file name of the downloaded file (extracted from the HTTP Response Headers if possible).
 
+##### Chunking
+
+For line-based inputs the bot can split up large reports into smaller chunks.
+
+This is particularly important for setups that use Redis as a message queue
+which has a per-message size limitation of 512 MB.
+
+To configure chunking, set `chunk_size` to a value in bytes.
+`chunk_replicate_header` determines whether the header line should be repeated
+for each chunk that is passed on to a parser bot.
+
+Specifically, to configure a large file input to work around Redis' size
+limitation set `chunk_size` to something like `384000000`, i.e., ~384 MB.
+
 * * *
 
 ### Generic Mail Attachment Fetcher
@@ -385,7 +399,9 @@ The resulting reports contains the following special fields:
 * `lookup:` yes
 * `public:` yes
 * `cache (redis db):` none
-* `description:` collect messages from a file.
+* `description:` This bot is capable of reading files from the local file-system.
+  This is handy for testing purposes, or when you need to react to spontaneous
+  events. In combination with the Generic CSV Parser this should work great.
 
 #### Configuration Parameters:
 
@@ -397,6 +413,35 @@ The resulting reports contains the following special fields:
 The resulting reports contains the following special fields:
  * `feed.url`: The URI using the `file://` scheme and localhost, with the full path to the processed file.
  * `extra.file_name`: The file name (without path) of the processed file.
+
+#### Chunking
+
+Additionally, for line-based inputs the bot can split up large reports into
+smaller chunks.
+
+This is particularly important for setups that use Redis as a message queue
+which has a per-message size limitation of 512 MB.
+
+To configure chunking, set `chunk_size` to a value in bytes.
+`chunk_replicate_header` determines whether the header line should be repeated
+for each chunk that is passed on to a parser bot.
+
+Specifically, to configure a large file input to work around Redis' size
+limitation set `chunk_size` to something like `384000`, i.e., ~384 MB.
+
+#### Workflow
+
+The bot loops over all files in `path` and tests if their file name matches
+*postfix, e.g. `*.csv`. If yes, the file will be read and inserted into the
+queue.
+
+If `delete_file` is set, the file will be deleted after processing. If deletion
+is not possible, the bot will stop.
+
+To prevent data loss, the bot also stops when no `postfix` is set and
+`delete_file` was set. This can not be overridden.
+
+The bot always sets the file name as feed.url
 
 * * *
 
@@ -428,7 +473,7 @@ Requires the rsync executable
 * `lookup:` yes
 * `public:` yes
 * `cache (redis db):` none
-* `description:` collect messages from a MISP server.
+* `description:` collect messages from [MISP](https://github.com/MISP), a malware information sharing platform. server.
 
 #### Configuration Parameters:
 
@@ -438,6 +483,16 @@ Requires the rsync executable
 * `misp_verify`: (default: `true`)
 * `misp_tag_to_process`: MISP tag for events to be processed
 * `misp_tag_processed`: MISP tag for processed events
+
+#### Workflow
+This collector will search for events on a MISP server that have a
+`to_process` tag attached to them (see the `misp_tag_to_process` parameter)
+and collect them for processing by IntelMQ. Once the MISP event has been
+processed the `to_process` tag is removed from the MISP event and a
+`processed` tag is then attached (see the `misp_tag_processed` parameter).
+
+**NB.** The MISP tags must be configured to be 'exportable' otherwise they will
+not be retrieved by the collector.
 
 * * *
 
@@ -450,6 +505,12 @@ Requires the rsync executable
 * `public:` yes
 * `cache (redis db):` none
 * `description:` Request Tracker Collector fetches attachments from an RTIR instance.
+
+You need the rt-library >= 1.9 from nic.cz, available via [pypi](https://pypi.org/project/rt/): `pip3 install rt`
+
+This rt bot will connect to RT and inspect the given `search_queue` for tickets matching all criteria in `search_*`, 
+Any matches will be inspected. For each match, all (RT-) attachments of the matching RT tickets are iterated over and within this loop, the first matching filename in the attachment is processed.
+If none of the filename matches apply, the contents of the first (RT-) "history" item is matched against the URL-regex.
 
 #### Configuration Parameters:
 
@@ -481,6 +542,31 @@ The resulting reports contains the following special fields:
  * `extra.ticket_queue`: The ticket's queue
  * `extra.file_name`: The name of the extracted file, the name of the downloaded file or the attachments' filename without `.gz` postfix.
  * `time.observation`: The creation time of the ticket or attachment.
+
+##### Search
+
+The parameters prefixed with `search_` allow configuring the ticket search.
+
+Empty strings and `null` as value for search parameters are ignored.
+
+##### File downloads
+
+Attachments can be optionally unzipped, remote files are downloaded with the `http_*` settings applied (see `defaults.conf`).
+
+If `url_regex` or `attachment_regex` are empty strings, false or null, they are ignored.
+
+##### Ticket processing
+
+Optionally, the RT bot can "take" RT tickets (i.e. the `user` is assigned this ticket now) and/or the status can be changed (leave `set_status` empty in case you don't want to change the status). Please note however that you **MUST** do one of the following: either "take" the ticket  or set the status (`set_status`). Otherwise, the search will find the ticket every time and we will have generated an endless loop.
+
+In case a resource needs to be fetched and this resource is permanently not available (status code is 4xx), the ticket status will be set according to the configuration to avoid processing the ticket over and over.
+For temporary failures the status is not modified, instead the ticket will be skipped in this run.
+
+##### Time search
+
+To find only tickets newer than a given absolute or relative time, you can use the `search_not_older_than` parameter. Absolute time specification can be anything parseable by dateutil, best use a ISO format.
+
+Relative must be in this format: `[number] [timespan]s`, e.g. `3 days`. Timespan can be hour, day, week, month, year. Trailing 's' is supported for all timespans. Relative times are subtracted from the current time directly before the search is performed.
 
 * * *
 
@@ -551,25 +637,35 @@ Requires the shodan library to be installed:
 * `cache (redis db):` none
 * `description:` This bot can connect to an XMPP Server and one room, in order to receive reports from it. TLS is used by default. rate_limit is ineffective here. Bot can either pass the body or the whole event.
 
+#### Requirements
+The Sleekxmpp - Library needs to be installed on your System
+```bash
+pip3 install -r intelmq/bots/collectors/xmpp/REQUIREMENTS.txt
+```
+
 #### Configuration Parameters:
 
 * **Feed parameters** (see above)
-* `xmpp_server`: FIXME
-* `xmpp_user`: FIXME
-* `xmpp_password`: FIXME
-* `xmpp_room`: FIXME
-* `xmpp_room_nick`: FIXME
-* `xmpp_room_password`: FIXME
-* `ca_certs`: FIXME (default: `/etc/ssl/certs/ca-certificates.crt`)
-* `strip_message`: FIXME (default: `true`)
-* `pass_full_xml`: FIXME (default: `false`)
+* `xmpp_server`: The domain name of the server of the XMPP-Account (part after the @ sign)
+* `xmpp_user`: The username of the XMPP-Account the collector shall use (part before the @ sign)
+* `xmpp_password`: The password of the XMPP-Account
+* `xmpp_room`: The room which which has to be joined by the XMPP-Collector (full address room@conference.server.tld)
+* `xmpp_room_nick`: The username / nickname the collector shall use within the room
+* `xmpp_room_password`: The password which might be required to join a room
+ - `use_muc` : If this parameter is `true`, the bot will join the room `xmpp_room`.
+ - `xmpp_userlist`: An array of usernames whose messages will (not) be processed.
+ - `xmpp_whitelist_mode`: If `true` the list provided in `xmpp_userlist` is a whitelist. Else it is a blacklist.
+    In case of a whitelist, only messages from the configured users will be processed, else their messages are not
+    processed. Default is `false` / blacklist.
+* `ca_certs`: A path to a file containing the CA's which should be used (default: `/etc/ssl/certs/ca-certificates.crt`)
+* `strip_message`: If `true` trailing white space will be removed from the message. Does not happen if `pass_full_xml` is set to `true` (default: `true`)
+* `pass_full_xml`: If this parameter is set to `true` the collector will read the full-xmpp-xml message and add it to the pipeline.
+   this is useful if other systems like AbuseHelper should be processed. (default: `false`)
 
 * * *
 
 
 ### Alien Vault OTX
-
-See the README.md
 
 #### Information:
 * `name:` intelmq.bots.collectors.alienvault_otx.collector
@@ -578,16 +674,23 @@ See the README.md
 * `cache (redis db):` none
 * `description:` collect report messages from Alien Vault OTX API
 
+#### Requirements
+
+Install the library from GitHub, as there is no package in PyPi:
+```bash
+pip3 install -r intelmq/bots/collectors/alienvault_otx/REQUIREMENTS.txt
+```
+
 #### Configuration Parameters:
 
 * **Feed parameters** (see above)
-* `api_key`: location of information resource (e.g. FIXME)
+* `api_key`: API Key
+* `modified_pulses_only`: get only modified pulses instead of all, set to it to true or false, default false
+* `interval`: if "modified_pulses_only" is set, define the time in hours (integer value) to get modified pulse since then, default 24 hours
 
 * * *
 
 ### Blueliv Crimeserver
-
-See the README.md
 
 #### Information:
 * `name:` intelmq.bots.collectors.blueliv.collector_crimeserver
@@ -596,10 +699,19 @@ See the README.md
 * `cache (redis db):` none
 * `description:` collect report messages from Blueliv API
 
+For more information visit https://github.com/Blueliv/api-python-sdk
+
+#### Requirements
+
+Install the required library:
+```bash
+pip3 install -r intelmq/bots/collectors/blueliv/REQUIREMENTS.txt
+```
+
 #### Configuration Parameters:
 
 * **Feed parameters** (see above)
-* `api_key`: location of information resource
+* `api_key`: location of information resource, see https://map.blueliv.com/?redirect=get-started#signup
 * `api_url`: The optional API endpoint, by default `https://freeapi.blueliv.com`.
 
 * * *
@@ -687,14 +799,19 @@ The cache is used to remember which files have already been downloaded. Make sur
 
 ### Stomp
 
-See the README.md in `intelmq/bots/collectors/stomp/`
-
 #### Information:
 * `name:` intelmq.bots.collectors.stomp.collector
 * `lookup:` yes
 * `public:` no
 * `cache (redis db):` none
 * `description:` collect messages from a stomp server
+
+#### Requirements
+
+Install the stomp.py library from pypi:
+```bash
+pip3 install -r intelmq/bots/collectors/stomp/REQUIREMENTS.txt
+```
 
 #### Configuration Parameters:
 
@@ -819,6 +936,47 @@ Lines starting with `'#'` will be ignored. Headers won't be interpreted.
 you can map them to the correct ones. The `type_translation` field can hold a JSON field with a dictionary which maps the feed's values to intelmq's.
  * `"columns_required"`: A list of true/false for each column. By default, it is true for every column.
 
+* * *
+
+### Fraunhofer DDos Attack Parser
+
+#### Information:
+* `name:` `intelmq.bots.parsers.fraunhofer.parser_ddosattack_cnc` and `intelmq.bots.parsers.fraunhofer.parser_ddosattack_target`
+* `public:` no
+* `cache (redis db):` none
+* `description:` Parses data from Fraunhofer's DDoS Attack feed.
+
+#### Description
+
+The parser bots generate c&c events and ddos events, depending on the
+information retrieved from the feed. The feed delivers reports with different
+message types and different C&C types based on the type of tracked C&C servers
+and the type of commands received. If the c&c parser bot receives a report with
+a known C&C type but with an unknown message type, it generates a C&C event
+with an adjusted feed.accuracy given by the parameter
+unknown_messagetype_accuracy, if set. This feature can be used to lower the
+accuracy of events in case of unknown behavior of the tracked C&Cs, while
+keeping a high accuracy otherwise. For this feature to work, set the default
+feed.accuracy of the collector bot feeding this parser bot to a high value,
+while setting the value of the c&c parser bot's unknown_messagetype_accuracy
+to a lower value. The c&c parser bot will not change the feed.accuracy value
+if the tracker was able to interpret the C&C communication, giving a high
+chance, that the tracked server is actually a real live C&C server.
+If the tracker was not able to completely interpret the C&C communication, the
+feed.accuracy will be set to the lower value of the
+unknown_messagetype_accuracy parameter. There is still a certain probability
+that the tracked server is a real C&C, but it could not be confirmed.
+The target parser bot generates one ddos event for every target found in the
+attack commands of the tracked C&C server, which could be more than one for a
+single event from the tracker feed. 
+
+#### Configuration
+
+* `unknown_messagetype_accuracy`: A float between 0 an 100 representing the
+  accuracy of a c&c event for reports with unknown message types. Replaces the
+  feed.accuracy with the given value for these events.
+
+* * *
 
 ### Cymru CAP Program
 
@@ -1001,6 +1159,22 @@ Parses breaches and pastes and creates one event per e-mail address. The e-mail 
 
 * * *
 
+### MISP
+
+* `name:` intelmq.bots.parsers.misp.parser
+* `public:` no
+* `cache (redis db):` none
+* `description:` Parses MISP events
+
+#### Description
+
+MISP events collected by the MISPCollectorBot are passed to this parser
+for processing. Supported MISP event categories and attribute types are
+defined in the `SUPPORTED_MISP_CATEGORIES` and `MISP_TYPE_MAPPING` class
+constants.
+
+* * *
+
 ### Twitter
 
 #### Information:
@@ -1008,6 +1182,7 @@ Parses breaches and pastes and creates one event per e-mail address. The e-mail 
 * `public:` no
 * `cache (redis db):` none
 * `description:` Extracts urls from text, fuzzy, aimed at parsing tweets
+
 #### Configuration Parameters:
 
 * `domain_whitelist`: domains to be filetered out
@@ -1149,31 +1324,50 @@ The parser is by far not complete as there are a lot of fields in a big nested s
 * `ignore_errors`: Boolean (default true)
 * `minimal_mode`: Boolean (default false)
 
+* * *
+
+### ZoneH
+
+#### Information
+* `name:` intelmq.bots.parsers.zoneh.parser
+* `public:` yes
+* `description:` Parses data from zoneh.
+
+#### Description
+This bot is designed to consume defacement reports from zone-h.org. It expects
+fields normally present in CSV files distributed by email.
+
+* * *
 
 ## Experts
 
 ### Abusix
-
-See the README.md
 
 #### Information:
 * `name:` abusix
 * `lookup:` dns
 * `public:` yes
 * `cache (redis db):` 5
-* `description:` FIXME
+* `description:` RIPE abuse contacts resolving through DNS TXT queries
 * `notes`: https://abusix.com/contactdb.html
 
 #### Configuration Parameters:
 
 * **Cache parameters** (see in section [common parameters](#common-parameters))
-FIXME
+
+#### Requirements
+This bot can optionally use the python module *querycontacts* by abusix itself:
+https://pypi.org/project/querycontacts/
+
+```bash
+pip3 install querycontacts
+```
+If the package is not installed, our own routines are used.
 
 * * *
 
 ### ASN Lookup
 
-See the README.md
 
 #### Information:
 * `name:` ASN lookup
@@ -1184,7 +1378,31 @@ See the README.md
 
 #### Configuration Parameters:
 
-FIXME
+* `database`: Path to the downloaded database.
+
+#### Requirements
+
+Install pyasn module
+```bash
+pip3 install pyasn 
+```
+
+#### Database
+* Download database and convert:
+```
+# cd /tmp/
+# pyasn_util_download.py --latest
+# pyasn_util_convert.py --single <downloaded_filename.bz2>  ipasn.dat
+```
+
+Note: the '<' '>' characters only are syntactic markings, no shell redirection is necessary.
+
+* Copy database to IntelMQ:
+```
+# mkdir /opt/intelmq/var/lib/bots/asn_lookup
+# mv /tmp/ipasn.dat /opt/intelmq/var/lib/bots/asn_lookup/
+# chown -R intelmq.intelmq /opt/intelmq/var/lib/bots/asn_lookup
+```
 
 * * *
 
@@ -1233,11 +1451,11 @@ Privatly registered suffixes (such as `blogspot.co.at`) which are part of the
 public suffix list too, are ignored.
 
 #### Information:
-* `name:` deduplicator
-* `lookup:` redis cache
+* `name:` domain suffix
+* `lookup:` no
 * `public:` yes
-* `cache (redis db):` 6
-* `description:` message deduplicator
+* `cache (redis db):` -
+* `description:` extracts the domain suffix from the FQDN
 
 #### Configuration Parameters:
 
@@ -1272,19 +1490,59 @@ And additionally the exceptions, together with the above wildcard rule:
 
 ### Deduplicator
 
-See the README.md
 
 #### Information:
 * `name:` deduplicator
 * `lookup:` redis cache
 * `public:` yes
 * `cache (redis db):` 6
-* `description:` message deduplicator
+* `description:` Bot responsible for ignore duplicated messages. The bot can be configured to perform deduplication just looking to specific fields on the message.
 
 #### Configuration Parameters:
 
 * **Cache parameters** (see in section [common parameters](#common-parameters))
-Please check this [README](../intelmq/bots/experts/deduplicator/README.md) file.
+* `bypass`- true or false value to bypass the eduplicator. When set to true, messages will not be deduplicated. Default: false
+
+##### Parameters for "fine-grained" deduplication
+
+* `filter_type`: type of the filtering which can be "blacklist" or "whitelist". The filter type will be used to define how Deduplicator bot will interpret the the parameter `filter_keys` in order to decide whether an event has already been seen or not, i.e., duplicated event or a completely new event.
+  * "whitelist" configuration: only the keys listed in `filter_keys` will be considered to verify if an event is duplicated or not.
+  * "blacklist" configuration: all keys except those in `filter_keys` will be considered to verify if an event is duplicated or not.
+* `filter_keys`: string with multiple keys separated by comma. Please note that `time.observation` key will not be considered even if defined, because the system always ignore that key.
+
+##### Parameters Configuration Example
+
+###### Example 1
+
+The bot with this configuration will detect duplication only based on `source.ip` and `destination.ip` keys.
+
+```
+"parameters": {
+    "redis_cache_db": 6,
+    "redis_cache_host": "127.0.0.1",
+    "redis_cache_password": null,
+    "redis_cache_port": 6379,
+    "redis_cache_ttl": 86400,
+    "filter_type": "whitelist",
+    "filter_keys": "source.ip,destination.ip",
+}
+```
+
+###### Example 2
+
+The bot with this configuration will detect duplication based on all keys, except `source.ip` and `destination.ip` keys.
+
+```
+"parameters": {
+    "redis_cache_db": 6,
+    "redis_cache_host": "127.0.0.1",
+    "redis_cache_password": null,
+    "redis_cache_port": 6379,
+    "redis_cache_ttl": 86400,
+    "filter_type": "blacklist",
+    "filter_keys": "source.ip,destination.ip",
+}
+```
 
 * * *
 
@@ -1419,7 +1677,46 @@ Order of operation: `strip -> replace -> split`. These three methods can be comb
 
 ### Generic DB Lookup
 
-See the README.md
+This bot is capable for enriching intelmq events by lookups to a database.
+Currently only PostgreSQL and SQLite are supported.
+
+If more than one result is returned, a ValueError is raised.
+
+#### Information:
+* `name:` `intelmq.bots.experts.generic_db_lookup.expert`
+* `lookup:` database
+* `public:` yes
+* `cache (redis db):` none
+* `description:` This bot is capable for enriching intelmq events by lookups to a database.
+
+#### Configuration Parameters:
+
+##### Connection
+
+* `engine`: `postgresql` or `sqlite`
+* `database`: string, defaults to "intelmq", database name or the SQLLite filename
+* `table`: defaults to "contacts"
+
+##### PostgreSQL specific
+* `host`: string, defaults to "localhost"
+* `password`: string
+* `port`: integer, defaults to 5432
+* `sslmode`: string, defaults to "require"
+* `user`: defaults to "intelmq"
+
+##### Lookup
+
+* `match_fields`: defaults to `{"source.asn": "asn"}`
+
+The value is a key-value mapping an arbitrary number **intelmq** field names **to table** column names.
+The values are compared with `=` only.
+
+##### Replace fields.
+
+* `overwrite`: defaults to `false`. Is applied per field
+* `replace_fields`: defaults to `{"contact": "source.abuse_contact"}`
+
+`replace_fields` is again a key-value mapping an arbitrary number of **table** column names **to intelmq** field names 
 
 * * *
 
@@ -1730,9 +2027,8 @@ If the rule is a string, a regex-search is performed, also for numeric values (`
 * * *
 
 ### RecordedFuture IP risk
-For both `source.ip` and `destination.ip` the corresponding risk score is fetched from a local database created from Recorded Future's API. The score is recorded in `extra.rf_iprisk.source` and `extra.rf_iprisk.destination`. If a lookup for an IP fails a score of 0 is recorded.
 
-See https://www.recordedfuture.com/products/api/ and speak with your recorded future representative for more information.
+This Bot tags events with score found in recorded futures large IP risklist.
 
 #### Information:
 * `name:` recordedfuture_iprisk
@@ -1741,10 +2037,35 @@ See https://www.recordedfuture.com/products/api/ and speak with your recorded fu
 * `cache (redis db):` none
 * `description:` Record risk score associated to source and destination IP if they are present. Assigns 0 to to IPs not in the RF list.
 
-### Configuration Parameters:
+#### Configuration Parameters:
 
 * `database`: Location of csv file obtained from recorded future API (a script is provided to download the large IP set)
 * `overwrite`: set to true if you want to overwrite any potentially existing risk score fields in the event.
+
+#### Description
+
+For both `source.ip` and `destination.ip` the corresponding risk score is fetched from a local database created from Recorded Future's API. The score is recorded in `extra.rf_iprisk.source` and `extra.rf_iprisk.destination`. If a lookup for an IP fails a score of 0 is recorded.
+
+See https://www.recordedfuture.com/products/api/ and speak with your recorded future representative for more information.
+
+
+The list is obtained from recorded future API and needs a valid API TOKEN
+The large list contains all IP's with a risk score of 25 or more.
+If IP's are not present in the database a risk score of 0 is given
+
+A script is supplied that may be run as intelmq to update the database.
+The script needs to be edited to use a valid API token.
+
+Download database:
+
+```bash
+mkdir /opt/intelmq/var/lib/bots/recordedfuture_iprisk
+cd /tmp/
+curl -H "X-RFToken: [API Token]" --output rfiprisk.dat.gz "https://api.recordedfuture.com/v2/ip/risklist?format=csv%2Fsplunk&gzip=true&list=large"
+bunzip rfiprisk.dat.gz
+mv rfiprisk.dat /opt/intelmq/var/lib/bots/recordedfuture_iprisk/rfiprisk.dat
+chown intelmq.intelmq -R /opt/intelmq/var/lib/bots/recordedfuture_iprisk
+```
 
 * * *
 
@@ -1818,8 +2139,6 @@ Online RIPE Abuse Contact and Geolocation Finder for IP addresses and Autonomous
 
 ### Sieve
 
-See intelmq/bots/experts/sieve/README.md
-
 #### Information:
 * `name:` sieve
 * `lookup:` none
@@ -1830,6 +2149,174 @@ See intelmq/bots/experts/sieve/README.md
 #### Configuration Parameters:
 
 * `file`: Path to sieve file. Syntax can be validated with `intelmq_sieve_expert_validator`.
+
+
+#### Description
+
+The sieve bot is used to filter and/or modify events based on a set of rules. The
+rules are specified in an external configuration file and with a syntax similar
+to the [Sieve language](http://sieve.info/) used for mail filtering.
+
+Each rule defines a set of matching conditions on received events. Events can be
+matched based on keys and values in the event. If the processed event matches a
+rule's conditions, the corresponding actions are performed. Actions can specify
+whether the event should be kept or dropped in the pipeline (filtering actions)
+or if keys and values should be changed (modification actions).
+
+#### Requirements
+
+To use this bot, you need to install the required dependencies:
+```
+pip3 install -r intelmq/bots/experts/sieve/REQUIREMENTS.txt
+```
+
+#### Examples
+
+The following excerpts illustrate some of the basic features of the sieve file
+format:
+
+```
+if :exists source.fqdn {
+  keep  // aborts processing of subsequent rules and forwards the event.
+}
+
+
+if :notexists source.abuse_contact || source.abuse_contact =~ '.*@example.com' {
+  drop  // aborts processing of subsequent rules and drops the event.
+}
+
+if source.ip << '192.0.0.0/24' {
+    add! comment = 'bogon'
+}
+
+if classification.type == ['phishing', 'malware'] && source.fqdn =~ '.*\.(ch|li)$' {
+  add! comment = 'domainabuse'
+  keep
+} elif classification.type == 'scanner' {
+  add! comment = 'ignore'
+  drop
+} else {
+  remove comment
+}
+```
+
+
+#### Reference
+
+##### Sieve File Structure
+
+The sieve file contains an arbitrary number of rules of the form:
+
+```
+if EXPRESSION {
+    ACTIONS
+} elif EXPRESSION {
+    ACTIONS
+} else {
+    ACTIONS
+}
+```
+
+
+#####  Expressions
+
+Each rule specifies on or more expressions to match an event based on its keys
+and values. Event keys are specified as strings without quotes. String values
+must be enclosed in single quotes. Numeric values can be specified as integers
+or floats and are unquoted. IP addresses and network ranges (IPv4 and IPv6) are
+specified with quotes. Following operators may be used to match events:
+
+ * `:exists` and `:notexists` match if a given key exists, for example:
+
+    ```if :exists source.fqdn { ... }```
+
+ * `==` and `!=` match for equality of strings and numbers, for example:
+
+   ```if feed.name != 'acme-security' || feed.accuracy == 100 { ... }```
+
+ * `:contains` matches on substrings.
+
+ * `=~` matches strings based on the given regex. `!~` is the inverse regex
+ match.
+
+ * Numerical comparisons are evaluated with `<`, `<=`, `>`, `>=`.
+
+ * `<<` matches if an IP address is contained in the specified network range:
+
+   ```if source.ip << '10.0.0.0/8' { ... }```
+
+ * Values to match against can also be specified as list, in which case any one
+ of the values will result in a match:
+
+   ```if source.ip == ['8.8.8.8', '8.8.4.4'] { ... }```
+
+  In this case, the event will match if it contains a key `source.ip` with
+  either value `8.8.8.8` or `8.8.4.4`.
+
+
+##### Actions
+
+If part of a rule matches the given conditions, the actions enclosed in `{` and
+`}` are applied. By default, all events that are matched or not matched by rules
+in the sieve file will be forwarded to the next bot in the pipeline, unless the
+`drop` action is applied.
+
+ * `add` adds a key value pair to the event. This action only applies if the key
+ is not yet defined in the event. If the key is already defined, the action is
+ ignored. Example:
+
+   ```add comment = 'hello, world'```
+
+ * `add!` same as above, but will force overwrite the key in the event.
+
+ * `update` modifies an existing value for a key. Only applies if the key is
+already defined. If the key is not defined in the event, this action is ignored.
+Example:
+
+   ```update feed.accuracy = 50```
+
+ * `remove` removes a key/value from the event. Action is ignored if the key is
+ not defined in the event. Example:
+
+    ```remove extra.comments```
+
+ * `keep` sends the message to the next bot in the pipeline
+ (same as the default behaviour), and stops sieve file processing.
+
+   ```keep```
+
+ * `path` sets the path (named queue) the message should be sent to (implicitly
+   or with the command `keep`. The named queue needs to configured in the
+   pipeline, see the User Guide for more information.
+
+   ```path 'named-queue```
+
+ * `drop` marks the event to be dropped. The event will not be forwarded to the
+ next bot in the pipeline. The sieve file processing is interrupted upon
+ reaching this action. No other actions may be specified besides the `drop`
+ action within `{` and `}`.
+
+
+##### Comments
+
+Comments may be used in the sieve file: all characters after `//` and until the end of the line will be ignored.
+
+
+##### Validating a sieve file
+
+Use the following command to validate your sieve files:
+```
+$ intelmq.bots.experts.sieve.validator
+usage: intelmq.bots.experts.sieve.validator [-h] sievefile
+
+Validates the syntax of sievebot files.
+
+positional arguments:
+  sievefile   Sieve file
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
 
 * * *
 
@@ -1850,8 +2337,6 @@ FIXME
 
 ### Tor Nodes
 
-See the README.md
-
 #### Information:
 * `name:` tor-nodes
 * `lookup:` local database
@@ -1861,7 +2346,10 @@ See the README.md
 
 #### Configuration Parameters:
 
-FIXME
+* `database`: Path to the database
+
+#### Database
+Use the included script `update-tor-nodes` to download the database.
 
 ### Url2FQDN
 
@@ -1913,6 +2401,7 @@ Note that SIGHUPs and reloads interrupt the sleeping.
 ### AMQP Topic
 
 Sends data to an AMQP Server
+See https://www.rabbitmq.com/tutorials/amqp-concepts.html for more details on amqp topic exchange.
 
 #### Information
 * `name`: `intelmq.bots.outputs.amqptopic.output`
@@ -1923,7 +2412,47 @@ Sends data to an AMQP Server
 
 #### Configuration parameters:
 
-See README.md
+* connection_attempts   : The number of connection attempts to defined server, defaults to 3
+* connection_heartbeat  : Heartbeat to server, in seconds, defaults to 3600
+* connection_host       : Name/IP for the AMQP server, defaults to 127.0.0.1
+* connection_port       : Port for the AMQP server, defaults to 5672
+* connection_vhost      : Virtual host to connect, on a http(s) connection would be http:/IP/<your virtual host>
+* content_type          : Content type to deliver to AMQP server, currently only supports "application/json"
+* delivery_mode         : 1 - Non-persistent, 2 - Persistent. On persistent mode, messages are delivered to 'durable' queues and will be saved to disk.
+* exchange_durable      : If set to True, the exchange will survive broker restart, otherwise will be a transient exchange.
+* exchange_name         : The name of the exchange to use
+* exchange_type         : Type of the exchange, e.g. `topic`, `fanout` etc.
+* keep_raw_field        : If set to True, the message 'raw' field will be sent
+* password              : Password for authentication on your AMQP server
+* require_confirmation  : If set to True, an exception will be raised if a confirmation error is received
+* routing_key           : The routing key for your amqptopic
+* `single_key`          : Only send a the field instead of the full event (expecting a field name as string)
+* username              : Username for authentication on your AMQP server
+* `use_ssl`             : Use ssl for the connection, make sure to also set the correct port, usually 5671 (`true`/`false`)
+* message_hierarchical_output: Convert the message to hierachical JSON, default: false
+* message_with_type     : Include the type in the sent message, default: false
+* message_jsondict_as_string: Convert fields of type JSONDict (extra) as string, default: false
+
+If no authentication should be used, leave username or password empty or `null`.
+
+#### Examples of usage:
+
+* Useful to send events to a RabbitMQ exchange topic to be further processed in other platforms.
+
+#### Confirmation
+
+If routing key or exchange name are invalid or non existent, the message is
+accepted by the server but we receive no confirmation.
+If parameter require_confirmation is True and no confirmation is received, an
+error is raised.
+
+#### Common errors
+
+##### Unroutable messages / Undefined destination queue
+
+The destination exchange and queue need to exist beforehand,
+with your preferred settings (e.g. durable, [lazy queue](https://www.rabbitmq.com/lazy-queues.html).
+If the error message says that the message is "unroutable", the queue doesn't exist.
 
 * * *
 
@@ -1940,17 +2469,21 @@ This output bot discards all incoming messages.
 
 * * *
 
-
 ### Elasticsearch Output Bot
 
-Output Bot that sends events to Elasticsearch
+#### Information
+* `name`: `intelmq.bots.outputs.elasticsearch.output`
+* `lookup`: yes
+* `public`: yes
+* `cache`: no
+* `description`: Output Bot that sends events to Elasticsearch
 
 #### Configuration parameters:
 
-* elastic_host       : Name/IP for the Elasticsearch server, defaults to 127.0.0.1
-* elastic_port       : Port for the Elasticsearch server, defaults to 9200
-* elastic_index      : Index for the Elasticsearch output, defaults to intelmq
-* rotate_index       : If set, will index events using the date information associated with the event.
+* `elastic_host`: Name/IP for the Elasticsearch server, defaults to 127.0.0.1
+* `elastic_port`: Port for the Elasticsearch server, defaults to 9200
+* `elastic_index`: Index for the Elasticsearch output, defaults to intelmq
+* `rotate_index`: If set, will index events using the date information associated with the event.
                        Options: 'never', 'daily', 'weekly', 'monthly', 'yearly'. Using 'intelmq' as the elastic_index, the following are examples of the generated index names:
 
                        'never' --> intelmq
@@ -1958,21 +2491,21 @@ Output Bot that sends events to Elasticsearch
                        'weekly' --> intelmq-2018-42
                        'monthly' --> intelmq-2018-02
                        'yearly' --> intelmq-2018
-* elastic_doctype    : Elasticsearch document type for the event. Default: events
-* http_username      : http_auth basic username
-* http_password      : http_auth basic password
-* use_ssl            : Whether to use SSL/TLS when connecting to Elasticsearch. Default: False
-* http_verify_cert   : Whether to require verification of the server's certificate. Default: False
-* ssl_ca_certificate : An optional path to a certificate bundle to use for verifying the server
-* ssl_show_warnings  : Whether to show warnings if the server's certificate can not be verified. Default: True
-* replacement_char   : If set, dots ('.') in field names will be replaced with this character prior to indexing. This is for backward compatibility with ES 2.X. Default: null. Recommended for ES2.X: '_'
-* flatten_fields     : In ES, some query and aggregations work better if the fields are flat and not JSON. Here you can provide a list of fields to convert.
+* `elastic_doctype`: Elasticsearch document type for the event. Default: events
+* `http_username`: http_auth basic username
+* `http_password`: http_auth basic password
+* `use_ssl`: Whether to use SSL/TLS when connecting to Elasticsearch. Default: False
+* `http_verify_cert`: Whether to require verification of the server's certificate. Default: False
+* `ssl_ca_certificate`: An optional path to a certificate bundle to use for verifying the server
+* `ssl_show_warnings`: Whether to show warnings if the server's certificate can not be verified. Default: True
+* `replacement_char`: If set, dots ('.') in field names will be replaced with this character prior to indexing. This is for backward compatibility with ES 2.X. Default: null. Recommended for ES2.X: '_'
+* `flatten_fields1: In ES, some query and aggregations work better if the fields are flat and not JSON. Here you can provide a list of fields to convert.
                        Can be a list of strings (fieldnames) or a string with field names separated by a comma (,). eg `extra,field2` or `['extra', 'field2']`
                        Default: ['extra']
 
 See contrib/elasticsearch/elasticmapper for a utility for creating Elasticsearch mappings and templates.
 
-If using rotate_index, the resulting index name will be of the form [elastic_index]-[event date].
+If using `rotate_index`, the resulting index name will be of the form [elastic_index]-[event date].
 To query all intelmq indices at once, use an alias (https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html), or a multi-index query.
 
 The data in ES can be retrieved with the HTTP-Interface:
@@ -1980,8 +2513,8 @@ The data in ES can be retrieved with the HTTP-Interface:
 ```bash
 > curl -XGET 'http://localhost:9200/intelmq/events/_search?pretty=True'
 ```
-* * *
 
+* * *
 
 ### File
 
@@ -2093,11 +2626,24 @@ The bot has been tested with pymongo versions 2.7.1 and 3.4.
 * `lookup:` to the redis server
 * `public:` yes
 * `cache (redis db):` none
-* `description:` Sends the events to another redis server
+* `description:` Output Bot that sends events to a remote Redis server/queue.
 
 #### Configuration Parameters:
 
-See README.md
+* `redis_db`: remote server database, e.g.: 2
+* `redis_password`: remote server password
+* `redis_queue`: remote server list (queue), e.g.: "remote-server-queue"
+* `redis_server_ip`: remote server IP address, e.g.: 127.0.0.1
+* `redis_server_port`: remote server Port, e.g: 6379
+* `redis_timeout`: Connection timeout, in msecs, e.g.: 50000
+* `hierarchical_output`: whether output should be sent in hierarchical json format (default: false)
+* `with_type`: Send the `__type` field (default: true)
+
+#### Examples of usage:
+
+* Can be used to send events to be processed in another system. E.g.: send events to Logstash.
+* In a multi tenant installation can be used to send events to external/remote IntelMQ instance. Any expert bot queue can receive the events.
+* In a complex configuration can be used to create logical sets in IntelMQ-Manager. 
 
 * * *
 
@@ -2148,7 +2694,7 @@ Sends a MIME Multipart message containing the text and the event as CSV for ever
 
 For several strings you can use values from the string using the
 [standard Python string format syntax](https://docs.python.org/3/library/string.html#format-string-syntax).
-Access the event's values with `{ev[source.ip]}` and similar.
+Access the event's values with `{ev[source.ip]}` and similar. Any not existing fields will result in `None`.
 
 Authentication is optional. If both username and password are given, these
 mechanism are tried: CRAM-MD5, PLAIN, and LOGIN.
@@ -2186,15 +2732,68 @@ for the versions you are using.
 * `sslmode`: PostgreSQL sslmode, can be `'disable'`, `'allow'`, `'prefer'` (default), `'require'`, `'verify-ca'` or `'verify-full'`. See postgresql docs: https://www.postgresql.org/docs/current/static/libpq-connect.html#libpq-connect-sslmode
 * `table`: name of the database table into which events are to be inserted
 
-#### Installation Requirements
+#### SQL
+Similarly to PostgreSQL, you can use `intelmq_psql_initdb` to create initial sql-statements
+from Harmonization.conf. The script will create the required table layout
+and save it as /tmp/initdb.sql
 
-See [REQUIREMENTS.txt](../intelmq/bots/outputs/sql/REQUIREMENTS.txt)
-from your installation.
+Create the new database (you can ignore all errors since SQLite doesn't know all SQL features generated for PostgreSQL):
 
-#### PostgreSQL Installation
+```bash
+sqlite3 your-db.db
+sqlite> .read /tmp/initdb.sql
+```
 
-See [outputs/sql/README.md](../intelmq/bots/outputs/sql/README.md)
-from your installation.
+#### PostgreSQL
+
+You have two basic choices to run PostgreSQL:
+1. on the same machine as intelmq, then you could use unix-sockets if available on your platform
+2. on a different machine. In which case you would need to use a TCP connection and make sure you give the right connection parameters to each psql or client call.
+
+Make sure to consult your PostgreSQL documentation 
+about how to allow network connections and authentication in case 2.
+
+##### PostgreSQL Version
+Any supported version of PostgreSQL should work 
+(v>=9.2 as of Oct 2016)[[1](https://www.postgresql.org/support/versioning/)].
+
+If you use PostgreSQL server v >= 9.4, it gives you the possibility 
+to use the time-zone [formatting string](https://www.postgresql.org/docs/9.4/static/functions-formatting.html) "OF" for date-times 
+and the [GiST index for the cidr type](https://www.postgresql.org/docs/9.4/static/release-9-4.html#AEN120769). This may be useful depending on how 
+you plan to use the events that this bot writes into the database.
+
+##### How to install:
+
+Use `intelmq_psql_initdb` to create initial sql-statements
+from Harmonization.conf. The script will create the required table layout
+and save it as /tmp/initdb.sql
+
+You need a postgresql database-user to own the result database.
+The recommendation is to use the name `intelmq`.
+There may already be such a user for the postgresql database-cluster
+to be used by other bots. (For example from setting up
+the expert/certbund_contact bot.)
+
+Therefore if still necessary: create the database-user
+as postgresql superuser, which usually is done via the system user `postgres`:
+```
+createuser --no-superuser --no-createrole --no-createdb --encrypted --pwprompt intelmq
+```
+
+Create the new database:
+```
+createdb --encoding='utf-8' --owner=intelmq intelmq-events
+```
+
+(The encoding parameter should ensure the right encoding on platform
+where this is not the default.)
+
+Now initialize it as database-user `intelmq` (in this example
+a network connection to localhost is used, so you would get to test
+if the user `intelmq` can authenticate):
+```
+psql -h localhost intelmq-events intelmq </tmp/initdb.sql
+```
 
 * * *
 
@@ -2274,21 +2873,80 @@ Multihreading is disabled for this bot.
 * `lookup:` no
 * `public:` yes
 * `cache (redis db):` none
-* `description:` TCP is the bot responsible to send events to a UDP port
+* `description:` Output Bot that sends events to a remote UDP server.
 
 Multihreading is disabled for this bot.
 
 #### Configuration Parameters:
 
-* `field_delimiter`: String, default: `"|"`
-* `format`: `json` or `delimited`, see README
-* `header`: string
+* `field_delimiter`: If the format is 'delimited' this will be added between fields. String, default: `"|"`
+* `format`: Can be `'json'` or `'delimited'`. The Json format outputs the event 'as-is'. Delimited will descontruct the event and print each field:value separated by the field delimit. See examples bellow.
+* `header`: Header text to be sent in the udp datagram, string.
 * `keep_raw_field`: boolean, default: false
 * `udp_host`: Destination's server's Host name or IP address
 * `udp_port`: Destination port
+
+#### Examples of usage:
+
+Consider the following event:
+```json
+{"raw": "MjAxNi8wNC8yNV8xMTozOSxzY2hpenppbm8ub21hcmF0aG9uLmNvbS9na0NDSnVUSE0vRFBlQ1pFay9XdFZOSERLbC1tWFllRk5Iai8sODUuMjUuMTYwLjExNCxzdGF0aWMtaXAtODUtMjUtMTYwLTExNC5pbmFkZHIuaXAtcG9vbC5jb20uLEFuZ2xlciBFSywtLDg5NzI=", "source": {"asn": 8972, "ip": "85.25.160.114", "url": "http://schizzino.omarathon.com/gkCCJuTHM/DPeCZEk/WtVNHDKl-mXYeFNHj/", "reverse_dns": "static-ip-85-25-160-114.inaddr.ip-pool.com"}, "classification": {"type": "malware"}, "event_description": {"text": "Angler EK"}, "feed": {"url": "http://www.malwaredomainlist.com/updatescsv.php", "name": "Malware Domain List", "accuracy": 100.0}, "time": {"observation": "2016-04-29T10:59:34+00:00", "source": "2016-04-25T11:39:00+00:00"}}
+```
+With the following Parameters:
+
+* field_delimiter   : |
+* format            : json
+* Header            : header example
+* keep_raw_field    : true
+* ip                : 127.0.0.1
+* port              : 514
+
+Resulting line in syslog:
+
+```
+Apr 29 11:01:29 header example {"raw": "MjAxNi8wNC8yNV8xMTozOSxzY2hpenppbm8ub21hcmF0aG9uLmNvbS9na0NDSnVUSE0vRFBlQ1pFay9XdFZOSERLbC1tWFllRk5Iai8sODUuMjUuMTYwLjExNCxzdGF0aWMtaXAtODUtMjUtMTYwLTExNC5pbmFkZHIuaXAtcG9vbC5jb20uLEFuZ2xlciBFSywtLDg5NzI=", "source": {"asn": 8972, "ip": "85.25.160.114", "url": "http://schizzino.omarathon.com/gkCCJuTHM/DPeCZEk/WtVNHDKl-mXYeFNHj/", "reverse_dns": "static-ip-85-25-160-114.inaddr.ip-pool.com"}, "classification": {"type": "malware"}, "event_description": {"text": "Angler EK"}, "feed": {"url": "http://www.malwaredomainlist.com/updatescsv.php", "name": "Malware Domain List", "accuracy": 100.0}, "time": {"observation": "2016-04-29T10:59:34+00:00", "source": "2016-04-25T11:39:00+00:00"}}
+```
+With the following Parameters:
+
+* field_delimiter   : |
+* format            : delimited
+* Header            : IntelMQ-event
+* keep_raw_field    : false
+* ip                : 127.0.0.1
+* port              : 514
+
+Resulting line in syslog:
+
+```
+Apr 29 11:17:47 localhost IntelMQ-event|source.ip: 85.25.160.114|time.source:2016-04-25T11:39:00+00:00|feed.url:http://www.malwaredomainlist.com/updatescsv.php|time.observation:2016-04-29T11:17:44+00:00|source.reverse_dns:static-ip-85-25-160-114.inaddr.ip-pool.com|feed.name:Malware Domain List|event_description.text:Angler EK|source.url:http://schizzino.omarathon.com/gkCCJuTHM/DPeCZEk/WtVNHDKl-mXYeFNHj/|source.asn:8972|classification.type:malware|feed.accuracy:100.0
+```
 
 * * *
 
 ### XMPP
 
-See the README.md in the bot's directory
+#### Information:
+* `name:` intelmq.bots.outputs.xmpp.collector
+* `lookup:` yes
+* `public:` yes
+* `cache (redis db):` none
+* `description:` The XMPP Output is capable of sending Messages to XMPP Rooms and as direct messages.
+
+#### Requirements
+The Sleekxmpp - Library needs to be installed on your System
+```bash
+pip3 install -r intelmq/bots/collectors/xmpp/REQUIREMENTS.txt
+```
+
+#### Configuration Parameters:
+
+- `xmpp_user` : The username of the XMPP-Account the output shall use (part before the @ sign)
+- `xmpp_server` : The domain name of the server of the XMPP-Account (part after the @ sign)
+- `xmpp_password` : The password of the XMPP-Account
+- `xmpp_to_user` : The username of the receiver
+- `xmpp_to_server` : The domain name of the receiver
+- `xmpp_room` : The room which which has to be joined by the output (full address a@conference.b.com)
+- `xmpp_room_nick` : The username / nickname the output shall use within the room.
+- `xmpp_room_password` : The password which might be required to join a room
+- `use_muc` : If this parameter is `true`, the bot will join the room `xmpp_room`.
+- `ca_certs` : A path to a file containing the CA's which should be used
