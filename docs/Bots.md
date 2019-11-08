@@ -39,6 +39,7 @@
 - [Experts](#experts)
   - [Abusix](#abusix)
   - [ASN Lookup](#asn-lookup)
+  - [CSV Converter](#csv-converter)
   - [Copy Extra](#copy-extra)
   - [Cymru Whois](#cymru-whois)
   - [Deduplicator](#deduplicator)
@@ -1406,6 +1407,28 @@ Note: the '<' '>' characters only are syntactic markings, no shell redirection i
 
 * * *
 
+### CSV Converter
+
+
+#### Information:
+* `name`: `intelmq.bots.experts.csv_converter.expert
+* `lookup`: no
+* `public`: yes
+* `cache (redis db)`: none
+* `description`: Converts an event to CSV format, saved in the `output` field.
+
+#### Configuration Parameters:
+
+ * `delimiter`: String, default `","`
+ * `fieldnames`: Comma-separated list of field names, e.g. `"time.source,classification.type,source.ip"`
+
+#### Usage
+
+To use the CSV-converted data in an output bot - for example in a file output,
+use the configuration parameter `single_key` of the output bot and set it to `output`.
+
+* * *
+
 ### Copy Extra
 
 #### Information:
@@ -2007,6 +2030,8 @@ Assume we have an event with `feed.name = Spamhaus Cert` and `malware.name = feo
 ##### Types
 
 If the rule is a string, a regex-search is performed, also for numeric values (`str()` is called on them). If the rule is numeric for numeric values, a simple comparison is done. If other types are mixed, a warning will be thrown.
+
+For boolean values, the comparison value needs to be `true` or `false` as in JSON they are written all-lowercase.
 
 * * *
 
