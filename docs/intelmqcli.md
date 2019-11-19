@@ -8,7 +8,7 @@ It is made for semi- and automatic usage. There are two programs:
 * `intelmqcli_create_reports`: it creates reports for all events to send, where no RTIR report exists. There is not interactivity available.
 * `intelmqcli`: Creates the Incident and Investigation tickets. This program can be run interactively and automatically.
 
-Both programs share very similar paramaters. Look at their help pages for more information.
+Both programs share very similar paramaters. Look at their help pages for more information. Their configuration file is `intelmqcli.conf` in IntelMQ's configration directory.
 
 intelmqcli iterates over all taxonomies and further over all abuse contacts.
 At the end it looks if there are "half processed" events where incidents exist, but no investigations.

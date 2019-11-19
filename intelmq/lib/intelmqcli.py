@@ -18,6 +18,8 @@ import intelmq.lib.utils as utils
 import psycopg2
 import psycopg2.extras
 
+from intelmq import INTELMQCLI_CONF_FILE
+
 
 __all__ = ['BASE_WHERE', 'CSV_FIELDS', 'EPILOG',
            'QUERY_DISTINCT_CONTACTS_BY_INCIDENT', 'QUERY_EVENTS_BY_ASCONTACT_INCIDENT',
@@ -282,9 +284,10 @@ class IntelMQCLIContollerTemplate():
     quiet = False
 
     def __init__(self):
+        usage_configuration = "\n\nThe configuration can be found at %r." % INTELMQCLI_CONF_FILE
 
         self.parser = argparse.ArgumentParser(prog=self.appname,
-                                              usage=self.usage,
+                                              usage=self.usage + usage_configuration,
                                               epilog=self.epilog,
                                               formatter_class=argparse.RawDescriptionHelpFormatter,
                                               )
@@ -375,17 +378,8 @@ class IntelMQCLIContollerTemplate():
             self.additional_where += """ AND "time.observation" >= %s """
             self.additional_params += (self.args.ton[0], )
 
-        with open('/etc/intelmq/intelmqcli.conf') as conf_handle:
+        with open(INTELMQCLI_CONF_FILE) as conf_handle:
             self.config = json.load(conf_handle)
-        home = os.path.expanduser("~")
-        with open(os.path.expanduser(home + '/.intelmq/intelmqcli.conf')) as conf_handle:
-            user_config = json.load(conf_handle)
-
-        for key, value in user_config.items():
-            if key in self.config and isinstance(value, dict):
-                self.config[key].update(value)
-            else:
-                self.config[key] = value
 
         if self.quiet:
             stream = None
