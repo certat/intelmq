@@ -61,6 +61,12 @@ CHANGELOG
   - log: Do not raise an exception if logging to neither file nor syslog is requested.
   - logging StreamHandler: Colorize all warning and error messages red.
   - logging FileHandler: Strip all shell colorizations from the messages (#1436).
+- `intelmq.lib.message`:
+  - `Message.to_json`: Set `sort_keys=True` to get reproducible results.
+  - `drop_privileges`: Handle situations where the user or group `intelmq` does not exist.
+- `intelmq.lib.pipeline`:
+  - `Amqp._send` and `Amqp._acknowledge`: Log traceback in debug mode in case of errors and necessary re-connections.
+  - `Amqp._acknowledge`: Reset delivery tag if acknowledge was successful.
 
 ### Development
 
@@ -76,6 +82,7 @@ CHANGELOG
 
 #### Experts
 - `intelmq.bots.experts.national_cert_contact_certat`: Handle empty responses by server (#1467).
+- `intelmq.bots.experts.maxmind_geoip`: The script `update-geoip-data` now requires a license key as second parameter because of upstream changes.
 
 #### Outputs
 - `intelmq.bots.outputs.restapi.output`: Fix logging of response body if response status code was not ok.
@@ -89,6 +96,8 @@ CHANGELOG
 
 ### Tests
 - `lib/test_utils`: Skip some tests on Python 3.4 because `contextlib.redirect_stdout` and `contextlib.redirect_sterr` are not supported on this version.
+- Travis: Stop running tests with all optional dependencies on Python 3.4, as more and more libraries are dropping support for it. Tests on the core and code without non-optional requirements are not affected.
+- `tests.bots.parsers.html_table`: Make tests independent of current year.
 
 ### Tools
 
