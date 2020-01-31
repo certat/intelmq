@@ -195,6 +195,27 @@ V210_EXP = {"test-collector": {
     }
 }
 }
+V220_MISP_VERIFY_FALSE = {
+"misp-collector": {
+        "module": "intelmq.bots.collectors.misp.collector",
+        "parameters": {
+                "misp_verify": False}}}
+V220_MISP_VERIFY_NULL = {
+"misp-collector": {
+        "module": "intelmq.bots.collectors.misp.collector",
+        "parameters": {}}}
+V220_MISP_VERIFY_TRUE = {
+"misp-collector": {
+        "module": "intelmq.bots.collectors.misp.collector",
+        "parameters": {
+                "misp_verify": True}}}
+V220_HTTP_VERIFY_FALSE = {
+"misp-collector": {
+        "module": "intelmq.bots.collectors.misp.collector",
+        "parameters": {
+                "http_verify_cert": False}}}
+DEFAULTS_HTTP_VERIFY_TRUE = {
+        "http_verify_cert": True}
 HARM = load_configuration(pkg_resources.resource_filename('intelmq',
                                                           'etc/harmonization.conf'))
 V210_HARM = deepcopy(HARM)
@@ -203,6 +224,8 @@ MISSING_REPORT = deepcopy(HARM)
 del MISSING_REPORT['report']
 WRONG_TYPE = deepcopy(HARM)
 WRONG_TYPE['event']['source.asn']['type'] = 'String'
+WRONG_REGEX = deepcopy(HARM)
+WRONG_REGEX['event']['protocol.transport']['iregex'] = 'foobar'
 
 
 def generate_function(function):
@@ -258,6 +281,17 @@ class TestUpgradeLib(unittest.TestCase):
         self.assertTrue(result[0])
         self.assertEqual(HARM, result[3])
 
+    def test_v220_configuration(self):
+        """ Test v220_configuration. """
+        result = upgrades.v220_configuration_1(DEFAULTS_HTTP_VERIFY_TRUE,
+                                               V220_MISP_VERIFY_TRUE, {}, False)
+        self.assertTrue(result[0])
+        self.assertEqual(V220_MISP_VERIFY_NULL, result[2])
+        result = upgrades.v220_configuration_1(DEFAULTS_HTTP_VERIFY_TRUE,
+                                               V220_MISP_VERIFY_FALSE, {}, False)
+        self.assertTrue(result[0])
+        self.assertEqual(V220_HTTP_VERIFY_FALSE, result[2])
+
     def test_missing_report_harmonization(self):
         """ Test missing report in harmonization """
         result = upgrades.harmonization({}, {}, MISSING_REPORT, False)
@@ -267,6 +301,12 @@ class TestUpgradeLib(unittest.TestCase):
     def test_wrong_type_harmonization(self):
         """ Test wrong type in harmonization """
         result = upgrades.harmonization({}, {}, WRONG_TYPE, False)
+        self.assertTrue(result[0])
+        self.assertEqual(HARM, result[3])
+
+    def test_wrong_regex_harmonization(self):
+        """ Test wrong regex in harmonization """
+        result = upgrades.harmonization({}, {}, WRONG_REGEX, False)
         self.assertTrue(result[0])
         self.assertEqual(HARM, result[3])
 

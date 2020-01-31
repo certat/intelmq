@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
-"""
-A collector for grabbing appropriately tagged events from MISP.
+"""A collector for grabbing appropriately tagged events from MISP.
 
 Parameters:
   - misp_url: URL of the MISP server
   - misp_key: API key for accessing MISP
-  - misp_verify: true or false, check the validity of the certificate
   - misp_tag_to_process: MISP tag identifying events to be processed
   - misp_tag_processed: MISP tag identifying events that have been processed
 
 
-pymisp versions released after January 2020 will no longer support the
+PyMISP versions released after January 2020 will no longer support the
 "old" PyMISP class.
-For compatibiltiy older versions of pymisp still work with this bot
+For compatibility:
+ * older versions of pymisp still work with this bot
+ * the deprecated parameter `misp_verify` will create a DeprecationWarning
 """
 import json
+import warnings
 import sys
 
 from intelmq.lib.bot import CollectorBot
@@ -39,10 +40,15 @@ class MISPCollectorBot(CollectorBot):
         if PyMISP is None:
             raise MissingDependencyError("pymisp")
 
+        if hasattr(self.parameters, 'misp_verify'):
+            self.parameters.http_verify_cert = self.parameters.misp_verify
+            warnings.warn("The parameter 'misp_verify' is deprecated in favor of"
+                          "'http_verify_cert'.", DeprecationWarning)
+
         # Initialize MISP connection
         self.misp = PyMISP(self.parameters.misp_url,
                            self.parameters.misp_key,
-                           self.parameters.misp_verify)
+                           self.parameters.http_verify_cert)
 
     def process(self):
         # Grab the events from MISP

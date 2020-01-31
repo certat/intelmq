@@ -10,6 +10,8 @@ CHANGELOG
 ### Core
 - The environment variable `INTELMQ_ROOT_DIR` can be used to set custom root directories instead of `/opt/intelmq/` (#805).
 - `intelmq.lib.exceptions`: Added `MissingDependencyError` for show error messages about a missing library and how to install it (#1471).
+- Adding more type annotations for core libraries.
+- `intelmq.lib.pipeline.Pythonlist.sleep`: Drop deprecated method.
 
 ### Development
 
@@ -19,17 +21,24 @@ CHANGELOG
 - Bots with dependencies: Use of `intelmq.lib.exceptions.MissingDependencyError`.
 
 #### Collectors
+- `intelmq.bots.collectors.misp.collector`: Deprecate parameter `misp_verify` in favor of generic parameter `http_verify_cert`.
+- `intelmq.bots.collectors.tcp.collector`: Drop compatibility with Python 3.4.
 
 #### Parsers
+- `intelmq.bots.parsers.autoshun.parser`: Drop compatibility with Python 3.4.
+- `intelmq.bots.parsers.html_table.parser`: Drop compatibility with Python 3.4.
 
 #### Experts
 - `intelmq.bots.experts.csv_converter`: Added as converter to CSV.
+- `intelmq.bots.experts.misp`: Added (PR#1475).
 
 #### Outputs
 - `intelmq.bots.outputs.amqptopic`: Allow formatting the routing key with event data by the new parameter `format_routing_key` (boolean).
+- `intelmq.bots.outputs.misp.output_feed`: Added, creates a MISP Feed (PR#1473).
 
 ### Documentation
 - Document usage of the `INTELMQ_ROOT_DIR` environment variable.
+- Added document on MISP integration possibilities.
 
 ### Packaging
 - `setup.py` do not try to install any data to `/opt/intelmq/` as the behavior is inconsistent on various systems and with `intelmqsetup` we have a tool to create the structure and files anyway.
@@ -40,23 +49,68 @@ CHANGELOG
 
 ### Tests
 - Travis: Use `intelmqsetup` here too.
+  - Install required build dependencies for the Debian package build test.
+  - This version is no longer automatically tested on Python `<` 3.5.
+  - Also run the tests on Python 3.8.
+  - Run the debian packaging tests on Python 3.5 and the codestyle test on 3.8.
+- Added tests for the new bot `intelmq.bots.outputs.misp.output_feed` (#1473).
+- Added tests for the new bot `intelmq.bots.experts.misp.expert` (#1473).
 
 ### Tools
-- `intelmqctl`: `upgrade-config`: Allow setting the state file location with the `--state-file` parameter.
+- `intelmqctl`:
+  - `upgrade-config`: Allow setting the state file location with the `--state-file` parameter.
+  - Only require `psutil` for the `IntelMQProcessManager`, not for process manager independent calls like `upgrade-config` or `check`.
 - `intelmqsetup`: Add argument parsing and an option to skip setting file ownership, possibly not requiring root permissions.
 - `intelmq_generate_misp_objects_templates.py`: Tool to create a MISP object template (#1470).
+
+### Contrib
+* Added `development-tools`.
+
+### Known issues
+
+
+2.1.3 (unreleased)
+------------------
+
+### Configuration
+
+### Core
+- `intelmq.lib.upgrades`:
+  - Harmonization upgrade: Also check and update regular expressions
+
+### Development
+
+### Harmonization
+- `protocol.transport`: Adapt regular expression to allow the value `nvp-ii` (protocol 11).
+
+### Bots
+#### Collectors
+
+#### Parsers
+- `intelmq.bots.parser.cymru.parser_cap_program`: Support for protocol 11 (`nvp-ii`).
+
+#### Experts
+
+#### Outputs
+
+### Documentation
+
+### Packaging
+
+### Tests
+
+### Tools
 
 ### Contrib
 
 ### Known issues
 
 
-2.1.2 (unreleased)
+2.1.2 (2020-01-28)
 ------------------
 
-### Configuration
-
 ### Core
+- `__init__`: Resolve absolute path for `STATE_FILE_PATH` variable (resolves `..`).
 - `intelmq.lib.utils`:
   - log: Do not raise an exception if logging to neither file nor syslog is requested.
   - logging StreamHandler: Colorize all warning and error messages red.
@@ -68,10 +122,6 @@ CHANGELOG
   - `Amqp._send` and `Amqp._acknowledge`: Log traceback in debug mode in case of errors and necessary re-connections.
   - `Amqp._acknowledge`: Reset delivery tag if acknowledge was successful.
 
-### Development
-
-### Harmonization
-
 ### Bots
 #### Collectors
 - `intelmq.bots.collectors.misp.collector`:
@@ -79,10 +129,13 @@ CHANGELOG
 
 #### Parsers
 - `intelmq.bots.parsers.shadowserver.config`: Add some missing fields for the feed `accessible-rdp` (#1463).
+- `intelmq.bots.parsers.shadowserver.parser`:
+  - Feed-detection based on file names: The prefixed date is optional now.
+  - Feed-detection based on file names: Re-detect feed for every report received (#1493).
 
 #### Experts
 - `intelmq.bots.experts.national_cert_contact_certat`: Handle empty responses by server (#1467).
-- `intelmq.bots.experts.maxmind_geoip`: The script `update-geoip-data` now requires a license key as second parameter because of upstream changes.
+- `intelmq.bots.experts.maxmind_geoip`: The script `update-geoip-data` now requires a license key as second parameter because of upstream changes (#1484)).
 
 #### Outputs
 - `intelmq.bots.outputs.restapi.output`: Fix logging of response body if response status code was not ok.
@@ -100,10 +153,19 @@ CHANGELOG
 - `tests.bots.parsers.html_table`: Make tests independent of current year.
 
 ### Tools
-
-### Contrib
+- `intelmqctl upgrade-config`: Fix missing substitution in error message "State file %r is not writable.".
 
 ### Known issues
+- bots trapped in endless loop if decoding of raw message fails (#1494)
+- intelmqctl status of processes: need to check bot id too (#1492)
+- MongoDB authentication: compatibility on different MongoDB and pymongo versions (#1439)
+- ctl: shell colorizations are logged (#1436)
+- http stream collector: retry on regular connection problems? (#1435)
+- tests: capture logging with context manager (#1342)
+- Bots started with IntelMQ-Manager stop when the webserver is restarted. (#952)
+- n6 parser: mapping is modified within each run (#905)
+- reverse DNS: Only first record is used (#877)
+- Corrupt dump files when interrupted during writing (#870)
 
 
 2.1.1 (2019-11-11)

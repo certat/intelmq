@@ -22,7 +22,6 @@ import xmlrpc.client
 from collections import OrderedDict
 
 import pkg_resources
-import psutil
 from termstyle import green
 
 from intelmq import (BOTS_FILE, DEFAULT_LOGGING_LEVEL, DEFAULTS_CONF_FILE,
@@ -31,8 +30,14 @@ from intelmq import (BOTS_FILE, DEFAULT_LOGGING_LEVEL, DEFAULTS_CONF_FILE,
                      DEFAULT_LOGGING_PATH, __version_info__)
 from intelmq.lib import utils
 from intelmq.lib.bot_debugger import BotDebugger
+from intelmq.lib.exceptions import MissingDependencyError
 from intelmq.lib.pipeline import PipelineFactory
 import intelmq.lib.upgrades as upgrades
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 
 class Parameters(object):
@@ -65,7 +70,8 @@ ERROR_MESSAGES = {
     'running': 'Bot %s is still running.',
     'stopped': 'Bot %s was NOT RUNNING.',
     'stopping': 'Bot %s failed to STOP.',
-    'not found': 'Bot %s failed to START because the file cannot be found.',
+    'not found': ('Bot %s FAILED to start because the executable cannot be found. '
+                  'Check your PATH variable and your the installation.'),
     'access denied': 'Bot %s failed to %s because of missing permissions.',
     'unknown': 'Status of Bot %s is unknown: %r.',
 }
@@ -131,6 +137,9 @@ class IntelMQProcessManager:
         self.__runtime_configuration = runtime_configuration
         self.logger = logger
         self.controller = controller
+
+        if psutil is None:
+            raise MissingDependencyError('psutil')
 
         if not os.path.exists(self.PIDDIR):
             try:
@@ -689,7 +698,7 @@ class IntelMQController():
         DESCRIPTION = """
         description: intelmqctl is the tool to control intelmq system.
 
-        Outputs are logged to %s/intelmqctl""" % DEFAULT_LOGGING_PATH
+        Outputs are logged to %s/intelmqctl.log""" % DEFAULT_LOGGING_PATH
         EPILOG = '''
         intelmqctl [start|stop|restart|status|reload] --group [collectors|parsers|experts|outputs]
         intelmqctl [start|stop|restart|status|reload] bot-id
@@ -1525,8 +1534,8 @@ Make a backup of your configuration first, also including bot's configuration fi
         """
         if os.path.isfile(state_file):
             if not os.access(state_file, os.W_OK) and not dry_run:
-                self.logger.error("State file %r is not writable.")
-                return 1, "State file %r is not writable."
+                self.logger.error("State file %r is not writable.", state_file)
+                return 1, "State file %r is not writable." % state_file
             state = utils.load_configuration(state_file)
         else:
             """

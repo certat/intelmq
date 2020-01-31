@@ -56,6 +56,7 @@
   - [Gethostbyname](#gethostbyname)
   - [IDEA](#idea)
   - [MaxMind GeoIP](#maxmind-geoip)
+  - [MISP](#misp)
   - [Modify](#modify)
     - [Configuration File](#configuration-file)
       - [Actions](#actions)
@@ -82,6 +83,7 @@
       - [Filename formatting](#filename-formatting)
   - [Files](#files)
   - [McAfee Enterprise Security Manager](#mcafee-enterprise-security-manager)
+  - [MISP Feed](#misp-feed)
   - [MongoDB](#mongodb)
     - [Installation Requirements](#installation-requirements)
   - [Redis](#redis)
@@ -482,9 +484,11 @@ Requires the rsync executable
 * **Feed parameters** (see above)
 * `misp_url`: URL of MISP server (with trailing '/')
 * `misp_key`: MISP Authkey
-* `misp_verify`: Verify the SSL certicate of the server, boolean (default: `true`)
 * `misp_tag_to_process`: MISP tag for events to be processed
 * `misp_tag_processed`: MISP tag for processed events, optional
+
+Generic parameters used in this bot:
+* `http_verify_cert`: Verify the TLS certicate of the server, boolean (default: `true`)
 
 #### Workflow
 This collector will search for events on a MISP server that have a
@@ -1234,7 +1238,7 @@ This does not affect URLs which already include the scheme.
 
 #### How this bot works?
 
-There are two possibilities TODO.
+There are two possibilities for the bot to determine which feed the data belongs to in order to determine the correct mapping of the columns:
 
 #### Automatic feed detection
 Since IntelMQ version 2.1 the parser can detect the feed based on metadata provided by the collector.
@@ -1246,6 +1250,7 @@ If this lookup is not possible, and the feed name is not given as parameter, the
 
 The field `extra.file_name` has the following structure:
 `%Y-%m-%d-${report_name}[-suffix].csv` where suffix can be something like `country-geo`. For example, some possible filenames are `2019-01-01-scan_http-country-geo.csv` or `2019-01-01-scan_tftp.csv`. The important part is `${report_name}`, between the date and the suffix.
+Since version 2.1.2 the date in the filename is optional, so filenames like `scan_tftp.csv` are also detected.
 
 #### Fixed feed name
 If the method above is not possible and for upgraded instances, the feed can be set with the `feedname` parameter.
@@ -1863,7 +1868,7 @@ Converts the event to IDEA format and saves it as JSON in the field `output`. Al
 Documentation about IDEA: https://idea.cesnet.cz/en/index
 
 #### Information:
-* `name:` idea
+* `name:` intelmq.bots.experts.idea.expert
 * `lookup:` local config
 * `public:` yes
 * `cache (redis db):` none
@@ -1878,7 +1883,7 @@ Documentation about IDEA: https://idea.cesnet.cz/en/index
 ### MaxMind GeoIP
 
 #### Information:
-* `name:` maxmind-geoip
+* `name:` intelmq.bots.experts.maxmind_geoip.expert
 * `lookup:` local database
 * `public:` yes
 * `cache (redis db):` none
@@ -1897,6 +1902,25 @@ You may want to use a shell script provided in the contrib directory to keep the
 * `database`: Path to the local database, e.g. `"/opt/intelmq/var/lib/bots/maxmind_geoip/GeoLite2-City.mmdb"`
 * `overwrite`: boolean
 * `use_registered`: boolean. MaxMind has two country ISO codes: One for the physical location of the address and one for the registered location. Default is `false` (backwards-compatibility). See also https://github.com/certtools/intelmq/pull/1344 for a short explanation.
+
+### MISP
+
+Queries a MISP instance for the `source.ip` and adds the MISP Attribute UUID and MISP Event ID of the newest attribute found.
+
+#### Information:
+* `name:` intelmq.bots.experts.misp.expert
+* `lookup:` yes
+* `public:` no
+* `cache (redis db):` none
+* `description:` IP address to MISP attribute and event
+
+#### Configuration Parameters:
+
+* `misp_key`: MISP Authkey
+* `misp_url`: URL of MISP server (with trailing '/')
+
+Generic parameters used in this bot:
+* `http_verify_cert`: Verify the TLS certicate of the server, boolean (default: `true`)
 
 * * *
 
@@ -2644,6 +2668,29 @@ If the field used in the format string is not defined, `None` will be used as fa
 * `esm_pw`: password of user
 * `esm_watchlist`: name of the watchlist to write to
 * `field`: name of the IntelMQ field to be written to ESM
+
+* * *
+
+### MISP Feed
+
+#### Information:
+* `name:` `intelmq.bots.outputs.misp.output_feed`
+* `lookup:` no
+* `public:` no
+* `cache (redis db):` none
+* `description:` Create a directory layout in the MISP Feed format
+
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `misp_org_name`: Org name which creates the event, string
+* `misp_org_uuid`: Org UUID which creates the event, string
+* `output_dir`: Output directory path, e.g. `/opt/intelmq/var/lib/bots/mispfeed-output`. Will be created if it does not exist and possible.
+* `interval_event`: The output bot creates one event per each interval, all data in this time frame is part of this event. Default "1 hour", string.
+
+#### Usage in MISP
+
+Configure the destination directory of this feed as feed in MISP, either as local location, or served via a web server. See [the MISP documentation on Feeds](https://www.circl.lu/doc/misp/managing-feeds/) for more information
 
 * * *
 
