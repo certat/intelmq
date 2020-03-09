@@ -835,7 +835,7 @@ class Bot(object):
         """
         self._parse_extract_file_parameter('extract_files')
 
-    def _parse_extract_file_parameter(self, parameter_name: str ='extract_files'):
+    def _parse_extract_file_parameter(self, parameter_name: str = 'extract_files'):
         """
         Parses and sanitizes commonly used parameters:
 
@@ -1190,7 +1190,7 @@ class OutputBot(Bot):
     Base class for outputs.
     """
 
-    def __init__(self, bot_id: str, start: bool=False, sighup_event=None,
+    def __init__(self, bot_id: str, start: bool = False, sighup_event=None,
                  disable_multithreading: bool = None):
         super().__init__(bot_id=bot_id)
         if self.__class__.__name__ == 'OutputBot':

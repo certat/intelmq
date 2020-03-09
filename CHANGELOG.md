@@ -10,6 +10,7 @@ CHANGELOG
 ### Core
 - The environment variable `INTELMQ_ROOT_DIR` can be used to set custom root directories instead of `/opt/intelmq/` (#805).
 - `intelmq.lib.exceptions`: Added `MissingDependencyError` for show error messages about a missing library and how to install it (#1471).
+  - Added optional parameter `installed` to show the installed version.
 - Adding more type annotations for core libraries.
 - `intelmq.lib.pipeline.Pythonlist.sleep`: Drop deprecated method.
 
@@ -23,6 +24,9 @@ CHANGELOG
 #### Collectors
 - `intelmq.bots.collectors.misp.collector`: Deprecate parameter `misp_verify` in favor of generic parameter `http_verify_cert`.
 - `intelmq.bots.collectors.tcp.collector`: Drop compatibility with Python 3.4.
+- `intelmq.bots.collectors.stomp.collector`:
+  - Check the stomp.py version and show an error message if it did not match.
+  - For stomp.py versions `>= 5.0.0` redirect the `stomp.PrintingListener` output to debug logging.
 
 #### Parsers
 - `intelmq.bots.parsers.autoshun.parser`: Drop compatibility with Python 3.4.
@@ -77,6 +81,7 @@ CHANGELOG
 ### Core
 - `intelmq.lib.upgrades`:
   - Harmonization upgrade: Also check and update regular expressions
+  - Add function to migrate the deprecated paramaeter `attach_unzip` to `extract_files` for the mail attachment collector.
 
 ### Development
 
@@ -85,6 +90,8 @@ CHANGELOG
 
 ### Bots
 #### Collectors
+- `intelmq.bots.collectors.mail.collector_mail_attach`: fix handling of deprecated parameter name `attach_unzip`.
+- `intelmq.bots.collectors.stomp.collector`: Fix compatibility with stomp.py versions `> 4.1.20` and catch errors on shutdown.
 
 #### Parsers
 - `intelmq.bots.parser.cymru.parser_cap_program`: Support for protocol 11 (`nvp-ii`).
@@ -100,6 +107,7 @@ CHANGELOG
 ### Tests
 
 ### Tools
+- `intelmqsetup`: Copy missing BOTS file to IntelMQ's root directory (#1498).
 
 ### Contrib
 
