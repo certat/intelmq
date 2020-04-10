@@ -5,6 +5,8 @@ AnubisNetworks Cyberfeed Stream parser
 TODO: Refactor with JSON mapping
 
 There is an old format and a new one - distinguishable by the test cases
+
+Migration to ParserBot does not make sense, as there's only one event per report anyway
 """
 import json
 
@@ -24,6 +26,11 @@ MAP_geo_env_remote_addr = {"country_code": 'source.geolocation.cc',
 
 
 class AnubisNetworksParserBot(Bot):
+
+    def init(self):
+        self.malware_as_identifier = getattr(self.parameters,
+                                             'use_malware_familiy_as_classification_identifier',
+                                             True)
 
     def process(self):
         report = self.receive_message()
@@ -80,7 +87,13 @@ class AnubisNetworksParserBot(Bot):
                     if subkey == "severity":
                         event.add('extra.malware.severity', subvalue)
                     elif subkey == "family":
-                        event.add('classification.identifier', subvalue)
+                        if self.malware_as_identifier:
+                            event.add('classification.identifier', subvalue)
+                        else:
+                            if subvalue == value['variant']:
+                                pass
+                            else:
+                                event.add('extra.malware.family', subvalue)
                     elif subkey == "variant":
                         event.add('malware.name', subvalue)
                     elif subkey == "categories":
@@ -162,16 +175,19 @@ class AnubisNetworksParserBot(Bot):
                 if value['ip'] == event['source.ip']:
                     continue
                     # and ignore
-                event  = self.parse_geo(event, value, 'tracking.last', raw_report, key)
+                event = self.parse_geo(event, value, 'tracking.last', raw_report, key)
                 if value["path"] != 'tracking.last_ip':
                     raise ValueError('_geo_tracking_last_ip.path is not \'tracking.last_ip\' (%r).'
                                      ''  % subvalue)
             elif key == '_geo_comm_http_host':
-                event  = self.parse_geo(event, value, 'communication.http.host', raw_report, key)
+                event = self.parse_geo(event, value, 'communication.http.host', raw_report, key)
                 if value["path"] != 'comm.http.host':
                     raise ValueError('_geo_tracking_last_ip.path is not \'comm.http.host\' (%r).'
                                      ''  % subvalue)
-
+            elif key.startswith('_geo_comm_http_x_forwarded_for_'):
+                event = self.parse_geo(event, value,
+                                       'extra.communication.http.%s' % key[15:],
+                                       raw_report, '_geo_comm_http_x_forwarded_for_')
             elif key in ["_origin", "_provider", "pattern_verified", "metadata"]:
                 event['extra.%s' % key] = value
             else:
@@ -181,7 +197,7 @@ class AnubisNetworksParserBot(Bot):
 
     def parse_geo(self, event, value, namespace, raw_report, orig_name):
         for subkey, subvalue in value.items():
-            if subkey in ("ip",'path'):
+            if subkey in ("ip", 'path'):
                 pass
             elif subkey == "netmask":
                 event = self.event_add_fallback(event,
