@@ -13,8 +13,9 @@ REQUIRES = [
     'python-termstyle>=0.1.10',
     'pytz>=2012c',
     'redis>=2.10',
-    'tabulate>=0.7.5',
+    'requests>=2.2.0',
     'rt>=1.0.9',
+    'tabulate>=0.7.5',
 ]
 
 exec(open(os.path.join(os.path.dirname(__file__),

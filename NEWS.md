@@ -8,12 +8,16 @@ See the changelog for a full list of changes.
 
 ### Requirements
 - IntelMQ no longer supports Python 3.4, Python `>=` 3.5 is required.
+  CentOS 7 (with EPEL) provides both Python 3.4 and Python 3.6. If IntelMQ was installed with Python 3.4, the code needs to be re-installed with Python 3.6 and removed for Python 3.4. Application data is compatible. To install needed packages: `yum install python36 python36-devel python36-requests`.
 
 ### Tools
 
 ### Harmonization
 
 ### Configuration
+
+#### ElasticSearch Output Bot
+The ElasticSearch Output bot does no longer support (only) ElasticSearch version 5, but only version 7 (#1513).
 
 ### Libraries
 
@@ -24,6 +28,7 @@ See the changelog for a full list of changes.
 ---------------------------------
 
 ### Requirements
+The python library `requests` is required by the core.
 
 ### Tools
 
@@ -41,11 +46,21 @@ The `intelmqctl upgrade-config` command takes care of this change.
 #### Abuse.ch Zeus Tracker Feed
 The Abuse.ch Zeus Tracker has been discontinued on 2019-07-08. The `intelmqctl upgrade-config` command warns if you have this feed in use.
 
+#### Abuse.ch Ransomware Tracker Feed
+The Abuse.ch Ransomware Tracker has been discontinued on 2019-12-08. The `intelmqctl upgrade-config` command warns if you have this feed in use.
+
 #### Bitcash.cz Feed
 The Bitcash.cz Banned IPs / Blocklist feed previously available under `https://bitcash.cz/misc/log/blacklist` is no longer available. The `intelmqctl upgrade-config` command warns if you have this feed in use.
 
 #### Fraunhofer DDoS Attack Feed
 The Fraunhofer DDoS Attack feed previously available under `https://feed.caad.fkie.fraunhofer.de/ddosattackfeed/` is no longer available. The `intelmqctl upgrade-config` command warns if you have this feed in use.
+
+#### Bambenek Feeds
+Many Bambenek feeds require a license now and URLs have changed. See https://osint.bambenekconsulting.com/feeds/ for more information. The `intelmqctl upgrade-config` command also warns if you have previously documents feeds in use and migrates the URL for the DGA domain feed.
+
+#### Nothink Feeds and Parser
+All Nothink Honeypot feeds have been discontinued and current the data available covers the time until 2019. The Nothink Parser has been removed.
+The `intelmqctl upgrade-config` command warns if you have these feed and the bot in use.
 
 ### Libraries
 

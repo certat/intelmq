@@ -4,6 +4,7 @@ CHANGELOG
 
 2.2.0 (unreleased)
 ------------------
+Dropped support for Python 3.4.
 
 ### Configuration
 - Update default runtime configuration with `upgrade-conf`.
@@ -61,6 +62,7 @@ CHANGELOG
 - `intelmq.bots.outputs.files`: Use `OutputBot` and `export_event`.
 - `intelmq.bots.outputs.misp.output_feed`: Added, creates a MISP Feed (PR#1473).
 - `intelmq.bots.outputs.misp.output_api`: Added, pushes to MISP via the API (PR#1506).
+- `intelmq.bots.outputs.elasticsearch.output`: Dropped ElasticSearch version 5 compatibility, added version 7 compatibility (#1513).
 
 ### Documentation
 - Document usage of the `INTELMQ_ROOT_DIR` environment variable.
@@ -106,6 +108,7 @@ CHANGELOG
 
 ### Contrib
 * Added `development-tools`.
+- ElasticSearch: Dropped version 5 compatibility, added version 7 compatibility (#1513).
 
 ### Known issues
 
@@ -114,6 +117,9 @@ CHANGELOG
 ------------------
 
 ### Configuration
+
+### Requirements
+- The python library `requests` is (again) listed as dependency of the core.
 
 ### Core
 - `intelmq.lib.upgrades`:
@@ -160,6 +166,8 @@ CHANGELOG
 - `intelmq.bots.parsers.n6.parser_n6stomp`: Always add n6 field `name` as `malware.name` independent of `category`.
 - `intelmq.bots.parsers.anubisnetworks`: Update parser with new data format.
 - `intelmq.bots.parsers.bambenek`: Add new feed URLs with Host `faf.bambenekconsulting.com` (#1525, PR#1526).
+- `intelmq.bots.parsers.abusech.parser_ransomware`: Removed, as the feed is discontinued (#1537).
+- `intelmq.bots.parsers.nothink.parser`: Removed, as the feed is discontinued (#1537).
 
 #### Experts
 - `intelmq.bots.experts.cymru_whois.lib`: Fix parsing of AS names with unicode characters.
@@ -177,6 +185,9 @@ CHANGELOG
   - Adding documentation URLs to nearly all feeds.
   - Remove unavailable Bitcash.cz feed.
   - Remove unavailable Fraunhofer DDos Attack feeds.
+  - Remove unavailable feed Abuse.CH Ransomware Tracker (#1537).
+  - Update information on Bambenek Feeds, many require a license now (#1525).
+  - Remove discontinued Nothink Honeypot Feeds (#1537).
 - Developers Guide: Fix the instructions for `/opt/intelmq` file permissions.
 
 ### Packaging
@@ -1257,7 +1268,7 @@ Update allowed classification fields to 2018-09-26 version (#802, #1350, #1380).
 - New allowed value for `classification.type`: `infected system` for taxonomy `malicious code` (#1197).
 
 ### Requirements
-- Requests is no longer listed as dependency of the core. For depending bots the requirement is noted in their REQUIREMENTS.txt file.
+- Requests is no longer listed as dependency of the core. For depending bots the requirement is noted in their `REQUIREMENTS.txt` file.
 
 ### Documentation
 - Use Markdown for README again, as pypi now supports it.

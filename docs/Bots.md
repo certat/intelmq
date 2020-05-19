@@ -2582,6 +2582,8 @@ This output bot discards all incoming messages.
 * `cache`: no
 * `description`: Output Bot that sends events to Elasticsearch
 
+Only ElasticSearch version 7 supported.
+
 #### Configuration parameters:
 
 * `elastic_host`: Name/IP for the Elasticsearch server, defaults to 127.0.0.1
@@ -2595,7 +2597,6 @@ This output bot discards all incoming messages.
                        'weekly' --> intelmq-2018-42
                        'monthly' --> intelmq-2018-02
                        'yearly' --> intelmq-2018
-* `elastic_doctype`: Elasticsearch document type for the event. Default: events
 * `http_username`: HTTP basic authentication username
 * `http_password`: HTTP basic authentication password
 * `use_ssl`: Whether to use SSL/TLS when connecting to Elasticsearch. Default: False
