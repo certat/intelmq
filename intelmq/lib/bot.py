@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-The base classes for all Bots
+The bot library has the base classes for all bots.
+  * Bot: generic base class for all kind of bots
+  * CollectorBot: base class for collectors
+  * ParserBot: base class for parsers
+  * SQLBot: base classs for any bots using SQL
 """
 import atexit
 import csv
@@ -253,8 +257,9 @@ class Bot(object):
                                      self.parameters.error_retry_delay)
                     time.sleep(self.parameters.error_retry_delay)
 
-                if error_on_message:
-                    error_on_message = False
+                starting = False
+                error_on_message = False
+                message_to_dump = None
 
                 if error_on_pipeline:
                     try:
@@ -263,9 +268,6 @@ class Bot(object):
                         raise exceptions.PipelineError(exc)
                     else:
                         error_on_pipeline = False
-
-                if starting:
-                    starting = False
 
                 self.__handle_sighup()
                 self.process()
@@ -280,6 +282,15 @@ class Bot(object):
                     self.logger.error(utils.error_message_from_exc(exc))
                     self.logger.error('Pipeline failed.')
                 self.__disconnect_pipelines()
+
+            except exceptions.DecodingError as exc:
+                self.logger.exception('Could not decode message from pipeline. No retries useful.')
+
+                # ensure that we do not re-process the faulty message
+                self.__error_retries_counter = self.parameters.error_max_retries + 1
+                error_on_message = sys.exc_info()
+
+                message_to_dump = exc.object
 
             except Exception as exc:
                 # in case of serious system issues, exit immediately
@@ -323,11 +334,6 @@ class Bot(object):
                     self.last_heartbeat = datetime.now()
 
             finally:
-                if getattr(self.parameters, 'testing', False):
-                    self.logger.debug('Testing environment detected, returning now.')
-                    return
-                    break
-
                 do_rate_limit = False
 
                 if error_on_message or error_on_pipeline:
@@ -343,7 +349,7 @@ class Bot(object):
                             if self.parameters.error_dump_message:
                                 error_traceback = traceback.format_exception(*error_on_message)
                                 self._dump_message(error_traceback,
-                                                   message=self.__current_message)
+                                                   message=message_to_dump if message_to_dump else self.__current_message)
                             else:
                                 warnings.warn("Message will be removed from the pipeline and not dumped to the disk. "
                                               "Set `error_dump_message` to true to save the message on disk. "
@@ -351,8 +357,8 @@ class Bot(object):
                             if self.__destination_queues and '_on_error' in self.__destination_queues:
                                 self.send_message(self.__current_message, path='_on_error')
 
-                            # remove message from pipeline
-                            self.acknowledge_message()
+                            if message_to_dump or self.__current_message:
+                                self.acknowledge_message()
 
                             # when bot acknowledge the message,
                             # don't need to wait again
@@ -384,6 +390,10 @@ class Bot(object):
                     if self.run_mode == 'scheduled':
                         self.logger.info('Shutting down scheduled bot.')
                         self.stop(exitcode=0)
+
+                if getattr(self.parameters, 'testing', False):
+                    self.logger.debug('Testing environment detected, returning now.')
+                    return
 
                 # Do rate_limit at the end on success and after the retries
                 # counter has been reset: https://github.com/certtools/intelmq/issues/1431
@@ -636,10 +646,10 @@ class Bot(object):
         self.__current_message = None
 
     def _dump_message(self, error_traceback, message: dict):
+        self.logger.info('Dumping message to dump file.')
+
         if message is None or getattr(self.parameters, 'testing', False):
             return
-
-        self.logger.info('Dumping message to dump file.')
 
         dump_file = os.path.join(self.parameters.logging_path, self.__bot_id + ".dump")
 
@@ -651,7 +661,12 @@ class Bot(object):
         new_dump_data[timestamp]["source_queue"] = self.__source_queues
         new_dump_data[timestamp]["traceback"] = error_traceback
 
-        new_dump_data[timestamp]["message"] = message.serialize()
+        if isinstance(message, bytes):
+            # decoding errors
+            new_dump_data[timestamp]["message"] = utils.base64_encode(message)
+            new_dump_data[timestamp]["message_type"] = 'base64'
+        else:
+            new_dump_data[timestamp]["message"] = message.serialize()
 
         if os.path.exists(dump_file):
             # existing dump
@@ -907,11 +922,20 @@ class ParserBot(Bot):
 
     def parse_json(self, report: libmessage.Report):
         """
-        A basic JSON parser
+        A basic JSON parser. Assumes a *list* of objects to be yielded
         """
         raw_report = utils.base64_decode(report.get("raw"))
         for line in json.loads(raw_report):
             yield line
+
+    def parse_json_stream(self, report: libmessage.Report):
+        """
+        A JSON Stream parses (one JSON data structure per line)
+        """
+        raw_report = utils.base64_decode(report.get("raw"))
+        for line in raw_report.splitlines():
+            self.current_line = line
+            yield json.loads(line)
 
     def parse(self, report: libmessage.Report):
         """
@@ -1049,7 +1073,22 @@ class ParserBot(Bot):
 
         Recovers a fully functional report with only the problematic pulse.
         """
-        return json.dumps(line)
+        return json.dumps([line])
+
+    def recover_line_json_stream(self, line: dict) -> str:
+        """
+        recover_line for json streams, just returns the current line, unparsed.
+
+        Parameters
+        ----------
+        line : dict
+
+        Returns
+        -------
+        str
+            unparsed JSON line.
+        """
+        return self.current_line
 
 
 class CollectorBot(Bot):

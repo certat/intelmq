@@ -299,6 +299,7 @@ The parameter `http_timeout_max_tries` is of no use in this collector.
 * `mail_host`: FQDN or IP of mail server
 * `mail_user`: user account of the email account
 * `mail_password`: password associated with the user account
+* `mail_port`: IMAP server port, optional (default: 143 without SSL, 993 for SSL)
 * `mail_ssl`: whether the mail account uses SSL (default: `true`)
 * `folder`: folder in which to look for mails (default: `INBOX`)
 * `subject_regex`: regular expression to look for a subject
@@ -347,6 +348,7 @@ limitation set `chunk_size` to something like `384000000`, i.e., ~384 MB.
 * `mail_host`: FQDN or IP of mail server
 * `mail_user`: user account of the email account
 * `mail_password`: password associated with the user account
+* `mail_port`: IMAP server port, optional (default: 143 without SSL, 993 for SSL)
 * `mail_ssl`: whether the mail account uses SSL (default: `true`)
 * `folder`: folder in which to look for mails (default: `INBOX`)
 * `subject_regex`: regular expression to look for a subject
@@ -379,6 +381,7 @@ The resulting reports contains the following special fields:
 * `mail_host`: FQDN or IP of mail server
 * `mail_user`: user account of the email account
 * `mail_password`: password associated with the user account
+* `mail_port`: IMAP server port, optional (default: 143 without SSL, 993 for SSL)
 * `mail_ssl`: whether the mail account uses SSL (default: `true`)
 * `folder`: folder in which to look for mails (default: `INBOX`)
 * `subject_regex`: regular expression to look for a subject
@@ -762,20 +765,23 @@ This bot works based on certstream library (https://github.com/CaliDog/certstrea
 ### Microsoft Azure
 
 Iterates over all blobs in all containers in an Azure storage.
+The Cache is required to memorize which files have already been processed (TTL needs to be high enough to cover the oldest files available!).
+
+This bot significantly changed in a backwards-incompatible way in IntelMQ Version 2.2.0 to support current versions of the Microsoft Azure Python libraries.
 
 #### Information:
-* `name:` intelmq.bots.collectors.microsoft.collector_azure
-* `lookup:` yes
-* `public:` no
-* `cache (redis db):` none
-* `description:` collect blobs from microsoft azure using their library
+* `name`: intelmq.bots.collectors.microsoft.collector_azure
+* `lookup`: yes
+* `public`: no
+* `cache (redis db)`: 5
+* `description`: collect blobs from Microsoft Azure using their library
 
 #### Configuration Parameters:
 
+* **Cache parameters** (see above)
 * **Feed parameters** (see above)
-* `account_name`: account name as give by Microsoft
-* `account_key`: account key as give by Microsoft
-* `delete`: boolean, delete containers and blobs after fetching
+* `connection_string`: connection string as given by Microsoft
+* `container_name`: name of the container to connect to
 
 * * *
 
@@ -1199,6 +1205,20 @@ Parses breaches and pastes and creates one event per e-mail address. The e-mail 
 
 * **Feed parameters** (see above)
 * `verdict_severity`: min report severity to parse
+
+* * *
+
+### Microsoft CTIP Parser
+
+* `name`: `intelmq.bots.parsers.microsoft.parser_ctip`
+* `public`: no
+* `cache (redis db)`: none
+* `description`: Parses data from the Microsoft CTIP Feed
+
+#### Description
+
+Can parse the JSON format provided by the Interflow interface (lists of dictionaries) as well as the format provided by the Azure interface (one dictionary per line).
+The provided data differs between the two formats/providers.
 
 * * *
 
@@ -2734,6 +2754,7 @@ The PyMISP library >= 2.4.120 is required, see
 
 * **Feed parameters** (see above)
 * `add_feed_provider_as_tag`: bool (use `true` when in doubt)
+* `add_feed_name_as_tag`: bool (use `true` when in doubt)
 * `misp_additional_correlation_fields`: list of fields for which
       the correlation flags will be enabled (in addition to those which are
       in significant_fields)
@@ -2748,9 +2769,12 @@ The PyMISP library >= 2.4.120 is required, see
 * `misp_url`: str, URL of the MISP server
 * `significant_fields`: list of intelmq field names
 
-The significant field values will be searched for in all MISP attribute values
+The `significant_fields` values
+will be searched for in all MISP attribute values
 and if all values are found in the same MISP event, no new MISP event
 will be created.
+Instead if the existing MISP events have the same feed.provider
+and match closely, their timestamp will be updated.
 
 If a new MISP event is inserted the `significant_fields` and the
 `misp_additional_correlation_fields` will be the attributes

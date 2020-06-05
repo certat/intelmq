@@ -249,12 +249,16 @@
             "description": "",
             "module": "intelmq.bots.collectors.microsoft.collector_azure",
             "parameters": {
-                "account_key": "",
-                "account_name": "",
-                "delete": true,
+                "connection_string": "<insert your connection string here>",
+                "container_name": "<insert the container name>",
                 "name": "Azure",
                 "provider": "Microsoft",
-                "rate_limit": 3600
+                "rate_limit": 3600,
+                "redis_cache_db": "5",
+                "redis_cache_host": "127.0.0.1",
+                "redis_cache_password": null,
+                "redis_cache_port": 6379,
+                "redis_cache_ttl": 864000
             }
         },
         "Microsoft Interflow": {
@@ -1070,6 +1074,7 @@
                 "add_feed_provider_as_tag": true,
                 "misp_additional_correlation_fields": [],
                 "misp_additional_tags": [],
+                "add_feed_name_as_tag": true,
                 "misp_key": "<insert MISP Authkey>",
                 "misp_publish": false,
                 "misp_tag_for_bot": "<insert MISP tag to mark inserted events>",
