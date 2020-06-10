@@ -190,6 +190,8 @@ Multihreading is disabled for all Collectors, as this would lead to duplicated d
 
 ### AMQP
 
+Requires the [`pika` python library](https://pypi.org/project/pika/), minimum version 1.0.0.
+
 #### Information:
 * `name`: intelmq.bots.collectors.amqp.collector_amqp
 * `lookup`: yes
@@ -2030,6 +2032,8 @@ Generic parameters used in this bot:
 
 * `configuration_path`: filename
 * `case_sensitive`: boolean, default: true
+* `maximum_matches`: Maximum number of matches. Processing stops after the limit is reached. Default: no limit (`null`, `0`).
+* `overwrite`: Overwrite any existing fields by matching rules. Default if the parameter is given: `true`, for backwards compatibility. Default will change to `false` in version 3.0.0.
 
 #### Configuration File
 
@@ -2526,6 +2530,8 @@ Note that SIGHUPs and reloads interrupt the sleeping.
 
 Sends data to an AMQP Server
 See https://www.rabbitmq.com/tutorials/amqp-concepts.html for more details on amqp topic exchange.
+
+Requires the [`pika` python library](https://pypi.org/project/pika/).
 
 #### Information
 * `name`: `intelmq.bots.outputs.amqptopic.output`

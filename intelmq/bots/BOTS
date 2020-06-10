@@ -1,7 +1,7 @@
 {
     "Collector": {
         "AMQP": {
-            "description": "Collecting from a (remote) AMQP Server and fetching either intelmq or any other messages.",
+            "description": "Collecting from a (remote) AMQP Server and fetching either intelmq or any other messages. Requires the pika python library.",
             "module": "intelmq.bots.collectors.amqp.collector_amqp",
             "parameters": {
                 "connection_attempts": 3,
@@ -844,6 +844,7 @@
             "parameters": {
                 "case_sensitive": true,
                 "configuration_path": "/opt/intelmq/var/lib/bots/modify/modify.conf",
+                "maximum_matches": null,
                 "overwrite": false
             }
         },
@@ -970,7 +971,7 @@
     },
     "Output": {
         "AMQP Topic": {
-            "description": "AMQP Topic is the bot responsible to send events to a AMQP topic exchange.",
+            "description": "AMQP Topic is the bot responsible to send events to a AMQP topic exchange. Requires the pika python library.",
             "module": "intelmq.bots.outputs.amqptopic.output",
             "parameters": {
                 "connection_attempts": 3,
@@ -996,7 +997,7 @@
             }
         },
         "Blackhole": {
-            "description": "AMQP Topic is the bot responsible to send events to a AMQP topic exchange.",
+            "description": "Discards messages.",
             "module": "intelmq.bots.outputs.blackhole.output",
             "parameters": {}
         },
