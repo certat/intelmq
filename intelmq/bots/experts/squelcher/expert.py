@@ -83,6 +83,15 @@ class SquelcherExpertBot(Bot):
                 if isinstance(value, dict):
                     self.config[rule_index][0][key] = tuple(value.items())
 
+    def convert_event(self, event):
+        event_copy = event.to_dict()
+        for key, value in event_copy.items():
+            if isinstance(value, list):
+                event_copy[key] = tuple(value)
+            if isinstance(value, dict):
+                event_copy[key] = tuple(value.items())
+        return event_copy
+
     def process(self):
         event = self.receive_message()
 
@@ -100,10 +109,6 @@ class SquelcherExpertBot(Bot):
             self.modify_end(event)
             return
 
-        event_copy = event.to_dict()
-        if 'extra.additionalmetadata' in event:
-            event_copy['extra.additionalmetadata'] = tuple(event['extra.additionalmetadata'])
-
         ttl = None
         for ruleset in self.config:
             condition = ruleset[0].copy()
@@ -115,7 +120,7 @@ class SquelcherExpertBot(Bot):
             if 'source.iprange' in condition and 'source.ip' in event:
                 conditions.append(event['source.ip'] in netaddr.IPRange(*condition['source.iprange']))
                 del condition['source.iprange']
-            if set(condition.items()).issubset(event_copy.items()) and all(conditions):
+            if set(condition.items()).issubset(self.convert_event(event).items()) and all(conditions):
                 ttl = ruleset[1]['ttl']
                 break
 

@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import pkg_resources
 import unittest
 import os
+import os.path
 
 import intelmq.lib.test as test
 from intelmq.bots.experts.squelcher.expert import SquelcherExpertBot
@@ -87,6 +88,9 @@ INPUT9['extra.additionalmetadata'] = ['foobar']
 
 INPUT10 = INPUT1.copy()
 INPUT10['notify'] = True
+
+INPUT11 = INPUT1.copy()
+INPUT11['extra.malware.variants'] = ["foo", "bar"]
 
 
 @test.skip_database()
@@ -294,6 +298,13 @@ INSERT INTO {table}(
         self.sysconfig['overwrite'] = True
         self.assertLogMatches('Notify field present and not allowed to overwrite, skipping.', levelname='DEBUG')
         self.assertMessageEqual(0, INPUT10)
+
+    def test_hashable(self):
+        self.input_message = INPUT11
+        self.run_bot(parameters={"configuration_path": os.path.join(os.path.dirname(__file__),
+                                                                    'unhashable.config')})
+        self.assertLogMatches('Found TTL 123 for', levelname='DEBUG')
+
 
     @classmethod
     def tearDownClass(cls):
