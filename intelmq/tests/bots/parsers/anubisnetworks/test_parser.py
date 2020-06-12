@@ -96,13 +96,12 @@ EXAMPLE_EVENT3  = {"classification.taxonomy": "malicious code",
                    "raw": EXAMPLE_REPORT3['raw'],
                    "classification.type": "malware",
                    "event_description.text": "Sinkhole attempted connection",
-                   "extra.metadata": {
-                       "flowbits": [
+                   "extra.metadata.flowbits": [
                            "_mt_s",
                            "_mt_sa",
                            "_mt_a",
                            "_mt_p"
-                       ], },
+                   ],
                    "protocol.application": "http",
                    "extra.malware.severity": 2,
                    "extra.malware.categories": [
@@ -219,6 +218,8 @@ EXAMPLE_EVENT_DNS  = {"classification.taxonomy": "malicious code",
                       "source.as_name": "Example AS Name",
                       'extra.dns_query_type': 'A',
                       }
+EMPTY_REPORT = EXAMPLE_REPORT.copy()
+EMPTY_REPORT['raw'] = 'Cg=='
 
 
 class TestAnubisNetworksParserBot(test.BotTestCase, unittest.TestCase):
@@ -250,6 +251,12 @@ class TestAnubisNetworksParserBot(test.BotTestCase, unittest.TestCase):
         self.input_message = EXAMPLE_REPORT_DNS
         self.run_bot()
         self.assertMessageEqual(0, EXAMPLE_EVENT_DNS)
+
+    def test_empty(self):
+        """ Test empty line as input """
+        self.input_message = EMPTY_REPORT
+        self.run_bot()
+        self.assertOutputQueueLen(0)
 
 
 if __name__ == '__main__':  # pragma: no cover
