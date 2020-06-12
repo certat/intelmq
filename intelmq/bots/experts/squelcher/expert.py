@@ -73,6 +73,16 @@ class SquelcherExpertBot(Bot):
             self.stop()
         self.logger.info("Connected to PostgreSQL.")
 
+        self.convert_config()
+
+    def convert_config(self):
+        for rule_index, ruleset in enumerate(self.config):
+            for key, value in ruleset[0].items():
+                if isinstance(value, list):
+                    self.config[rule_index][0][key] = tuple(value)
+                if isinstance(value, dict):
+                    self.config[rule_index][0][key] = tuple(value.items())
+
     def process(self):
         event = self.receive_message()
 

@@ -304,5 +304,37 @@ INSERT INTO {table}(
         cls.con.close()
 
 
+class TestSquelcherExpertBotHelper(unittest.TestCase):
+    def test_convert_config_list(self):
+        self.config = [
+            [{
+                "extra.malware.variants": ["foo", "bar"]},
+                {"ttl": 10},
+             ]
+        ]
+        SquelcherExpertBot.convert_config(self)
+        self.assertEqual(self.config, [
+            [{
+                "extra.malware.variants": ("foo", "bar")},
+                {"ttl": 10},
+             ]
+        ])
+
+    def test_convert_config_dict(self):
+        self.config = [
+            [{
+                "extra.malware.variants": {"foo": "bar"}},
+                {"ttl": 10},
+             ]
+        ]
+        SquelcherExpertBot.convert_config(self)
+        self.assertEqual(self.config, [
+            [{
+                "extra.malware.variants": (("foo", "bar"), )},
+                {"ttl": 10},
+             ]
+        ])
+
+
 if __name__ == '__main__':
     unittest.main()
