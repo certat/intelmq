@@ -39,6 +39,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 - [PrecisionSec](#precisionsec)
 - [ShadowServer](#shadowserver)
 - [Spamhaus](#spamhaus)
+- [Strangereal Intel](#strangereal-intel)
 - [Sucuri](#sucuri)
 - [Surbl](#surbl)
 - [Taichung](#taichung)
@@ -182,9 +183,9 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 ## Cyberfeed Stream
 
 * **Public:** unknown
-* **Revision:** 2018-01-20
-* **Documentation:** https://www.anubisnetworks.com/
-* **Description:** AnubisNetworks Collector is the bot responsible to get AnubisNetworks Cyberfeed Stream.
+* **Revision:** 2020-06-15
+* **Documentation:** https://www.anubisnetworks.com/ https://www.bitsight.com/
+* **Description:** Fetches and parsers the Cyberfeed data stream.
 
 ### Collector
 
@@ -199,6 +200,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 
 * **Module:** intelmq.bots.parsers.anubisnetworks.parser
 * **Configuration Parameters:**
+*  * `use_malware_familiy_as_classification_identifier`: `True`
 
 
 # Autoshun
@@ -1641,6 +1643,31 @@ server {
 ### Parser
 
 * **Module:** intelmq.bots.parsers.spamhaus.parser_drop
+* **Configuration Parameters:**
+
+
+# Strangereal Intel
+
+## DailyIOC
+
+* **Public:** yes
+* **Revision:** 2019-12-05
+* **Documentation:** https://github.com/StrangerealIntel/DailyIOC
+* **Description:** Daily IOC from tweets and articles
+* **Additional Information:** collector's `extra_fields` parameter may be any of fields from the github [content API response](https://developer.github.com/v3/repos/contents/)
+
+### Collector
+
+* **Module:** intelmq.bots.collectors.github_api.collector_github_contents_api
+* **Configuration Parameters:**
+*  * `basic_auth_password`: `PASSWORD`
+*  * `basic_auth_username`: `USERNAME`
+*  * `regex`: `.*.json`
+*  * `repository`: `StrangerealIntel/DailyIOC`
+
+### Parser
+
+* **Module:** intelmq.bots.parsers.github_feed
 * **Configuration Parameters:**
 
 

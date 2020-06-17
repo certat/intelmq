@@ -402,6 +402,38 @@ The resulting reports contains the following special fields:
 
 * * *
 
+### GithubAPI
+
+
+#### Information:
+* `name:` intelmq.bots.collectors.github_api.collector_github_contents_api
+* `lookup:` yes
+* `public:` yes
+* `cache (redis db):` none
+* `description:` Collects files matched by regex from github repository via the Github API.
+  Optionally with github credentials, which are used as the Basic HTTP authetication.
+  
+#### Configuration Parameters:
+
+* **Feed parameters** (see above)
+* `basic_auth_username:` Github account username (optional)
+* `basic_auth_password:` Github account password (optional)
+* `repository:` Github target repository (`<USER>/<REPOSITORY>`)
+* `regex:` Valid regex of target files within the repository (defaults to `.*.json`)
+* `extra_fields:` Comma-separated list of extra fields from [github contents API](https://developer.github.com/v3/repos/contents/)
+
+#### Workflow
+
+The optional authentication parameters provide a high limit of the github API requests.
+With the github user authentication, the requests are rate limited to 5000 per hour, otherwise to 60 requests per hour. 
+
+The collector recursively searches for `regex`-defined files in the provided `repository`.
+Additionally it adds extra file metadata defined by the `extra_fields`.
+
+The bot always sets the url, from which downloaded the file, as `feed.url`.
+
+* * *
+
 ### Fileinput
 
 #### Information:
@@ -903,6 +935,7 @@ TODO
 
 #### Description
 
+The feed format changes over time. The parser supports at least data from 2016 and 2020.
 
 #### Configuration parameters
 
@@ -1061,6 +1094,15 @@ http://www.team-cymru.com/bogon-reference.html
 * `public:` no
 * `cache (redis db):` none
 * `description:` Parses data from full bogons feed.
+
+* * *
+
+### Github Feed
+
+#### Information
+
+* `name:` intelmq.bots.parsers.github_feed.parser
+* `description:` Parses Feeds available publicly on github (should receive from github_api collector)
 
 * * *
 
@@ -1332,6 +1374,7 @@ These are the supported feed name and their corresponding file name for automati
 | Open-DB2-Discovery-Service | `scan_db2` |
 | Open-Elasticsearch | `scan_elasticsearch` |
 | Open-IPMI | `scan_ipmi` |
+| Open-IPP | `scan_ipp` |
 | Open-LDAP | `scan_ldap ` |
 | Open-LDAP-TCP | `scan_ldap_tcp` |
 | Open-mDNS | `scan_mdns` |
