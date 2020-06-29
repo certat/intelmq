@@ -83,7 +83,8 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                 report_id = None
             else:
                 report_id = self.rt.create_ticket(Queue='Incident Reports', Subject=subject,
-                                                  Owner=self.config['rt']['user'])
+                                                  Owner=self.config['rt']['user'],
+                                                  Requestor=self.config['rt']['incident_report_requestor'].format(feedcode=feedcode))
                 if report_id == -1:
                     self.logger.error('Could not create Incident ({}).'.format(report_id))
                     return False
