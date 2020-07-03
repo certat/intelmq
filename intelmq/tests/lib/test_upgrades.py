@@ -332,6 +332,32 @@ V213_FEED = {"zeus-collector": {
     "module": "intelmq.bots.parsers.nothink.parser",
 },
 }
+V220_FEED = {
+"urlvir-hosts-collector": {
+    "group": "Collector",
+    "module": "intelmq.bots.collectors.http.collector_http",
+    "parameters": {
+        "http_url": "http://www.urlvir.com/export-hosts/",
+    },
+},
+"urlvir-parser": {
+    "group": "Parser",
+    "module": "intelmq.bots.parsers.urlvir.parser",
+},
+}
+V221_FEED = {
+"hphosts-collector": {
+    "group": "Collector",
+    "module": "intelmq.bots.collectors.http.collector_http",
+    "parameters": {
+        "http_url": "http://hosts-file.net/download/hosts.txt",
+    },
+},
+"hphosts-parser": {
+    "group": "Parser",
+    "module": "intelmq.bots.parsers.hphosts.parser",
+},
+}
 
 
 def generate_function(function):
@@ -389,11 +415,11 @@ class TestUpgradeLib(unittest.TestCase):
 
     def test_v220_configuration(self):
         """ Test v220_configuration. """
-        result = upgrades.v220_configuration_1(DEFAULTS_HTTP_VERIFY_TRUE,
+        result = upgrades.v220_configuration(DEFAULTS_HTTP_VERIFY_TRUE,
                                                V220_MISP_VERIFY_TRUE, {}, False)
         self.assertTrue(result[0])
         self.assertEqual(V220_MISP_VERIFY_NULL, result[2])
-        result = upgrades.v220_configuration_1(DEFAULTS_HTTP_VERIFY_TRUE,
+        result = upgrades.v220_configuration(DEFAULTS_HTTP_VERIFY_TRUE,
                                                V220_MISP_VERIFY_FALSE, {}, False)
         self.assertTrue(result[0])
         self.assertEqual(V220_HTTP_VERIFY_FALSE, result[2])
@@ -446,6 +472,28 @@ class TestUpgradeLib(unittest.TestCase):
                          'Remove affected bots yourself.',
                          result[0])
         self.assertEqual(V213_FEED, result[2])
+
+    def test_v220_feed_changes(self):
+        """ Test v213_feed_changes """
+        result = upgrades.v220_feed_changes({}, V220_FEED, {}, False)
+        self.assertEqual('A discontinued feed "URLVir" has been found '
+                         'as bot urlvir-hosts-collector. '
+                         'The removed parser "URLVir" has been found '
+                         'as bot urlvir-parser. '
+                         'Remove affected bots yourself.',
+                         result[0])
+        self.assertEqual(V220_FEED, result[2])
+
+    def test_v221_feed_changes(self):
+        """ Test v213_feed_changes """
+        result = upgrades.v221_feed_changes_1({}, V221_FEED, {}, False)
+        self.assertEqual('A discontinued feed "HP Hosts File" has been found '
+                         'as bot hphosts-collector. '
+                         'The removed parser "HP Hosts" has been found '
+                         'as bot hphosts-parser. '
+                         'Remove affected bots yourself.',
+                         result[0])
+        self.assertEqual(V221_FEED, result[2])
 
 
 for name in upgrades.__all__:

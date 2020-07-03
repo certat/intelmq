@@ -22,8 +22,10 @@ __all__ = ['v100_dev7_modify_syntax',
            'v210_deprecations',
            'v213_deprecations',
            'v213_feed_changes',
-           'v220_configuration_1',
+           'v220_configuration',
            'v220_azure_collector',
+           'v220_feed_changes',
+           'v221_feed_changes_1',
            ]
 
 
@@ -116,7 +118,7 @@ def v110_shadowserver_feednames(defaults, runtime, harmonization, dry_run):
 
 def v110_deprecations(defaults, runtime, harmonization, dry_run):
     """
-    Checking for deprecated runtime configurations (stomp collector, cymru parser, ripe expert)
+    Checking for deprecated runtime configurations (stomp collector, cymru parser, ripe expert, collector feed parameter)
     """
     mapping = {
         "intelmq.bots.collectors.n6.collector_stomp": "intelmq.bots.collectors.stomp.collector",
@@ -301,7 +303,7 @@ def v213_deprecations(defaults, runtime, harmonization, dry_run):
     return changed, defaults, runtime, harmonization
 
 
-def v220_configuration_1(defaults, runtime, harmonization, dry_run):
+def v220_configuration(defaults, runtime, harmonization, dry_run):
     """
     Migrating configuration
     """
@@ -435,6 +437,56 @@ def v213_feed_changes(defaults, runtime, harmonization, dry_run):
     return messages + ' Remove affected bots yourself.' if messages else changed, defaults, runtime, harmonization
 
 
+def v220_feed_changes(defaults, runtime, harmonization, dry_run):
+    """
+    Migrates feed configuration for changed feed parameters.
+    """
+    found_urlvir_feed = []
+    found_urlvir_parser = []
+    changed = None
+    messages = []
+    for bot_id, bot in runtime.items():
+        if bot["module"] == "intelmq.bots.collectors.http.collector_http":
+            if "http_url" not in bot["parameters"]:
+                continue
+            if bot["parameters"]["http_url"].startswith("http://www.urlvir.com/export-"):
+                found_urlvir_feed.append(bot_id)
+        elif bot['module'] == "intelmq.bots.parsers.urlvir.parser":
+            found_urlvir_parser.append(bot_id)
+    if found_urlvir_feed:
+        messages.append('A discontinued feed "URLVir" has been found '
+                        'as bot %s.' % ', '.join(sorted(found_urlvir_feed)))
+    if found_urlvir_parser:
+        messages.append('The removed parser "URLVir" has been found '
+                        'as bot %s.' % ', '.join(sorted(found_urlvir_parser)))
+    messages = ' '.join(messages)
+    return messages + ' Remove affected bots yourself.' if messages else changed, defaults, runtime, harmonization
+
+
+def v221_feed_changes_1(defaults, runtime, harmonization, dry_run):
+    """
+    Deprection of HP Hosts file feed & parser.
+    """
+    found_hphosts_collector = []
+    found_hphosts_parser = []
+    messages = []
+    changed = None
+    for bot_id, bot in runtime.items():
+        if bot["module"] == "intelmq.bots.collectors.http.collector_http":
+            if bot["parameters"].get("http_url", None) == "http://hosts-file.net/download/hosts.txt":
+                found_hphosts_collector.append(bot_id)
+        elif bot['module'] == "intelmq.bots.parsers.hphosts.parser":
+            found_hphosts_parser.append(bot_id)
+    if found_hphosts_collector:
+        messages.append('A discontinued feed "HP Hosts File" has been found '
+                        'as bot %s.' % ', '.join(sorted(found_hphosts_collector)))
+    if found_hphosts_parser:
+        messages.append('The removed parser "HP Hosts" has been found '
+                        'as bot %s.' % ', '.join(sorted(found_hphosts_parser)))
+    messages = ' '.join(messages)
+    return messages + ' Remove affected bots yourself.' if messages else changed, defaults, runtime, harmonization
+
+
 UPGRADES = OrderedDict([
     ((1, 0, 0, 'dev7'), (v100_dev7_modify_syntax, )),
     ((1, 1, 0), (v110_shadowserver_feednames, v110_deprecations)),
@@ -448,8 +500,9 @@ UPGRADES = OrderedDict([
     ((2, 1, 1), ()),
     ((2, 1, 2), ()),
     ((2, 1, 3), (v213_deprecations, v213_feed_changes)),
-    ((2, 1, 4), ()),
-    ((2, 2, 0), (v220_configuration_1, v220_azure_collector)),
+    ((2, 2, 0), (v220_configuration, v220_azure_collector, v220_feed_changes)),
+    ((2, 2, 1), (v221_feed_changes_1, )),
+    ((2, 3, 0), ()),
 ])
 
 ALWAYS = (harmonization, )

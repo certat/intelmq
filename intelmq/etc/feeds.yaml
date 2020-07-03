@@ -90,7 +90,7 @@ providers:
           module: intelmq.bots.parsers.malwarepatrol.parser_dansguardian
           parameters:
       revision: 2018-01-20
-      documentation: https://www.malwarepatrol.net/
+      documentation: https://www.malwarepatrol.net/non-commercial/
       public: no
   Malware Domains:
     Malicious:
@@ -181,42 +181,6 @@ providers:
       revision: 2018-02-06
       documentation: https://www.openphish.com/phishing_feeds.html
       public: no
-  URLVir:
-    Hosts:
-      description: This feed provides FQDN's or IP addresses for Active Malicious
-        Hosts.
-      additional_information:
-      bots:
-        collector:
-          module: intelmq.bots.collectors.http.collector_http
-          parameters:
-            http_url: http://www.urlvir.com/export-hosts/
-            rate_limit: 129600
-            name: __FEED__
-            provider: __PROVIDER__
-        parser:
-          module: intelmq.bots.parsers.urlvir.parser
-          parameters:
-      revision: 2018-01-20
-      documentation: http://www.urlvir.com/
-      public: yes
-    IPs:
-      description: This feed provides IP addresses hosting Malware.
-      additional_information:
-      bots:
-        collector:
-          module: intelmq.bots.collectors.http.collector_http
-          parameters:
-            http_url: http://www.urlvir.com/export-ip-addresses/
-            rate_limit: 129600
-            name: __FEED__
-            provider: __PROVIDER__
-        parser:
-          module: intelmq.bots.parsers.urlvir.parser
-          parameters:
-      revision: 2018-01-20
-      documentation: http://www.urlvir.com/
-      public: yes
   Netlab 360:
     Mirai Scanner:
       description: 'This feed provides IP addresses which actively scan for vulnerable
@@ -481,27 +445,6 @@ providers:
           module: intelmq.bots.parsers.taichung.parser
       revision: 2018-01-20
       documentation: https://www.tc.edu.tw/net/netflow/lkout/recent/
-      public: yes
-  HPHosts:
-    Hosts:
-      description: hpHosts is a community managed and maintained hosts file that allows
-        an additional layer of protection against access to ad, tracking and malicious
-        websites.
-      additional_information:
-      bots:
-        collector:
-          module: intelmq.bots.collectors.http.collector_http
-          parameters:
-            http_url: http://hosts-file.net/download/hosts.txt
-            rate_limit: 3600
-            name: __FEED__
-            provider: __PROVIDER__
-        parser:
-          module: intelmq.bots.parsers.hphosts.parser
-          parameters:
-            error_log_message: 'false'
-      revision: 2018-01-20
-      documentation: http://hosts-file.net/
       public: yes
   Dataplane:
     SSH Client Connection:
@@ -839,7 +782,7 @@ providers:
           module: intelmq.bots.parsers.phishtank.parser
           parameters:
       revision: 2018-01-20
-      documentation: https://data.phishtank.com/
+      documentation: https://www.phishtank.com/developer_info.php
       public: no
   CINSscore:
     Army List:
@@ -1658,3 +1601,40 @@ providers:
       revision: 2019-12-05
       documentation: https://github.com/StrangerealIntel/DailyIOC
       public: yes
+  ESET:
+    ETI Domains:
+      description: Domain data from ESET's TAXII API.
+      additional_information:
+      bots:
+        collector:
+          module: intelmq.bots.collectors.eset.collector
+          parameters:
+            username: <username>
+            password: <password>
+            endpoint: eti.eset.com
+            time_delta: 3600
+            collection: ei.domains v2 (json)
+        parser:
+          module: intelmq.bots.parsers.eset.parser
+          parameters:
+      revision: 2020-06-30
+      documentation: https://www.eset.com/int/business/services/threat-intelligence/
+      public: no
+    ETI URLs:
+      description: URL data from ESET's TAXII API.
+      additional_information:
+      bots:
+        collector:
+          module: intelmq.bots.collectors.eset.collector
+          parameters:
+            username: <username>
+            password: <password>
+            endpoint: eti.eset.com
+            time_delta: 3600
+            collection: ei.urls (json)
+        parser:
+          module: intelmq.bots.parsers.eset.parser
+          parameters:
+      revision: 2020-06-30
+      documentation: https://www.eset.com/int/business/services/threat-intelligence/
+      public: no

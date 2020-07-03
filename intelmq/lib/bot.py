@@ -1075,13 +1075,13 @@ class ParserBot(Bot):
         """
         return json.dumps([line])
 
-    def recover_line_json_stream(self, line: dict) -> str:
+    def recover_line_json_stream(self, line=None) -> str:
         """
         recover_line for json streams, just returns the current line, unparsed.
 
         Parameters
         ----------
-        line : dict
+        line : None, not required, only for compatibility with other recover_line methods
 
         Returns
         -------
@@ -1119,12 +1119,6 @@ class CollectorBot(Bot):
     def __add_report_fields(self, report: libmessage.Report):
         if hasattr(self.parameters, 'name'):
             report.add("feed.name", self.parameters.name)
-        if hasattr(self.parameters, 'feed'):
-            warnings.warn("The parameter 'feed' is deprecated and will be "
-                          "removed in version 2.2. Use 'name' instead.",
-                          DeprecationWarning)
-            if "feed.name" not in report:
-                report.add("feed.name", self.parameters.feed)
         if hasattr(self.parameters, 'code'):
             report.add("feed.code", self.parameters.code)
         if hasattr(self.parameters, 'documentation'):
