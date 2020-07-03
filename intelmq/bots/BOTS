@@ -716,6 +716,8 @@
                     "deviceid",
                     "firmwarerev"
                 ]
+            }
+        },
         "CSV Converter": {
             "description": "Converts data to CSV.",
             "module": "intelmq.bots.experts.csv_converter.expert",
