@@ -323,8 +323,9 @@ class Bot(object):
                 self.stop(exitcode=0)
 
             else:
-                if (not self.last_heartbeat or
-                        (datetime.now() - self.last_heartbeat) > self.heartbeat_time):
+                if (self.monitoring_interval and  # -> if set, otherwise ignore
+                    (not self.last_heartbeat or  # -> never sent a heartbeat
+                     (datetime.now() - self.last_heartbeat) > self.heartbeat_time)):  # -> heartbeat is due
                     with open('/var/lib/check_mk_agent/spool/%s_intelmq-%s.txt' % (self.monitoring_interval, self.__bot_id),
                               'w') as checkmk_file:
                         checkmk_file.write('<<<local>>>\nP intelmq-%s ERROR_RETRIES_COUNTER=%d|TOTAL=0;1;1\n'
