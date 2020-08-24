@@ -90,6 +90,7 @@
   - [MongoDB](#mongodb)
     - [Installation Requirements](#installation-requirements)
   - [Redis](#redis)
+  - [Request Tracker](#request-tracker)
   - [REST API](#rest-api)
   - [SMTP Output Bot](#smtp-output-bot)
   - [SQL](#sql)
@@ -451,7 +452,7 @@ The bot always sets the url, from which downloaded the file, as `feed.url`.
 
 * **Feed parameters** (see above)
 * `path`: path to file
-* `postfix`: FIXME
+* `postfix`: The postfix (file ending) of the files to look for. For example `.csv`.
 * `delete_file`: whether to delete the file after reading (default: `false`)
 
 The resulting reports contains the following special fields:
@@ -1005,7 +1006,7 @@ Lines starting with `'#'` will be ignored. Headers won't be interpreted.
 
         - parse a value and ignore if it fails  `"columns": "source.url|__IGNORE__"`
 
- * `"column_regex_search"`: Optional. A dictionary mapping field names (as given per the columns parameter) to regular expression. The field is evaluated using `re.search`. Eg. to get the ASN out of `AS1234` use: `{"source.asn": "[0-9]*"}`.
+ * `"column_regex_search"`: Optional. A dictionary mapping field names (as given per the columns parameter) to regular expression. The field is evaluated using `re.search`. Eg. to get the ASN out of `AS1234` use: `{"source.asn": "[0-9]*"}`. Make sure to properly escape any backslashes in your regular expression (See also [#1579](https://github.com/certtools/intelmq/issues/1579).
  * `"default_url_protocol"`: For URLs you can give a default protocol which will be pretended to the data.
  * `"delimiter"`: separation character of the CSV, e.g. `","`
  * `"skip_header"`: Boolean, skip the first line of the file, optional. Lines starting with `#` will be skipped additionally, make sure you do not skip more lines than needed!
@@ -1298,6 +1299,27 @@ constants.
 
 * * *
 
+### n6
+
+#### Information:
+* `name`: `intelmq.bots.parsers.n6.parser_n6stomp`
+* `public`: no
+* `cache (redis db)`: none
+* `description`: Convert n6 data into IntelMQ format.
+
+#### Configuration Parameters:
+None
+
+#### Description
+
+Test messages are ignored, this is logged with debug logging level.
+Also contains a mapping for the classification (results in taxonomy, type and identifier).
+The `name` field is normally used as `malware.name`, if that fails due to disallowed characters, these characters are removed and the original value is saved as `event_description.text`. This can happen for names like `"further iocs: text with invalid ’ char"`.
+
+If an n6 message contains multiple IP addresses, multiple events are generated, resulting in events only differing in the address information.
+
+* * *
+
 ### Twitter
 
 #### Information:
@@ -1369,6 +1391,7 @@ These are the supported feed name and their corresponding file name for automati
 | Accessible-FTP | `scan_ftp` |
 | Accessible-Hadoop | `scan_hadoop` |
 | Accessible-HTTP | `scan_http` |
+| Accessible-Radmin | `scan_radmin` |
 | Accessible-RDP | `scan_rdp` |
 | Accessible-Rsync | `scan_rsync` |
 | Accessible-SMB | `scan_smb` |
@@ -1376,7 +1399,9 @@ These are the supported feed name and their corresponding file name for automati
 | Accessible-Ubiquiti-Discovery-Service | `scan_ubiquiti` |
 | Accessible-VNC | `scan_vnc` |
 | Amplification-DDoS-Victim | `ddos_amplification` |
-| Blacklisted-IP | `blacklist` |
+| Blacklisted-IP (deprecated) | `blacklist` |
+| Blocklist | `blocklist` |
+| CAIDA-IP-Spoofer | `caida_ip_spoofer` |
 | Compromised-Website | `compromised_website` |
 | Darknet | `darknet` |
 | DNS-Open-Resolvers | `scan_dns` |
@@ -1516,21 +1541,9 @@ pip3 install pyasn
 ```
 
 #### Database
-* Download database and convert:
-```
-# cd /tmp/
-# pyasn_util_download.py --latest
-# pyasn_util_convert.py --single <downloaded_filename.bz2>  ipasn.dat
-```
+Use this command to create/update the database and reload the bot:
 
-Note: the '<' '>' characters only are syntactic markings, no shell redirection is necessary.
-
-* Copy database to IntelMQ:
-```
-# mkdir /opt/intelmq/var/lib/bots/asn_lookup
-# mv /tmp/ipasn.dat /opt/intelmq/var/lib/bots/asn_lookup/
-# chown -R intelmq.intelmq /opt/intelmq/var/lib/bots/asn_lookup
-```
+`intelmq.bots.experts.asn_lookup.expert --update-database`
 
 * * *
 
@@ -1553,22 +1566,6 @@ Note: the '<' '>' characters only are syntactic markings, no shell redirection i
 
 To use the CSV-converted data in an output bot - for example in a file output,
 use the configuration parameter `single_key` of the output bot and set it to `output`.
-
-* * *
-
-### Copy Extra
-
-#### Information:
-* `name:` `intelmq.bots.experts.national_cert_contact_certat.expert
-* `lookup:` to https://contacts.cert.at/cgi-bin/abuse-nationalcert.pl
-* `public:` yes
-* `cache (redis db):` none
-* `description:` Queries abuse contact based on the country.
-
-#### Configuration Parameters:
-
-* **Cache parameters** (see in section [common parameters](#common-parameters))
-FIXME
 
 * * *
 
@@ -1959,6 +1956,7 @@ create index idx_squelch on events("source.ip", "time.source");
 * `public:` yes
 * `cache (redis db):` none
 * `description:` DNS name (FQDN) to IP
+* `fallback_to_url` If True and no `source.fqdn` present, use `source.url` instead while producing `source.ip`
 
 #### Configuration Parameters:
 
@@ -2007,6 +2005,14 @@ You may want to use a shell script provided in the contrib directory to keep the
 * `database`: Path to the local database, e.g. `"/opt/intelmq/var/lib/bots/maxmind_geoip/GeoLite2-City.mmdb"`
 * `overwrite`: boolean
 * `use_registered`: boolean. MaxMind has two country ISO codes: One for the physical location of the address and one for the registered location. Default is `false` (backwards-compatibility). See also https://github.com/certtools/intelmq/pull/1344 for a short explanation.
+* `license_key`: License key is necessary for downloading the GeoLite2 database.
+
+#### Database
+Use this command to create/update the database and reload the bot:
+
+`intelmq.bots.experts.maxmind_geoip.expert --update-database`
+
+* * *
 
 ### MISP
 
@@ -2225,6 +2231,7 @@ This Bot tags events with score found in recorded futures large IP risklist.
 
 * `database`: Location of csv file obtained from recorded future API (a script is provided to download the large IP set)
 * `overwrite`: set to true if you want to overwrite any potentially existing risk score fields in the event.
+* `api_token`: This needs to contain valid API token to download the latest database data.
 
 #### Description
 
@@ -2238,18 +2245,11 @@ The large list contains all IP's with a risk score of 25 or more.
 If IP's are not present in the database a risk score of 0 is given
 
 A script is supplied that may be run as intelmq to update the database.
-The script needs to be edited to use a valid API token.
 
-Download database:
+#### Database
+Use this command to create/update the database and reload the bot:
 
-```bash
-mkdir /opt/intelmq/var/lib/bots/recordedfuture_iprisk
-cd /tmp/
-curl -H "X-RFToken: [API Token]" --output rfiprisk.dat.gz "https://api.recordedfuture.com/v2/ip/risklist?format=csv%2Fsplunk&gzip=true&list=large"
-bunzip rfiprisk.dat.gz
-mv rfiprisk.dat /opt/intelmq/var/lib/bots/recordedfuture_iprisk/rfiprisk.dat
-chown intelmq.intelmq -R /opt/intelmq/var/lib/bots/recordedfuture_iprisk
-```
+`intelmq.bots.experts.recordedfuture_iprisk.expert --update-database`
 
 * * *
 
@@ -2533,11 +2533,23 @@ optional arguments:
 * `lookup:` no
 * `public:` yes
 * `cache (redis db):` none
-* `description:` use eCSIRT taxonomy to classify events (classification type to classification taxonomy)
+* `description:` Adds the `classification.taxonomy` field according to the RSIT taxonomy.
+
+Please note that there is a [slight mismatch of IntelMQ's taxonomy to the upstream taxonomy](https://github.com/certtools/intelmq/issues/1409), but it should not matter here much.
 
 #### Configuration Parameters:
 
-FIXME
+None.
+
+#### Description
+
+Information on the "Reference Security Incident Taxonomy" can be found here: https://github.com/enisaeu/Reference-Security-Incident-Taxonomy-Task-Force
+
+For brevity, "type" means `classification.type` and "taxonomy" means `classification.taxonomy`.
+
+- If taxonomy is missing, and type is given, the according taxonomy is set.
+- If neither taxonomy, not type is given, taxonomy is set to "other" and type to "unknown".
+- If taxonomy is given, but type is not, type is set to "unknown".
 
 * * *
 
@@ -2555,7 +2567,11 @@ FIXME
 * `database`: Path to the database
 
 #### Database
-Use the included script `update-tor-nodes` to download the database.
+Use this command to create/update the database and reload the bot:
+
+`intelmq.bots.experts.tor_nodes.expert --update-database`
+
+* * *
 
 ### Url2FQDN
 
@@ -2932,6 +2948,44 @@ The bot has been tested with pymongo versions 2.7.1, 3.4 and 3.10.1 (server vers
 * Can be used to send events to be processed in another system. E.g.: send events to Logstash.
 * In a multi tenant installation can be used to send events to external/remote IntelMQ instance. Any expert bot queue can receive the events.
 * In a complex configuration can be used to create logical sets in IntelMQ-Manager. 
+
+* * *
+
+### Request Tracker
+
+#### Information:
+* `name:` `intelmq.bots.outputs.rt.output`
+* `lookup:` to the Request Tracker instance
+* `public:` yes
+* `cache (redis db):` none
+* `description:` Output Bot that creates Request Tracker tickets from events.
+
+#### Description
+
+The bot creates tickets in Request Tracker and uses event fields for the ticket body text. The bot follows the workflow of the RTIR:
+- create ticket in Incidents queue (or any other queue)
+  - all event fields are included in the ticket body,
+  - event attributes are assigned to tickets' CFs according to the attribute mapping,
+  - ticket taxonomy can be assigned according to the CF mapping. If you use taxonomy different from [ENISA RSIT](https://github.com/enisaeu/Reference-Security-Incident-Taxonomy-Task-Force), consider using some extra attribute field and do value mapping with modify or sieve bot,
+- create linked ticket in Investigations queue, if these conditions are met
+  - if first ticket destination was Incidents queue,
+  - if there is source.abuse_contact is specified,
+  - if description text is specified in the field appointed by configuration,
+- RT/RTIR supposed to do relevant notifications by scrip working on condition "On Create",
+- configuration option investigation_fields specifies which event fields has to be included in the investigation,
+- Resolve Incident ticket, according to configuration (Investigation ticket status should depend on RT scrip configuration),
+
+Take extra caution not to flood your ticketing system with enormous amount of tickets. Add extra filtering for that to pass only critical events to the RT, and/or deduplicating events.
+
+#### Configuration Parameters:
+
+- `rt_uri`, `rt_user`, `rt_password`, `verify_cert`: RT API endpoint connection details, string.
+- `queue`: ticket destination queue. If set to 'Incidents', 'Investigations' ticket will be created if create_investigation is set to true, string.
+- `CF_mapping`: mapping attributes to ticket CFs, dictionary. E.g `{"event_description.text":"Description","source.ip":"IP","extra.classification.type":"Incident Type","classification.taxonomy":"Classification"}`
+- `final_status`: the final status for the created ticket, string. E.g. `resolved` if you want to resolve the created ticket. The linked Investigation ticket will be resolved automatically by RTIR scripts.
+- `create_investigation`: if an Investigation ticket should be created (in case of RTIR workflow). `true` or `false`, boolean.
+- `investigation_fields`: attributes to include into investigation ticket, comma-separated string. E.g. `time.source,source.ip,source.port,source.fqdn,source.url,classification.taxonomy,classification.type,classification.identifier,event_description.url,event_description.text,malware.name,protocol.application,protocol.transport`.
+- `description_attr`: which event attribute contains text message being sent to the recipient, string. If it is not specified or not found in the event, the Investigation ticket is not going to be created. Example: `extra.message.text`.
 
 * * *
 

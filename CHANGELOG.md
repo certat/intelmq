@@ -9,10 +9,13 @@ CHANGELOG
 ### Core
 - `intelmq.lib.bot`:
   - `ParserBot.recover_line_json_stream`: Make `line` parameter optional, as it is not needed for this method.
+  - `Bot.argparser`: Added class method `_create_argparser` (returns `argparse.ArgumentParser`) for easy command line arguments parsing.
 - `intelmq.lib.upgrades`:
   - Add upgrade function for removal of *HPHosts Hosts file* feed and `intelmq.bots.parsers.hphosts` parser (#1559).
 - `intelmq.lib.exceptions`:
   - `PipelineError`: Remove unused code to format exceptions.
+- `intelmq.lib.utils`:
+  - `create_request_session_from_bot`: Changed bot argument to optional, uses defaults.conf as fallback, renamed to `create_request_session`. Name `create_request_session_from_bot` will be removed in version 3.0.0.
 
 ### Development
 
@@ -34,6 +37,18 @@ CHANGELOG
   - Speed improvements.
   - More output in debug logging mode.
   - Checks parameter length on initialization and in check method.
+- `intelmq.bots.experts.gethostbyname.expert`:
+  - Added parameter `fallback_to_url` and set to True. (PR#1586 by Edvard Rejthar)
+- `intelmq.bots.experts.asn_lookup.expert`
+  - Added `--update-database` option. (PR#1524 by Filip Pokorný)
+- `intelmq.bots.experts.maxmind_geoip.expert`
+  - Added `--update-database` option. (PR#1524 by Filip Pokorný)
+  - Added `license_key` parameter. (PR#1524 by Filip Pokorný)
+- `intelmq.bots.experts.tor_nodes.expert`
+  - Added `--update-database` option. (PR#1524 by Filip Pokorný)
+- `intelmq.bots.experts.recordedfuture_iprisk.expert`
+  - Added `--update-database` option. (PR#1524 by Filip Pokorný)
+  - Added `api_token` parameter. (PR#1524 by Filip Pokorný)
 
 #### Outputs
 
@@ -44,6 +59,8 @@ CHANGELOG
   - Added CZ.NIC HaaS feed (PR#1560 by Filip Pokorný and Edvard Rejthar).
 - Bots:
   - Enhanced documentation of RFC1918 Expert.
+  - Updated documentation for Maxmind GeoIP, ASN Lookup, TOR Nodes and Recorded Future experts to reflect new `--update-database` option.  (PR#1524 by Filip Pokorný)
+- Add n6 Integration documentation.
 
 ### Packaging
 
@@ -51,10 +68,15 @@ CHANGELOG
 - Added tests for `intelmq.lib.exceptions.PipelineError`.
 
 ### Tools
+- `intelmqdump`:
+    - Check if given queue is configured upon recovery (PR#1587 by Mladen Markovic).
 - `intelmqctl`:
   - `intelmq list queues`: `--sum`, `--count`, `-s` flag for showing total count of messages (PR#1581 by Mladen Markovic).
 
 ### Contrib
+- eventdb:
+  - Add SQL script for keeping track of the oldest inserted/update "time.source" information.
+- Cron Jobs: The script `intelmq-update-data` has been renamed to `intelmq-update-database`
 
 ### Known issues
 
@@ -64,6 +86,8 @@ CHANGELOG
 ### Configuration
 
 ### Core
+- `intelmq.lib.upgrades`:
+  - Add upgrade function for renamed Shadowserver feed name "Blacklisted-IP"/"Blocklist".
 
 ### Development
 
@@ -73,17 +97,30 @@ CHANGELOG
 #### Collectors
 
 #### Parsers
+- `intelmq.bots.parsers.shadowserver`:
+  - Rename "Blacklisted-IP" feed to "Blocklist", old name is still valid until IntelMQ version 3.0 (PR#1588 by Thomas Hungenberg).
+  - Added support for the feeds `Accessible Radmin` and `CAIDA IP Spoofer` (PR#1600 by sinus-x).
+- `intelmq.bots.parsers.anubisnetworks.parser`: Fix parsing error where `dst.ip` was not equal to `comm.http.host`.
 
 #### Experts
 
 #### Outputs
+- `intelmq.bots.outputs.rt`: Added Request Tracker output bot (PR#1589 by Marius Urkis).
 
 ### Documentation
+- README:
+  - Add Core Infrastructure Initiative Best Practices Badge.
+- Bots:
+  - Generic CSV Parser: Add note on escaping backslashes (#1579).
+  - Remove section of non-existing "Copy Extra" Bot.
+  - Explain taxonomy expert.
+  - Add documentation on n6 parser.
 
 ### Packaging
 
 ### Tests
 - `intelmq.tests.lib.test_pipeline`: Skip `TestAmqp.test_acknowledge` on Travis with Python 3.8.
+- `intelmq.tests.bots.outputs.elasticsearch.test_output`: Refresh index `intelmq` manually to fix random test failures (#1593, PR#1595 by Zach Stone).
 
 ### Tools
 - `intelmqctl check`:

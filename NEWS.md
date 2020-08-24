@@ -10,6 +10,23 @@ See the changelog for a full list of changes.
 
 ### Tools
 
+#### Bot option `--updata-database`
+- Bots that require a database file (such as `maxmind_geoip`, `asn_lookup`, `tor_nodes` and `recordedfuture_iprisk`)
+  have new command line option `--update-database`. It is not necessary to specify a
+  bot ID, the function automatically updates the database for all the bots of the same
+  type and reloads them afterwards. Removes any external dependencies (such as curl or wget).
+  This is a replacement for shell scripts such as `update-tor-nodes`, `update-asn-data`,
+  `update-geoip-data`, `update-rfiprisk-data`.
+  
+  Usage:
+  ```
+  intelmq.bots.experts.asn_lookup.expert --update-database
+  intelmq.bots.experts.maxmind_geoip.expert --update-database
+  intelmq.bots.experts.recordedfuture_iprisk.expert --update-database
+  intelmq.bots.experts.tor_nodes.expert --update-database
+  ```
+  The provided shell scripts use these new commands.
+
 ### Harmonization
 
 ### Configuration
@@ -27,6 +44,8 @@ See the changelog for a full list of changes.
 ### Tools
 
 ### Harmonization
+#### Shadowserver Feed/Parser
+The feed "Blacklisted-IP" has been renamed by ShadowServer to "Blocklist". In IntelMQ, the old name can still be used in IntelMQ until version 3.0.
 
 ### Configuration
 
