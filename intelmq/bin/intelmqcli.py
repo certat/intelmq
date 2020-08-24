@@ -158,6 +158,9 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                         self.logger.error('Could not link Incident to Incident Report: (%d -> %d).',
                                           incident_id, report_id)
                         continue
+                    elif self.dryrun:
+                        self.logger.info('Would have linked Incident Report %d to Incident.', report_id)
+
 
                 self.executemany("UPDATE events SET rtir_incident_id = %s WHERE id = %s",
                                  [(incident_id, event_id) for event_id in event_ids],
