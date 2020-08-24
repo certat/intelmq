@@ -161,7 +161,6 @@ class IntelMQCLIContoller(lib.IntelMQCLIContollerTemplate):
                     elif self.dryrun:
                         self.logger.info('Would have linked Incident Report %d to Incident.', report_id)
 
-
                 self.executemany("UPDATE events SET rtir_incident_id = %s WHERE id = %s",
                                  [(incident_id, event_id) for event_id in event_ids],
                                  extend=False)
