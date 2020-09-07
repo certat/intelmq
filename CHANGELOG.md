@@ -10,6 +10,7 @@ CHANGELOG
 - `intelmq.lib.bot`:
   - `ParserBot.recover_line_json_stream`: Make `line` parameter optional, as it is not needed for this method.
   - `Bot.argparser`: Added class method `_create_argparser` (returns `argparse.ArgumentParser`) for easy command line arguments parsing.
+  - Runtime configuration does not necessarily need a parameter entry for each block. Previously and at least empty block was required (PR#1604 by Filip Pokorný).
 - `intelmq.lib.upgrades`:
   - Add upgrade function for removal of *HPHosts Hosts file* feed and `intelmq.bots.parsers.hphosts` parser (#1559).
 - `intelmq.lib.exceptions`:
@@ -24,6 +25,7 @@ CHANGELOG
 ### Bots
 #### Collectors
 - `intelmq.bots.collectors.eset.collector`: Added (PR#1554 by Mikk Margus Möll).
+- `intelmq.bots.collectors.http.collector_http`: Added PGP signature check functionality (PR#1602 by sinus-x).
 
 #### Parsers
 - `intelmq.bots.parsers.eset.parser`: Added (PR#1554 by Mikk Margus Möll).
@@ -61,6 +63,7 @@ CHANGELOG
   - Enhanced documentation of RFC1918 Expert.
   - Updated documentation for Maxmind GeoIP, ASN Lookup, TOR Nodes and Recorded Future experts to reflect new `--update-database` option.  (PR#1524 by Filip Pokorný)
 - Add n6 Integration documentation.
+- Moved 'Orphaned Queues' section from the FAQ to the intelmqctl documentation.
 
 ### Packaging
 
@@ -72,6 +75,7 @@ CHANGELOG
     - Check if given queue is configured upon recovery (PR#1587 by Mladen Markovic).
 - `intelmqctl`:
   - `intelmq list queues`: `--sum`, `--count`, `-s` flag for showing total count of messages (PR#1581 by Mladen Markovic).
+  - `intelmq check`: Added a possibility to ignore queues from the orphaned queues check.
 
 ### Contrib
 - eventdb:
@@ -101,6 +105,7 @@ CHANGELOG
   - Rename "Blacklisted-IP" feed to "Blocklist", old name is still valid until IntelMQ version 3.0 (PR#1588 by Thomas Hungenberg).
   - Added support for the feeds `Accessible Radmin` and `CAIDA IP Spoofer` (PR#1600 by sinus-x).
 - `intelmq.bots.parsers.anubisnetworks.parser`: Fix parsing error where `dst.ip` was not equal to `comm.http.host`.
+- `intelmq/bots/parsers/danger_rulez/parser`: correctly skip malformed rows by defining variables before referencing (PR#1601 by Tomas Bellus).
 
 #### Experts
 
@@ -125,6 +130,7 @@ CHANGELOG
 ### Tools
 - `intelmqctl check`:
   - For disabled bots which do not have any pipeline connections, do not raise an error, but only warning.
+  - Fix check on source/destination queues for bots as well the orphaned queues.
 
 ### Contrib
 
