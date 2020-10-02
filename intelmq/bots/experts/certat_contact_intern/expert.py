@@ -35,7 +35,7 @@ class CERTatContactExpertBot(Bot):
             self.cur = self.con.cursor()
             self.con.autocommit = getattr(self.parameters, 'autocommit', True)
 
-        except:
+        except Exception:
             self.logger.exception('Failed to connect to database.')
             self.stop()
         self.logger.info("Connected to PostgreSQL.")

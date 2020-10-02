@@ -68,7 +68,7 @@ class SquelcherExpertBot(Bot):
 
             global SELECT_QUERY
             SELECT_QUERY = SELECT_QUERY.format(table=self.parameters.table)
-        except:
+        except Exception:
             self.logger.exception('Failed to connect to database.')
             self.stop()
         self.logger.info("Connected to PostgreSQL.")
@@ -153,11 +153,11 @@ class SquelcherExpertBot(Bot):
     def shutdown(self):
         try:
             self.cur.close()
-        except:
+        except Exception:
             pass
         try:
             self.con.close()
-        except:
+        except Exception:
             pass
 
     def modify_end(self, event):

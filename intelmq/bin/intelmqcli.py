@@ -447,7 +447,7 @@ Subject: {subj}
                          "rtir_investigation_id = %s", (investigation_id, ),
                          extend=False)
             self.logger.info('Marked events as sent.')
-        except:
+        except Exception:
             self.con.rollback()
             raise
         else:
