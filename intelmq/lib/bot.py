@@ -6,6 +6,7 @@ The bot library has the base classes for all bots.
   * ParserBot: base class for parsers
   * SQLBot: base classs for any bots using SQL
 """
+import argparse
 import atexit
 import csv
 import fcntl
@@ -21,7 +22,6 @@ import time
 import traceback
 import types
 import warnings
-import argparse
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, List, Optional
@@ -1081,6 +1081,7 @@ class ParserBot(Bot):
         writer = csv.DictWriter(out, self.csv_fieldnames, **self.csv_params)
         writer.writeheader()
         out.write(self.current_line)
+
         return out.getvalue().strip()
 
     def recover_line_json(self, line: dict):

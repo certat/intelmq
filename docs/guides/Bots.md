@@ -36,6 +36,7 @@
   - [Cymru CAP Program](#cymru-cap-program)
   - [Cymru Full Bogons](#cymru-full-bogons)
   - [HTML Table Parser](#html-table-parser)
+  - [Key-Value Parser](#key-value-parser)
   - [Twitter](#twitter)
   - [Shadowserver](#shadowserver)
   - [Shodan](#shodan)
@@ -74,6 +75,7 @@
   - [RipeNCC Abuse Contact](#ripencc-abuse-contact)
   - [Sieve](#sieve)
   - [Taxonomy](#taxonomy)
+  - [Threshold](#threshold)
   - [Tor Nodes](#tor-nodes)
   - [Url2FQDN](#url2fqdn)
   - [Wait](#wait)
@@ -94,8 +96,8 @@
   - [REST API](#rest-api)
   - [SMTP Output Bot](#smtp-output-bot)
   - [SQL](#sql)
-    - [Installation Requirements](#installation-requirements)
-    - [PostgreSQL Installation](#postgresql-installation)
+    - [PostgreSQL](#postgresql)
+    - [SQLite](#sqlite)
   - [TCP](#tcp)
   - [Touch](#touch)
   - [UDP](#tcp)
@@ -266,6 +268,12 @@ You may use a `JSON` specifying [time-delta](https://docs.python.org/3/library/d
 Zipped files are automatically extracted if detected.
 
 For extracted files, every extracted file is sent in its own report. Every report has a field named `extra.file_name` with the file name in the archive the content was extracted from.
+
+#### HTTP Response status code checks
+
+If the HTTP response' status code is not 2xx, this is treated as error.
+
+In Debug logging level, the request's and response's headers and body are logged for further inspection.
 
 * * *
 
@@ -676,6 +684,11 @@ Requires the shodan library to be installed:
 * `ip`: IP of destination server
 * `port`: port of destination server
 
+#### Response
+
+TCP collector just sends an "Ok" message after every recevied message, this should not pose a problem for an arbitrary input.
+If you intend to link two IntelMQ instance via TCP, have a look at the TCP output bot documentation.
+
 * * *
 
 
@@ -688,6 +701,8 @@ Requires the shodan library to be installed:
 * `public:` yes
 * `cache (redis db):` none
 * `description:` This bot can connect to an XMPP Server and one room, in order to receive reports from it. TLS is used by default. rate_limit is ineffective here. Bot can either pass the body or the whole event.
+
+**Warning:** This bot is currently *unmaintained* and needs to be adapted. The used XMPP library *sleekxmpp* is deprecated, therefore the bots needs to be adapted to the successor library *slixmpp*. For more information see [Issue #1614](https://github.com/certtools/intelmq/issues/1614).
 
 #### Requirements
 The Sleekxmpp - Library needs to be installed on your System
@@ -979,6 +994,8 @@ Events with the Malware "TestSinkholingLoss" are ignored, as they are for the fe
 
 * `use_malware_familiy_as_classification_identifier`: default: `true`. Use the `malw.family` field as `classification.type`. If `false`, check if the same as `malw.variant`. If it is the same, it is ignored. Otherwise saved as `extra.malware.family`.
 
+* * *
+
 ### Generic CSV Parser
 
 Lines starting with `'#'` will be ignored. Headers won't be interpreted.
@@ -1011,6 +1028,22 @@ Lines starting with `'#'` will be ignored. Headers won't be interpreted.
         - parse a value and ignore if it fails  `"columns": "source.url|__IGNORE__"`
 
  * `"column_regex_search"`: Optional. A dictionary mapping field names (as given per the columns parameter) to regular expression. The field is evaluated using `re.search`. Eg. to get the ASN out of `AS1234` use: `{"source.asn": "[0-9]*"}`. Make sure to properly escape any backslashes in your regular expression (See also [#1579](https://github.com/certtools/intelmq/issues/1579).
+ * `"compose_fields"`: Optional, dictionary. Create fields from columns, e.g. with data like this:
+   ```csv
+   # Host,Path
+   example.com,/foo/
+   example.net,/bar/
+   ```
+   using this compose_fields parameter:
+   ```json
+   {"source.url": "http://{0}{1}"}
+   ```
+   You get:
+   ```
+   http://example.com/foo/
+   http://example.net/bar/
+   ```
+   in the respective `source.url` fields. The value in the dictionary mapping is formatted whereas the columns are available with their index.
  * `"default_url_protocol"`: For URLs you can give a default protocol which will be pretended to the data.
  * `"delimiter"`: separation character of the CSV, e.g. `","`
  * `"skip_header"`: Boolean, skip the first line of the file, optional. Lines starting with `#` will be skipped additionally, make sure you do not skip more lines than needed!
@@ -1222,6 +1255,45 @@ Parses breaches and pastes and creates one event per e-mail address. The e-mail 
  * `"time_format"`: Optional. If `"timestamp"`, `"windows_nt"` or `"epoch_millis"` the time will be converted first. With the default `null` fuzzy time parsing will be used.
  * `"type"`: set the `classification.type` statically, optional
  * `"html_parser"`: The HTML parser to use, by default "html.parser", can also be e.g. "lxml", have a look at https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+* * *
+
+### Key-Value Parser
+
+#### Information:
+* `name:` intelmq.bots.parsers.key_value.parser
+* `lookup:` no
+* `public:` no
+* `cache (redis db):` none
+* `description:` Parses text lines in key=value format, for example FortiGate firewall logs.
+
+#### Configuration Parameters:
+
+* `pair_separator`: String separating key=value pairs, default "` `" (space).
+* `kv_separator`: String separating key and value, default `=`.
+* `keys`: Array of string->string, names of keys to propagate mapped to IntelMQ event fields. Example:
+   ```json
+   "keys": {
+       "srcip": "source.ip",
+       "dstip": "destination.ip"
+   }
+   ```
+   The value mapped to `time.source` is parsed. If the value is numeric, it is interpreted. Otherwise, or if it fails, it is parsed fuzzy with dateutil.
+   If the value cannot be parsed, a warning is logged per line.
+* `strip_quotes`: Boolean, remove opening and closing quotes from values, default true.
+
+#### Parsing limitations
+
+The input must not have (quoted) occurrences of the separator in the values. For example, this is not parsable (with space as separator):
+
+```
+key="long value" key2="other value"
+```
+
+In firewall logs like FortiGate, this does not occur. These logs usually look like:
+```
+srcip=192.0.2.1 srcmac="00:00:5e:00:17:17"
+```
 
 * * *
 
@@ -1960,11 +2032,23 @@ create index idx_squelch on events("source.ip", "time.source");
 * `public:` yes
 * `cache (redis db):` none
 * `description:` DNS name (FQDN) to IP
-* `fallback_to_url` If True and no `source.fqdn` present, use `source.url` instead while producing `source.ip`
 
 #### Configuration Parameters:
 
-none
+- `fallback_to_url` If True and no `source.fqdn` present, use `source.url` instead while producing `source.ip`
+- `gaierrors_to_ignore`: Optional, list (comma-separated) of gaierror codes to ignore, e.g. `-3` for EAI_AGAIN (Temporary failure in name resolution). Only accepts the integer values, not the names.
+
+#### Description
+
+Resolves the `source/destination.fqdn` hostname using the `gethostbyname` syscall and saves the resulting IP address as `source/destination.ip`.
+The following gaierror resolution errors are ignored and treated as if the hostname cannot be resolved:
+- `-2`/`EAI_NONAME`: NAME or SERVICE is unknown
+- `-4`/`EAI_FAIL`: Non-recoverable failure in name res.
+- `-5`/`EAI_NODATA`: No address associated with NAME.
+- `-8`/`EAI_SERVICE`: SERVICE not supported for `ai_socktype'.
+- `-11`/`EAI_SYSTEM`: System error returned in `errno'.
+Other errors result in an exception if not ignored by the parameter `gaierrors_to_ignore` (see above).
+All gaierrors can be found here: http://www.castaglia.org/proftpd/doc/devel-guide/src/lib/glibc-gai_strerror.c.html
 
 * * *
 
@@ -2557,6 +2641,42 @@ For brevity, "type" means `classification.type` and "taxonomy" means `classifica
 
 * * *
 
+### Threshold
+
+#### Information:
+
+* **Cache parameters** (see in section [common parameters](#common-parameters))
+* `name`: threshold
+* `lookup`: redis cache
+* `public`: no
+* `cache (redis db)`: 11
+* `description`: Check if the number of similar messages during a specified time interval exceeds a set value.
+
+#### Configuration Parameters:
+
+* `filter_keys`: String, comma-separated list of field names to consider or ignore when determining which messages are similar.
+* `filter_type`: String, `whitelist` (consider only the fields in `filter_keys`) or `blacklist` (consider everything but the fields in `filter_keys`).
+* `timeout`: Integer, number of seconds before threshold counter is reset.
+* `threshold`: Integer, number of messages required before propagating one. In forwarded messages, the threshold is saved in the message as `extra.count`.
+* `add_keys`: Array of string->string, optional, fields and values to add (or update) to propagated messages. Example:
+   ```json
+   "add_keys": {
+       "classification.type": "spam",
+       "comment": "Started more than 10 SMTP connections"
+   }
+   ```
+
+#### Limitations
+
+This bot has certain limitations and is not a true threshold filter (yet). It works like this:
+1. Every incoming message is hashed according to the `filter_*` parameters.
+2. The hash is looked up in the cache and the count is incremented by 1, and the TTL of the key is (re-)set to the timeout.
+3. If the new count matches the threshold exactly, the message is forwarded. Otherwise it is dropped.
+
+Please note: Even if a message is sent, any further identical messages are dropped, if the time difference to the last message is less than the timeout! The counter is not reset if the threshold is reached.
+
+* * *
+
 ### Tor Nodes
 
 #### Information:
@@ -2826,7 +2946,7 @@ If the field used in the format string is not defined, `None` will be used as fa
 * `description:` Create a directory layout in the MISP Feed format
 
 The PyMISP library >= 2.4.119.1 is required, see
-[REQUIREMENTS.txt](../intelmq/bots/outputs/misp/REQUIREMENTS.txt).
+[REQUIREMENTS.txt](https://github.com/certtools/intelmq/blob/master/intelmq/bots/outputs/misp/REQUIREMENTS.txt).
 
 #### Configuration Parameters:
 
@@ -2852,7 +2972,7 @@ Configure the destination directory of this feed as feed in MISP, either as loca
 * `description:` Connect to a MISP instance and add event as MISPObject if not there already.
 
 The PyMISP library >= 2.4.120 is required, see
-[REQUIREMENTS.txt](../intelmq/bots/outputs/misp/REQUIREMENTS.txt).
+[REQUIREMENTS.txt](https://github.com/certtools/intelmq/blob/master/intelmq/bots/outputs/misp/REQUIREMENTS.txt).
 
 #### Configuration Parameters:
 
@@ -3078,18 +3198,6 @@ for the versions you are using.
 * `sslmode`: PostgreSQL sslmode, can be `'disable'`, `'allow'`, `'prefer'` (default), `'require'`, `'verify-ca'` or `'verify-full'`. See postgresql docs: https://www.postgresql.org/docs/current/static/libpq-connect.html#libpq-connect-sslmode
 * `table`: name of the database table into which events are to be inserted
 
-#### SQL
-Similarly to PostgreSQL, you can use `intelmq_psql_initdb` to create initial SQL statements
-from `harmonization.conf`. The script will create the required table layout
-and save it as `/tmp/initdb.sql`.
-
-Create the new database (you can ignore all errors since SQLite doesn't know all SQL features generated for PostgreSQL):
-
-```bash
-sqlite3 your-db.db
-sqlite> .read /tmp/initdb.sql
-```
-
 #### PostgreSQL
 
 You have two basic choices to run PostgreSQL:
@@ -3140,6 +3248,20 @@ if the user `intelmq` can authenticate):
 ```
 psql -h localhost intelmq-events intelmq </tmp/initdb.sql
 ```
+
+#### SQLite
+Similarly to PostgreSQL, you can use `intelmq_psql_initdb` to create initial SQL statements
+from `harmonization.conf`. The script will create the required table layout
+and save it as `/tmp/initdb.sql`.
+
+Create the new database (you can ignore all errors since SQLite doesn't know all SQL features generated for PostgreSQL):
+
+```bash
+sqlite3 your-db.db
+sqlite> .read /tmp/initdb.sql
+```
+
+Then, set the `database` parameter to the `your-db.db` file path. 
 
 * * *
 
@@ -3194,6 +3316,11 @@ Multihreading is disabled for this bot.
 * `port`: port of destination server
 * `separator`: separator of messages, e.g. "\n", optional. When sending to a TCP collector, parameter shouldn't be present.
     In that case, the output waits every message is acknowledged by "Ok" message the TCP collector bot implements.
+
+#### Sending to an IntelMQ TCP collector
+
+If you intend to link two IntelMQ instance via TCP, set the parameter `counterpart_is_intelmq` to true. The bot then awaits an "Ok" message to be received after each message is sent.
+The TCP collector just sends "Ok" after every message it gets.
 
 * * *
 
@@ -3277,6 +3404,8 @@ Apr 29 11:17:47 localhost IntelMQ-event|source.ip: 85.25.160.114|time.source:201
 * `public:` yes
 * `cache (redis db):` none
 * `description:` The XMPP Output is capable of sending Messages to XMPP Rooms and as direct messages.
+
+**Warning:** This bot is currently *unmaintained* and needs to be adapted. The used XMPP library *sleekxmpp* is deprecated, therefore the bots needs to be adapted to the successor library *slixmpp*. For more information see [Issue #1614](https://github.com/certtools/intelmq/issues/1614).
 
 #### Requirements
 The Sleekxmpp - Library needs to be installed on your System

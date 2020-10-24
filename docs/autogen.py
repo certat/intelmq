@@ -1,5 +1,8 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
+
+# This script generates the files
+# `guides/Harmonization-fields.md`
+# and `guides/Feeds.md`
 
 import json
 import os.path
@@ -27,7 +30,7 @@ TYPE_SECTION = """### {}
 {}
 
 """
-BASEDIR = os.path.join(os.path.dirname(__file__), '../../')
+BASEDIR = os.path.join(os.path.dirname(__file__), '../')
 
 
 def harm_docs():
@@ -94,11 +97,11 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 
     for provider, feeds in sorted(config['providers'].items(), key=lambda x: x[0]):
 
-        output += "# %s\n\n" % provider
+        output += "## %s\n\n" % provider
 
         for feed, feed_info in sorted(feeds.items(), key=lambda x: x[0]):
 
-            output += "## %s\n\n" % feed
+            output += "### %s\n\n" % feed
 
             if feed_info.get('public'):
                 output += info("public", "yes" if feed_info['public'] else "no")
@@ -119,7 +122,7 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
 
             for bot, bot_info in sorted(feed_info['bots'].items(), key=lambda x: x[0]):
 
-                output += "### %s\n\n" % bot.title()
+                output += "#### %s\n\n" % bot.title()
 
                 output += info("Module", bot_info['module'])
                 output += info("Configuration Parameters")
@@ -145,10 +148,3 @@ To add feeds to this file add them to `intelmq/etc/feeds.yaml` and then run
             output += '\n'
 
     return output
-
-
-if __name__ == '__main__':  # pragma: no cover
-    with open(os.path.join(BASEDIR, 'docs/Harmonization-fields.md'), 'w') as handle:
-        handle.write(harm_docs())
-    with open(os.path.join(BASEDIR, 'docs/Feeds.md'), 'w') as handle:
-        handle.write(feeds_docs())

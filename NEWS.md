@@ -6,6 +6,8 @@ See the changelog for a full list of changes.
 2.3.0 Bugfix release (unreleased)
 ----------------------------------
 
+The documentation is now available at [intelmq.readthedocs.io](https://intelmq.readthedocs.io/) (FIXME: Link to stable version?).
+
 ### Requirements
 
 ### Tools
@@ -25,7 +27,7 @@ See the changelog for a full list of changes.
   intelmq.bots.experts.recordedfuture_iprisk.expert --update-database
   intelmq.bots.experts.tor_nodes.expert --update-database
   ```
-  The provided shell scripts use these new commands.
+  The provided shell scripts use these new commands, however they are now deprecated and will be removed in version 3.0.
 
 ### Harmonization
 
@@ -38,6 +40,11 @@ See the changelog for a full list of changes.
 
 2.2.2 Bugfix release (unreleased)
 ---------------------------------
+
+### Bots
+#### Cymru Whois Lookup
+The cache key calculation has been fixed. It previously led to duplicate keys for different IP addresses and therefore wrong results in rare cases. The cache key calculation is intentionally not backwards-compatible. Therefore, this bot may take longer processing events than usual after applying this update.
+More details can be found in [issue #1592](https://github.com/certtools/intelmq/issues/1592).
 
 ### Requirements
 
