@@ -54,7 +54,11 @@ author = 'IntelMQ Community'
 # The full version, including alpha/beta/rc tags
 release = '2.3.0'
 
-
+rst_prolog = """
+.. |intelmq-users-list-link| replace:: `IntelMQ Users Mailinglist <https://lists.cert.at/cgi-bin/mailman/listinfo/intelmq-users>`__
+.. |intelmq-developers-list-link| replace:: `IntelMQ Developers Mailinglist <https://lists.cert.at/cgi-bin/mailman/listinfo/intelmq-dev>`__
+.. |intelmq-manager-github-link| replace:: `IntelMQ Manager <https://github.com/certtools/intelmq-manager>`__
+"""
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -62,6 +66,7 @@ release = '2.3.0'
 # ones.
 extensions = [
         'sphinx.ext.autodoc',
+        'sphinx.ext.extlinks',
         'recommonmark',
         'sphinx_markdown_tables',
         'sphinx.ext.napoleon'
@@ -80,6 +85,9 @@ napoleon_include_private_with_doc = True
 #napoleon_use_ivar = False
 #napoleon_use_param = True
 #napoleon_use_rtype = True
+
+
+extlinks = {'issue': ('https://github.com/certtools/intelmq/issues/%s', 'issue ')}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -112,13 +120,13 @@ html_theme_options = {
         }
 
 def run_apidoc(_):
-    subprocess.check_call("sphinx-apidoc -o source ../intelmq", shell=True)
+    subprocess.check_call("sphinx-apidoc --implicit-namespaces -o source ../intelmq", shell=True)
 
 
 def run_autogen(_):
-    with open('guides/Harmonization-fields.md', 'w') as handle:
+    with open('dev/harmonization-fields.md', 'w') as handle:
         handle.write(autogen.harm_docs())
-    with open('guides/Feeds.md', 'w') as handle:
+    with open('user/feeds.rst', 'w') as handle:
         handle.write(autogen.feeds_docs())
 
 

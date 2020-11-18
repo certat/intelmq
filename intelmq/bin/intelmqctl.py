@@ -171,10 +171,12 @@ class IntelMQProcessManager:
         with open(filename, 'w') as fp:
             fp.write(str(os.getpid()))
 
+        output = ""
         try:
-            BotDebugger(self.__runtime_configuration[bot_id], bot_id, run_subcommand,
+            bd = BotDebugger(self.__runtime_configuration[bot_id], bot_id, run_subcommand,
                         console_type, message_action_kind, dryrun, msg, show_sent,
                         loglevel=loglevel)
+            output = bd.run()
             retval = 0
         except KeyboardInterrupt:
             print('Keyboard interrupt.')
@@ -186,7 +188,8 @@ class IntelMQProcessManager:
         self.__remove_pidfile(bot_id)
         if paused:
             self.bot_start(bot_id)
-        return retval
+
+        return retval, output
 
     def bot_start(self, bot_id, getstatus=True):
         pid = self.__check_pid(bot_id)
@@ -463,10 +466,12 @@ class SupervisorProcessManager:
 
         log_bot_message("starting", bot_id)
 
+        output = ""
         try:
             BotDebugger(self.__runtime_configuration[bot_id], bot_id, run_subcommand,
                         console_type, message_action_kind, dryrun, msg, show_sent,
                         loglevel=loglevel)
+            output = bd.run()
             retval = 0
         except KeyboardInterrupt:
             print("Keyboard interrupt.")
@@ -478,7 +483,7 @@ class SupervisorProcessManager:
         if paused:
             self.bot_start(bot_id)
 
-        return retval
+        return retval, output
 
     def bot_start(self, bot_id: str, getstatus: bool = True):
         state = self._get_process_state(bot_id)
@@ -681,6 +686,7 @@ class IntelMQController():
             no_file_logging: do not log to the log file
             drop_privileges: Drop privileges and fail if it did not work.
         """
+        self.logging_level = DEFAULT_LOGGING_LEVEL
         self.interactive = interactive
         global RETURN_TYPE
         RETURN_TYPE = return_type
@@ -689,28 +695,29 @@ class IntelMQController():
         QUIET = quiet
         self.parameters = Parameters()
 
-        # Try to get log_level from defaults_configuration, else use default
+        # Try to get logging_level from defaults configuration, else use default (defined above)
         defaults_loading_exc = None
         try:
             self.load_defaults_configuration()
         except Exception as exc:
             defaults_loading_exc = exc
-            log_level = DEFAULT_LOGGING_LEVEL
             logging_level_stream = 'DEBUG'
         else:
-            log_level = self.parameters.logging_level.upper()
+            self.logging_level = self.parameters.logging_level.upper()
         # make sure that logging_level_stream is always at least INFO or more verbose
         # otherwise the output on stdout/stderr is less than the user expects
-        logging_level_stream = log_level if log_level == 'DEBUG' else 'INFO'
+        logging_level_stream = self.logging_level if self.logging_level == 'DEBUG' else 'INFO'
 
         try:
             if no_file_logging:
                 raise FileNotFoundError
-            logger = utils.log('intelmqctl', log_level=log_level,
+            logger = utils.log('intelmqctl', log_level=self.logging_level,
                                log_format_stream=utils.LOG_FORMAT_SIMPLE,
-                               logging_level_stream=logging_level_stream)
+                               logging_level_stream=logging_level_stream,
+                               log_max_size=getattr(self.parameters, "logging_max_size", 0),
+                               log_max_copies=getattr(self.parameters, "logging_max_copies", None))
         except (FileNotFoundError, PermissionError) as exc:
-            logger = utils.log('intelmqctl', log_level=log_level, log_path=False,
+            logger = utils.log('intelmqctl', log_level=self.logging_level, log_path=False,
                                log_format_stream=utils.LOG_FORMAT_SIMPLE,
                                logging_level_stream=logging_level_stream)
             logger.error('Not logging to file: %s', exc)
@@ -1029,7 +1036,12 @@ Get some debugging output on the settings and the enviroment (to be extended):
         return retval
 
     def bot_run(self, **kwargs):
-        return self.bot_process_manager.bot_run(**kwargs), None
+        # the bot_run method is special in that it mixes plain text
+        # and json in its output, therefore it is printed here
+        # and not in the calling `run` method.
+        retval, results = self.bot_process_manager.bot_run(**kwargs)
+        print(results)
+        return retval, None
 
     def bot_start(self, bot_id, getstatus=True, group=None):
         if bot_id is None:
@@ -1489,7 +1501,7 @@ Get some debugging output on the settings and the enviroment (to be extended):
                 if orphan_queues:
                     check_logger.warning("Orphaned queues found: '%s'. Possible leftover from past reconfigurations "
                                          "without cleanup. Have a look at the FAQ at "
-                                         "https://github.com/certtools/intelmq/blob/master/docs/intelmqctl.md"
+                                         "https://intelmq.readthedocs.io/en/latest/guides/intelmqctl.html"
                                          "#orphaned-queues", orphan_queues)
 
         check_logger.info('Checking harmonization configuration.')

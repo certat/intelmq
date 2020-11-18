@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import sys
 
 from setuptools import find_packages, setup
 
@@ -12,10 +13,13 @@ REQUIRES = [
     'python-termstyle>=0.1.10',
     'pytz>=2012c',
     'redis>=2.10',
-    'requests>=2.2.0',
     'rt>=1.0.9',
     'tabulate>=0.7.5',
 ]
+if sys.version_info[:2] == (3, 5):
+    REQUIRES.append('requests<2.26')
+else:
+    REQUIRES.append('requests>=2.2.0')
 
 exec(open(os.path.join(os.path.dirname(__file__),
                        'intelmq/version.py')).read())  # defines __version__
