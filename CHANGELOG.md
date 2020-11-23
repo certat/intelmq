@@ -18,6 +18,8 @@ CHANGELOG
 - `intelmq.lib.utils`:
   - `create_request_session_from_bot`: Changed bot argument to optional, uses defaults.conf as fallback, renamed to `create_request_session`. Name `create_request_session_from_bot` will be removed in version 3.0.0.
   - `log`: Use RotatingFileHandler for allow log file rotation without external tools (PR#1637 by Vasek Bruzek).
+- `intelmq.lib.harmonization`:
+  - The `IPAddress` type sanitiation now accepts integer IP addresses and converts them to the string representation.
 
 ### Development
 - `intelmq.bin.intelmq_gen_docs`: Add bot name to the `Feeds.md` documentation (PR#1617 by Birger Schacht).
@@ -132,6 +134,9 @@ CHANGELOG
 
 #### Parsers
 - `intelmq.bots.parsers.cymru.parser_cap_program`: Add support for protocols 47 (GRE) and 59 (IPv6-NoNxt).
+- `intelmq.bots.parsers.microsoft.parser_ctip`:
+  - Fix mapping of `DestinationIpInfo.DestinationIpConnectionType` field (contained a typo).
+  - Explicitly ignore field `DestinationIpInfo.DestinationIpv4Int` as the data is already in another field.
 
 #### Experts
 
