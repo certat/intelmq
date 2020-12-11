@@ -468,9 +468,9 @@ class SupervisorProcessManager:
 
         output = ""
         try:
-            BotDebugger(self.__runtime_configuration[bot_id], bot_id, run_subcommand,
-                        console_type, message_action_kind, dryrun, msg, show_sent,
-                        loglevel=loglevel)
+            bd = BotDebugger(self.__runtime_configuration[bot_id], bot_id, run_subcommand,
+                             console_type, message_action_kind, dryrun, msg, show_sent,
+                             loglevel=loglevel)
             output = bd.run()
             retval = 0
         except KeyboardInterrupt:
@@ -1015,6 +1015,15 @@ Get some debugging output on the settings and the enviroment (to be extended):
                 self.abort('Error loading %r: %s' % (DEFAULTS_CONF_FILE, exc))
         for option, value in config.items():
             setattr(self.parameters, option, value)
+
+        # TODO: Rewrite variables with env. variables ( CURRENT IMPLEMENTATION NOT FINAL )
+        # "destination_pipeline_host": "127.0.0.1",
+        # "source_pipeline_host": "127.0.0.1",
+        if os.getenv('INTELMQ_IS_DOCKER', None):
+            pipeline_host = os.getenv('INTELMQ_PIPELINE_HOST')
+            if pipeline_host:
+                setattr(self.parameters, 'destination_pipeline_host', pipeline_host)
+                setattr(self.parameters, 'source_pipeline_host', pipeline_host)
 
     def run(self):
         results = None

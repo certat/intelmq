@@ -73,10 +73,12 @@ class GenericCsvParserBot(ParserBot):
     def parse(self, report):
         raw_report = utils.base64_decode(report.get("raw"))
         raw_report = raw_report.translate({0: None})
-        # ignore lines starting with #
-        raw_report = re.sub(r'(?m)^#.*\n?', '', raw_report)
+        # ignore lines starting with #. # can have leading spaces/tabs
+        raw_report = re.sub(r'(?m)^[ \t]*#.*\n?', '', raw_report)
         # ignore null bytes
         raw_report = re.sub(r'(?m)\0', '', raw_report)
+        # ignore lines having mix of spaces and tabs only
+        raw_report = re.sub(r'(?m)^[ \t]*\n?', '', raw_report)
         # skip header
         if getattr(self.parameters, 'skip_header', False):
             self.tempdata.append(raw_report[:raw_report.find('\n')])
@@ -129,7 +131,7 @@ class GenericCsvParserBot(ParserBot):
                         value = self.type_translation[value]
                     elif not hasattr(self.parameters, 'type'):
                         continue
-                if event.add(key, value, raise_failure=False):
+                if event.add(key, value, raise_failure=False) is not False:
                     break
             else:
                 # if the value sill remains unadded we need to inform if the key is needed

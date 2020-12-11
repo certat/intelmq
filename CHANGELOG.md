@@ -11,6 +11,7 @@ CHANGELOG
   - `ParserBot.recover_line_json_stream`: Make `line` parameter optional, as it is not needed for this method.
   - `Bot.argparser`: Added class method `_create_argparser` (returns `argparse.ArgumentParser`) for easy command line arguments parsing.
   - Runtime configuration does not necessarily need a parameter entry for each block. Previously and at least empty block was required (PR#1604 by Filip Pokorný).
+  - Allow setting the pipeline host and the redis cache host by environment variables for docker usage (PR#1669 by Sebastian Waldbauer).
 - `intelmq.lib.upgrades`:
   - Add upgrade function for removal of *HPHosts Hosts file* feed and `intelmq.bots.parsers.hphosts` parser (#1559).
 - `intelmq.lib.exceptions`:
@@ -68,6 +69,7 @@ CHANGELOG
   - Added `api_token` parameter. (PR#1524 by Filip Pokorný)
   - The script `update-rfiprisk-data` is now deprecated and will be removed in version 3.0.
 - Added `intelmq.bots.experts.threshold` (PR#1608 by Karl-Johan Karlsson).
+- Added `intelmq.bots.experts.splunk_saved_search.expert` (PR#1666 by Karl-Johan Karlsson).
 
 #### Outputs
 - `intelmq.bots.outputs.rt`: Added Request Tracker output bot (PR#1589 by Marius Urkis).
@@ -110,6 +112,7 @@ CHANGELOG
 - `intelmqctl`:
   - `intelmq list queues`: `--sum`, `--count`, `-s` flag for showing total count of messages (PR#1581 by Mladen Markovic).
   - `intelmq check`: Added a possibility to ignore queues from the orphaned queues check.
+  - Allow setting the pipeline host by environment variables for docker usage (PR#1669 by Sebastian Waldbauer).
 
 ### Contrib
 - eventdb:
@@ -138,6 +141,9 @@ CHANGELOG
 - `intelmq.bots.parsers.microsoft.parser_ctip`:
   - Fix mapping of `DestinationIpInfo.DestinationIpConnectionType` field (contained a typo).
   - Explicitly ignore field `DestinationIpInfo.DestinationIpv4Int` as the data is already in another field.
+- `intelmq.bots.parsers.generic.parser_csv`:
+  - Ignore line having spaces or tabs only or comment having leading tabs or spaces (PR#1669 by Brajneesh).
+  - Data fields containing `-` are now ignored and do not raise an exeception anymore (#1651, PR#74 by Sebastian Waldbauer).
 
 #### Experts
 
@@ -148,6 +154,7 @@ CHANGELOG
 ### Packaging
 
 ### Tests
+- Travis: Deactivate tests with optional requirements on Python 3.5, as the build fails because of abusix/querycontacts version conflicts on dnspython.
 
 ### Tools
 
