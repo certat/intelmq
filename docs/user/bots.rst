@@ -627,6 +627,10 @@ If you intend to link two IntelMQ instance via TCP, have a look at the TCP outpu
 
 XMPP collector
 ^^^^^^^^^^^^^^
+
+**Warning:** This bot is deprecated and will be removed in the version 3.0 of IntelMQ.
+**Warning:** This bot is currently *unmaintained*. The used XMPP library *sleekxmpp* is deprecated. For more information see :issue:`Issue #1614 <1614>`.
+
 **Information**
 
 * `name:` intelmq.bots.collectors.xmpp.collector
@@ -634,8 +638,6 @@ XMPP collector
 * `public:` yes
 * `cache (redis db):` none
 * `description:` This bot can connect to an XMPP Server and one room, in order to receive reports from it. TLS is used by default. rate_limit is ineffective here. Bot can either pass the body or the whole event.
-
-**Warning:** This bot is currently *unmaintained* and needs to be adapted. The used XMPP library *sleekxmpp* is deprecated, therefore the bots needs to be adapted to the successor library *slixmpp*. For more information see :issue:`Issue #1614 <1614>`.
 
 **Requirements**
 
@@ -2447,14 +2449,16 @@ Sieve
 **Description**
 
 The sieve bot is used to filter and/or modify events based on a set of rules. The
-rules are specified in an external configuration file and with a syntax similar
+rules are specified in an external configuration file and with a syntax *similar*
 to the `Sieve language <http://sieve.info>`_ used for mail filtering.
 
 Each rule defines a set of matching conditions on received events. Events can be
-matched based on keys and values in the event. If the processed event matches a
-rule's conditions, the corresponding actions are performed. Actions can specify
-whether the event should be kept or dropped in the pipeline (filtering actions)
-or if keys and values should be changed (modification actions).
+matched based on keys and values in the event. Conditions can be combined using
+parenthesis and the boolean operators ``&&`` and ``||``. If the processed event
+matches a rule's conditions, the corresponding actions are performed. Actions
+can specify whether the event should be kept or dropped in the pipeline
+(filtering actions) or if keys and values should be changed (modification
+actions).
 
 **Requirements**
 
@@ -2513,21 +2517,26 @@ The sieve file contains an arbitrary number of rules of the form:
    }
 
 
+*Please note* that nesting if-statements is currently not possible. `ACTIONS`
+must contain one or more actions of the actions listed below.
+
 *Expressions*
 
 Each rule specifies on or more expressions to match an event based on its keys
 and values. Event keys are specified as strings without quotes. String values
 must be enclosed in single quotes. Numeric values can be specified as integers
 or floats and are unquoted. IP addresses and network ranges (IPv4 and IPv6) are
-specified with quotes. Following operators may be used to match events:
+specified with quotes. Expression statements can be combined and chained using
+parenthesis and the boolean operators ``&&`` and ``||``.
+The following operators may be used to match events:
 
  * `:exists` and `:notexists` match if a given key exists, for example:
 
-    ```if :exists source.fqdn { ... }```
+    ``if :exists source.fqdn { ... }``
 
  * `==` and `!=` match for equality of strings and numbers, for example:
 
-   ```if feed.name != 'acme-security' || feed.accuracy == 100 { ... }```
+   ``if feed.name != 'acme-security' || feed.accuracy == 100 { ... }``
 
  * `:contains` matches on substrings.
 
@@ -2537,21 +2546,25 @@ specified with quotes. Following operators may be used to match events:
 
  * `<<` matches if an IP address is contained in the specified network range:
 
-   ```if source.ip << '10.0.0.0/8' { ... }```
+   ``if source.ip << '10.0.0.0/8' { ... }``
 
  * Values to match against can also be specified as list, in which case any one of the values will result in a match:
 
-   ```if source.ip == ['8.8.8.8', '8.8.4.4'] { ... }```
+   ``if source.ip == ['8.8.8.8', '8.8.4.4'] { ... }``
 
   In this case, the event will match if it contains a key `source.ip` with
   either value `8.8.8.8` or `8.8.4.4`.
 
   With inequality operators, the behavior is the same, so it matches if any expression does not match:
 
-  ```if source.ip != ['8.8.8.8', '8.8.4.4'] { ... }```
+  ``if source.ip != ['8.8.8.8', '8.8.4.4'] { ... }``
 
   Events with values like `8.8.8.8` or `8.8.4.4` will match, as they are always unequal to the other value.
   The result is *not* that the field must be unequal to all given values.
+
+ * The combination of multiple expressions can be done using parenthesis and boolean operators:
+
+  ``if (source.ip == '127.0.0.1') && (comment == 'add field' || classification.taxonomy == 'vulnerable') { ... }``
 
 
 *Actions*
@@ -2563,27 +2576,27 @@ in the sieve file will be forwarded to the next bot in the pipeline, unless the
 
  * `add` adds a key value pair to the event. This action only applies if the key is not yet defined in the event. If the key is already defined, the action is ignored. Example:
 
-   ```add comment = 'hello, world'```
+   ``add comment = 'hello, world'``
 
  * `add!` same as above, but will force overwrite the key in the event.
 
  * `update` modifies an existing value for a key. Only applies if the key is already defined. If the key is not defined in the event, this action is ignored.  Example:
 
-   ```update feed.accuracy = 50```
+   ``update feed.accuracy = 50``
 
  * `remove` removes a key/value from the event. Action is ignored if the key is not defined in the event. Example:
 
-    ```remove extra.comments```
+    ``remove extra.comments``
 
  * `keep` sends the message to the next bot in the pipeline (same as the default behaviour), and stops sieve file processing.
 
-   ```keep```
+   ``keep``
 
  * `path` sets the path (named queue) the message should be sent to (implicitly
    or with the command `keep`. The named queue needs to configured in the
    pipeline, see the User Guide for more information.
 
-   ```path 'named-queue'```
+   ``path 'named-queue'``
 
  * `drop` marks the event to be dropped. The event will not be forwarded to the next bot in the pipeline. The sieve file processing is interrupted upon
    reaching this action. No other actions may be specified besides the `drop` action within `{` and `}`.
@@ -3492,6 +3505,8 @@ Resulting line in syslog:
 
 XMPP
 ^^^^
+**Warning:** This bot is deprecated and will be removed in the version 3.0 of IntelMQ.
+**Warning:** This bot is currently *unmaintained*. The used XMPP library *sleekxmpp* is deprecated. For more information see :issue:`Issue #1614 <1614>`.
 
 **Information**
 
@@ -3501,7 +3516,6 @@ XMPP
 * `cache (redis db):` none
 * `description:` The XMPP Output is capable of sending Messages to XMPP Rooms and as direct messages.
 
-**Warning:** This bot is currently *unmaintained* and needs to be adapted. The used XMPP library *sleekxmpp* is deprecated, therefore the bots needs to be adapted to the successor library *slixmpp*. For more information see :issue:`Issue #1614 <1614>`.
 
 **Requirements**
 

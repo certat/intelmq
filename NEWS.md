@@ -12,6 +12,8 @@ The documentation is now available at [intelmq.readthedocs.io](https://intelmq.r
 
 ### Tools
 
+### Bots
+
 #### Bot option `--updata-database`
 - Bots that require a database file (such as `maxmind_geoip`, `asn_lookup`, `tor_nodes` and `recordedfuture_iprisk`)
   have new command line option `--update-database`. It is not necessary to specify a
@@ -28,6 +30,12 @@ The documentation is now available at [intelmq.readthedocs.io](https://intelmq.r
   intelmq.bots.experts.tor_nodes.expert --update-database
   ```
   The provided shell scripts use these new commands, however they are now deprecated and will be removed in version 3.0.
+
+#### XMPP Bots
+Both the XMPP output bot and the XMPP collector bot are deprecated.
+The bots need to be migrate to another XMPP library (see [#1614](https://github.com/certtools/intelmq/issues/1614) for details) and a survey on the mailing listed revealed no users.
+If you depend on this bot, please reach out to us via the mailing list or GitHub.
+The bots are logging a deprecation warning now and the current plan is to remove them in IntelMQ version 3.0.
 
 ### Harmonization
 
@@ -46,12 +54,25 @@ The documentation is now available at [intelmq.readthedocs.io](https://intelmq.r
 ### Tools
 
 ### Harmonization
+A bug in the taxonomy expert did set the Taxonomy for the type `scanning` to `information gathering`
+whereas for the type `sniffing` and `social-engineering`, the taxonomy was correctly set to `information-gathering`.
+This inconsistency for the taxonomy `information-gathering` is now fixed, but the data eventually needs to fixed in data output (databases) as well.
+
+There are still some inconsistencies in the naming of the classification taxonomies and types,
+more fixes will come in version 3.0.0. See [issue #1409](https://github.com/certtools/intelmq/issues/1409).
 
 ### Configuration
 
 ### Libraries
 
 ### Postgres databases
+The following statements optionally update existing data.
+Please check if you did use these feed names and eventually adapt them for your setup!
+```SQL
+UPDATE events
+   SET "classification.taxonomy" = 'information-gathering'
+   WHERE "classification.taxonomy" = 'information gathering';
+```
 
 2.2.2 Bugfix release (2020-10-28)
 ---------------------------------

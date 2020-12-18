@@ -11,7 +11,7 @@ CHANGELOG
   - `ParserBot.recover_line_json_stream`: Make `line` parameter optional, as it is not needed for this method.
   - `Bot.argparser`: Added class method `_create_argparser` (returns `argparse.ArgumentParser`) for easy command line arguments parsing.
   - Runtime configuration does not necessarily need a parameter entry for each block. Previously and at least empty block was required (PR#1604 by Filip Pokorný).
-  - Allow setting the pipeline host and the redis cache host by environment variables for docker usage (PR#1669 by Sebastian Waldbauer).
+  - Allow setting the pipeline host and the Redis cache host by environment variables for docker usage (PR#1669 by Sebastian Waldbauer).
 - `intelmq.lib.upgrades`:
   - Add upgrade function for removal of *HPHosts Hosts file* feed and `intelmq.bots.parsers.hphosts` parser (#1559).
 - `intelmq.lib.exceptions`:
@@ -20,7 +20,7 @@ CHANGELOG
   - `create_request_session_from_bot`: Changed bot argument to optional, uses defaults.conf as fallback, renamed to `create_request_session`. Name `create_request_session_from_bot` will be removed in version 3.0.0.
   - `log`: Use RotatingFileHandler for allow log file rotation without external tools (PR#1637 by Vasek Bruzek).
 - `intelmq.lib.harmonization`:
-  - The `IPAddress` type sanitiation now accepts integer IP addresses and converts them to the string representation.
+  - The `IPAddress` type sanitation now accepts integer IP addresses and converts them to the string representation.
 
 ### Development
 - `intelmq.bin.intelmq_gen_docs`: Add bot name to the `Feeds.md` documentation (PR#1617 by Birger Schacht).
@@ -33,7 +33,8 @@ CHANGELOG
 - `intelmq.bots.collectors.http.collector_http`:
   - Added PGP signature check functionality (PR#1602 by sinus-x).
   - If status code is not 2xx, the request's and response's headers and body are logged in debug logging level (#1615).
-- `intelmq.bots.collectors.kafka.collector`: Added (PR#1654, closes #1634)
+- `intelmq.bots.collectors.kafka.collector`: Added (PR#1654 by Birger Schacht, closes #1634)
+- `intelmq.bots.collectors.xmpp.collector`: Marked as deprecated, see https://lists.cert.at/pipermail/intelmq-users/2020-October/000177.html (#1614, PR#1685 by Birger Schacht).
 
 #### Parsers
 - `intelmq.bots.parsers.eset.parser`: Added (PR#1554 by Mikk Margus Möll).
@@ -73,6 +74,7 @@ CHANGELOG
 
 #### Outputs
 - `intelmq.bots.outputs.rt`: Added Request Tracker output bot (PR#1589 by Marius Urkis).
+- `intelmq.bots.outputs.xmpp.output`: Marked as deprecated, see https://lists.cert.at/pipermail/intelmq-users/2020-October/000177.html (#1614, PR#1685 by Birger Schacht).
 
 ### Documentation
 - Feeds:
@@ -85,7 +87,7 @@ CHANGELOG
 - Bots:
   - Enhanced documentation of RFC1918 Expert.
   - Enhanced documentation of SQL Output (PR #1620 by Edvard Rejthar).
-  - Updated documentation for Maxmind GeoIP, ASN Lookup, TOR Nodes and Recorded Future experts to reflect new `--update-database` option.  (PR#1524 by Filip Pokorný)
+  - Updated documentation for MaxMind GeoIP, ASN Lookup, TOR Nodes and Recorded Future experts to reflect new `--update-database` option.  (PR#1524 by Filip Pokorný)
 - Add n6 Integration documentation.
 - Moved 'Orphaned Queues' section from the FAQ to the intelmqctl documentation.
 - Generate documentation using Sphinx (PR#1622 by Birger Schacht).
@@ -115,7 +117,7 @@ CHANGELOG
   - Allow setting the pipeline host by environment variables for docker usage (PR#1669 by Sebastian Waldbauer).
 
 ### Contrib
-- eventdb:
+- EventDB:
   - Add SQL script for keeping track of the oldest inserted/update "time.source" information.
 - Cron Jobs: The script `intelmq-update-data` has been renamed to `intelmq-update-database`
 
@@ -132,9 +134,11 @@ CHANGELOG
 ### Development
 
 ### Harmonization
+- See NEWS.md for information on a fixed bug in the taxonomy expert.
 
 ### Bots
 #### Collectors
+- `intelmq.bots.rt.collector_rt`: Log the size of the downloaded file in bytes on debug logging level.
 
 #### Parsers
 - `intelmq.bots.parsers.cymru.parser_cap_program`: Add support for protocols 47 (GRE) and 59 (IPv6-NoNxt).
@@ -143,9 +147,10 @@ CHANGELOG
   - Explicitly ignore field `DestinationIpInfo.DestinationIpv4Int` as the data is already in another field.
 - `intelmq.bots.parsers.generic.parser_csv`:
   - Ignore line having spaces or tabs only or comment having leading tabs or spaces (PR#1669 by Brajneesh).
-  - Data fields containing `-` are now ignored and do not raise an exeception anymore (#1651, PR#74 by Sebastian Waldbauer).
+  - Data fields containing `-` are now ignored and do not raise an exception anymore (#1651, PR#74 by Sebastian Waldbauer).
 
 #### Experts
+- `intelmq.bots.experts.taxonomy.expert`: Map type `scanner` to `information-gathering` instead of `information gathering` See NEWS file for more information.
 
 #### Outputs
 
@@ -201,7 +206,7 @@ CHANGELOG
   - Add information on Microsoft CTIP C2 feed.
 
 ### Packaging
-- In Debian packages, `intelmqctl check` and `intelmqctl upgrade-config` are executed in the postinst step (#1551, PR#1624 by Birger Schacht).
+- In Debian packages, `intelmqctl check` and `intelmqctl upgrade-config` are executed in the "postinst" step (#1551, PR#1624 by Birger Schacht).
 - Require `requests<2.26` for Python 3.5, as 2.25.x will be the last release series of the requests library with support for Python 3.5.
 
 ### Tests
@@ -226,7 +231,7 @@ CHANGELOG
 
 ### Core
 - `intelmq.lib.upgrades`:
-  - Add upgrade function for changed configuration of the feed "Abuse.ch URLHaus" (#1571, PR#1572 by Filip Pokorný).
+  - Add upgrade function for changed configuration of the feed "Abuse.ch URLhaus" (#1571, PR#1572 by Filip Pokorný).
   - Add upgrade function for removal of *HPHosts Hosts file* feed and `intelmq.bots.parsers.hphosts` parser (#1559).
   - `intelmq.lib.harmonization`:
     - For IP Addresses, explicitly reject IPv6 addresses with scope ID (due to changed behavior in Python 3.9, #1550).
@@ -257,7 +262,7 @@ CHANGELOG
 
 ### Documentation
 - Feeds:
-  - Update documentation of feed "Abuse.ch URLHaus" (#1571, PR#1572 by Filip Pokorný).
+  - Update documentation of feed "Abuse.ch URLhaus" (#1571, PR#1572 by Filip Pokorný).
 - Bots:
   - Overhaul of all bots' description fields (#1570).
 - User-Guide:
