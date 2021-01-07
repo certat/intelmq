@@ -4,6 +4,8 @@ CHANGELOG
 2.3.0 (unreleased)
 ------------------
 
+IntelMQ no longer supports Python 3.5 (and thus Debian 9 and Ubuntu 16.04), the minimum supported Python version is 3.6.
+
 ### Configuration
 
 ### Core
@@ -21,6 +23,11 @@ CHANGELOG
   - `log`: Use RotatingFileHandler for allow log file rotation without external tools (PR#1637 by Vasek Bruzek).
 - `intelmq.lib.harmonization`:
   - The `IPAddress` type sanitation now accepts integer IP addresses and converts them to the string representation.
+  - `DateTime.parse_utc_isoformat`: Add parameter `return_datetime` to return `datetime` object instead of string ISO format.
+  - `DateTime.convert`: Fix `utc_isoformat` format, it pointed to a string and not a function, causing an exception when used.
+  - `DateTime.from_timestamp`: Ensure that time zone information (`+00:00`) is always present.
+- `intelmq.lib.upgrades`:
+  - Added upgrade function `v230_feed_fix`.
 
 ### Development
 - `intelmq.bin.intelmq_gen_docs`: Add bot name to the `Feeds.md` documentation (PR#1617 by Birger Schacht).
@@ -71,6 +78,8 @@ CHANGELOG
   - The script `update-rfiprisk-data` is now deprecated and will be removed in version 3.0.
 - Added `intelmq.bots.experts.threshold` (PR#1608 by Karl-Johan Karlsson).
 - Added `intelmq.bots.experts.splunk_saved_search.expert` (PR#1666 by Karl-Johan Karlsson).
+- `intelmq.bots.experts.sieve.expert`:
+  - Added possibility to give multiple queue names for the `path` directive (#1462).
 
 #### Outputs
 - `intelmq.bots.outputs.rt`: Added Request Tracker output bot (PR#1589 by Marius Urkis).
@@ -105,8 +114,11 @@ CHANGELOG
 - `intelmq.tests.bots.collectors.mail.test_collector_url`: Use requests_mock to mock all requests and do not require a local webserver.
 - `intelmq.tests.bots.experts.ripe.test_expert`: Use requests_mock to mock all requests and do not require a local webserver.
 - The test flag (environment variable) `INTELMQ_TEST_LOCAL_WEB` is no longer used.
+- Added tests for `intelmq.harmonization.DateTime.parse_utc_isoformat` and `convert_fuzzy`.
 - Travis:
   - Remove installation of local web-server (not necessary anymore) and HTTP proxy (no tests anymore).
+- `intelmq.lib.test`:
+  - `test_static_bot_check_method` checks the bot's static `check(parameters)` method for any exceptions, and a valid formatted return value (#1505).
 
 ### Tools
 - `intelmqdump`:
@@ -1245,7 +1257,7 @@ There are some features considered as beta and marked as such in the documentati
 ### Tools
 - intelmqctl:
   - status: Show commandline differences if a program with the expected PID could be found, but they do not match (previous output was `None`).
-  - Use logging level from defauls configuration if possible, otherwise intelmq's internal default. Previously, DEBUG was used unconditionally.
+  - Use logging level from defaults configuration if possible, otherwise intelmq's internal default. Previously, DEBUG was used unconditionally.
 
 ### Known issues
 - Bots started with IntelMQ-Manager stop when the webserver is restarted (#952).
@@ -1682,7 +1694,7 @@ Update allowed classification fields to 2018-09-26 version (#802, #1350, #1380).
 ### Tools
 - `intelmqctl`:
   - `intelmqctl run` has a new parameter `-l` `--loglevel` to overwrite the log level for the run (#1075).
-  - `intelmqctl run [bot-id] mesage send` can now send report messages (#1077).
+  - `intelmqctl run [bot-id] message send` can now send report messages (#1077).
 - `intelmqdump`:
   - has now command completion for bot names, actions and queue names in interactive console.
   - automatically converts messages from events to reports if the queue the message is being restored to is the source queue of a parser (#1225).
@@ -1759,7 +1771,7 @@ no known issues
 - `lib.harmonization`: Handle idna encoding error in FQDN sanitation (#1175, #1176).
 - `lib.bot`:
   - Bots stop when redis gives the error "OOM command not allowed when used memory > 'maxmemory'." (#1138).
-  - warnings of bots are catched by the logger (#1074, #1113).
+  - warnings of bots are caught by the logger (#1074, #1113).
   - Fixed exitcodes 0 for graceful shutdowns .
   - better handling of problems with pipeline and especially it's initialization (#1178).
   - All parsers using `ParserBot`'s methods now log the sum of successfully parsed and failed lines at the end of each run (#1161).
@@ -2011,7 +2023,7 @@ Changes between 0.9 and 1.0.0.dev6
 #### Experts
 - Added experts: asnlookup, cert.at contact lookup, filter, generic db lookup, gethostbyname, modify, reverse dns, rfc1918, tor_nodes, url2fqdn
 - removed experts: contactdb, countrycodefilter (obsolete), sanitizer (obsolete)
-- renamed `intelmq.bots.expers.abusix.abusix` to `intelmq.bots.expers.abusix.expert`
+- renamed `intelmq.bots.experts.abusix.abusix` to `intelmq.bots.experts.abusix.expert`
   `intelmq.bots.experts.asnlookup.asnlookup` to `intelmq.bots.experts.asn_lookup.expert`
   `intelmq.bots.experts.cymru.expert` to `intelmq.bots.experts.cymru_whois.expert`
   `intelmq.bots.experts.deduplicator.deduplicator` to `intelmq.bots.experts.deduplicator.expert`

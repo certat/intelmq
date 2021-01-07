@@ -62,10 +62,9 @@ Getting involved
 
    dev/guide
    dev/data-harmonization
-   dev/harmonization-fields.md
+   dev/harmonization-fields
    dev/release-procedure
    dev/feeds-wishlist
-   dev/IntelMQ-3.0-Architecture.md
 
 Licence
 =======
