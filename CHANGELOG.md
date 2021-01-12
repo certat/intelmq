@@ -95,6 +95,7 @@ IntelMQ no longer supports Python 3.5 (and thus Debian 9 and Ubuntu 16.04), the 
   - Added CZ.NIC Proki feed (PR#1599 by sinus-x).
   - Added CERT-BUND CB-Report Malware infections feed (PR#1598 by sinus-x).
   - Fixed parsing of the `public` field in the generated feeds documentation (PR#1641 by Birger Schacht).
+  - Change the `rate_limit` parameter of some feeds from 2 days (129600 seconds) to one day (86400 seconds).
 - Bots:
   - Enhanced documentation of RFC1918 Expert.
   - Enhanced documentation of SQL Output (PR #1620 by Edvard Rejthar).
@@ -107,21 +108,24 @@ IntelMQ no longer supports Python 3.5 (and thus Debian 9 and Ubuntu 16.04), the 
   - Refactor documentation and fix broken syntax (#1639, PRs #1638 #1640 #1642 by Birger Schacht).
 
 ### Packaging
+- Fix paths in the integrated logcheck rules.
+- Build the sphinx documentation on package build (PR#1701 by Birger Schacht).
 
 ### Tests
 - Added tests for `intelmq.lib.exceptions.PipelineError`.
-- `intelmq.tests.bots.collectors.http_collector.test_collector`: Use requests_mock to mock all requests and do not require a local webserver.
+- `intelmq.tests.bots.collectors.http_collector.test_collector`: Use `requests_mock` to mock all requests and do not require a local webserver.
 - `intelmq.tests.bots.outputs.restapi.test_output`:
-  - Use requests_mock to mock all requests and do not require a local webserver.
+  - Use `requests_mock` to mock all requests and do not require a local webserver.
   - Add a test for checking the response status code.
-- `intelmq.tests.bots.collectors.mail.test_collector_url`: Use requests_mock to mock all requests and do not require a local webserver.
-- `intelmq.tests.bots.experts.ripe.test_expert`: Use requests_mock to mock all requests and do not require a local webserver.
+- `intelmq.tests.bots.collectors.mail.test_collector_url`: Use `requests_mock` to mock all requests and do not require a local webserver.
+- `intelmq.tests.bots.experts.ripe.test_expert`: Use `requests_mock` to mock all requests and do not require a local webserver.
 - The test flag (environment variable) `INTELMQ_TEST_LOCAL_WEB` is no longer used.
 - Added tests for `intelmq.harmonization.DateTime.parse_utc_isoformat` and `convert_fuzzy`.
 - Travis:
   - Remove installation of local web-server (not necessary anymore) and HTTP proxy (no tests anymore).
 - `intelmq.lib.test`:
   - `test_static_bot_check_method` checks the bot's static `check(parameters)` method for any exceptions, and a valid formatted return value (#1505).
+  - `setUpClass`: Skip tests if cache was requests with `use_cache` member, but Redis is deactivated with the environment variable `INTELMQ_SKIP_REDIS`.
 
 ### Tools
 - `intelmqdump`:
